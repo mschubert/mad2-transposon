@@ -2,8 +2,6 @@
 
 rsync -auvr --include='*.pdf' \
     --exclude '.snakemake' \
-#    --include 'data/singlecell/BB150521_I_merged.bam{,.bai}' \
-#    --exclude 'data/*' \
     --include '*.RData' \
     --include='*/' \
     --include='docs/*' \
