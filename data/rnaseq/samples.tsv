@@ -1,33 +1,33 @@
 file	id	source	isolation	ng/ul RNA	mad2_qPCR	spleen_weight	thymus_weight	tissue	mad2_class
-Petra170929_001	157s	pellet	RNA from pellet 170720	121.0	0.02	877.00	NA	spleen	low
-Petra170929_002	180t	pellet	RNA from pellet 170720	235.4	0.02	413.00	729.00	thymus	low
-Petra170929_003	184t	pellet	RNA from pellet 170802	324.8	0.05	856.00	966.00	thymus	low
-Petra170929_004	401t	pellet	RNA from pellet 170803	262.0	0.18	755	395	thymus	low
-Petra170929_005	404s	pellet	RNA from pellet 170720	243.1	0.01	1390	53	spleen	low
-Petra170929_006	407t	pellet	RNA from pellet 170720	348.5	0.06	150	749	thymus	low
-Petra170929_007	409s	pellet	RNA from pellet 170720	370.7	0.01	1800	30	spleen	low
-Petra170929_008	411s	pellet	RNA from pellet 170720	327.3	0.00	1450	10	spleen	low
-Petra170929_009	412s	pellet	RNA from pellet 170720	301.8	0.09	1170	18	spleen	low
-Petra170929_010	413s	pellet	RNA from pellet 170720	410.7	0.01	2400	22	spleen	low
-Petra170929_011	416s	tissue	RNA from tissue 170615	898.8	1.24	863	22	spleen	high
-Petra170929_012	417s	pellet	RNA from pellet 170720	167.7	0.06	655	5	spleen	low
-Petra170929_013	418t	pellet	RNA from pellet 170722	131.2	0.03	142	1340	thymus	low
-Petra170929_014	419t	pellet	RNA from pellet 170720	377.0	0.01	132	1400	thymus	low
-Petra170929_015	422s	pellet	RNA from pellet 170720	207.6	0.16	855	27	spleen	low
-Petra170929_016	424s	pellet	RNA from pellet 170720	545.2	1.10	784	46	spleen	high
-Petra170929_017	428s	pellet	RNA from pellet 170720	438.8	0.10	1000	40	spleen	low
-Petra170929_018	429s	pellet	RNA from pellet 170720	442.0	0.01	2000	18	spleen	low
-Petra170929_019	431s	pellet	RNA from pellet 170720	257.7	0.02	2600	60	spleen	low
-Petra170929_020	434s	pellet	RNA from pellet 170720	523.5	0.32	1300	NA	spleen	low
-Petra170929_021	435s	pellet	RNA from pellet 170720	371.2	0.95	974	17	spleen	high
-Petra170929_022	437_s	pellet	RNA from pellet 170720	199.4	0.50	731	27	spleen	high
-Petra170929_023	442s	pellet	RNA from pellet 170720	357.3	0.13	810	49	spleen	low
-Petra170929_024	443t	pellet	RNA from pellet 170802	353.2	0.03	1400	457	thymus	low
-Petra170929_025	449t	pellet	RNA from pellet 170803	838.1	0.02	1900	142	thymus	low
-Petra170929_026	451_SPL	tissue	RNA from tissue (not RNAl) 170815	780.5	0.36	1000	36	NA	NA
-Petra170929_027	452t	pellet	RNA from tissue 170802	152.9	0.06	98	929	thymus	low
-Petra170929_028	462s	pellet	RNA from pellet 170722	396.3	1.93	2450	63	spleen	high
-Petra170929_029	476s	pellet	RNA from pellet 170722	303.7	1.58	535	NA	spleen	high
-Petra170929_030	477t	tissue	RNA from tissue (not RNAl) 170803	916.7	0.02	1250	1240	thymus	low
-Petra170929_031	482s	pellet	RNA from pellet 170722	145.7	0.31	809	NA	spleen	low
-Petra170929_032	489_SPL	pellet	RNA from pellet 170722	189.2	146.27	388	NA	NA	NA
+Petra170929_001	157s	pellet	RNA from pellet 170720	121	0.02	877	NA	spleen	low
+Petra170929_002	180t	pellet	RNA from pellet 170720	235.4	0.02	413	729	thymus	low
+Petra170929_003	404s	pellet	RNA from pellet 170720	243.1	0.01	1390	53	spleen	low
+Petra170929_004	407t	pellet	RNA from pellet 170720	348.5	0.06	150	749	thymus	low
+Petra170929_005	409s	pellet	RNA from pellet 170720	370.7	0.01	1800	30	spleen	low
+Petra170929_006	411s	pellet	RNA from pellet 170720	327.3	0	1450	10	spleen	low
+Petra170929_007	413s	pellet	RNA from pellet 170720	410.7	0.01	2400	22	spleen	low
+Petra170929_008	416s	tissue	RNA from tissue 170615	898.8	1.24	863	22	spleen	high
+Petra170929_009	417s	pellet	RNA from pellet 170720	167.7	0.06	655	5	spleen	low
+Petra170929_010	418t	pellet	RNA from pellet 170722	131.2	0.03	142	1340	thymus	low
+Petra170929_011	422s	pellet	RNA from pellet 170720	207.6	0.16	855	27	spleen	low
+Petra170929_012	424s	pellet	RNA from pellet 170720	545.2	1.1	784	46	spleen	high
+Petra170929_013	428s	pellet	RNA from pellet 170720	438.8	0.1	1000	40	spleen	low
+Petra170929_014	429s	pellet	RNA from pellet 170720	442	0.01	2000	18	spleen	low
+Petra170929_015	431s	pellet	RNA from pellet 170720	257.7	0.02	2600	60	spleen	low
+Petra170929_016	434s	pellet	RNA from pellet 170720	523.5	0.32	1300	NA	spleen	low
+Petra170929_017	435s	pellet	RNA from pellet 170720	371.2	0.95	974	17	spleen	high
+Petra170929_018	437_s	pellet	RNA from pellet 170720	199.4	0.5	731	27	spleen	high
+Petra170929_019	449t	pellet	RNA from pellet 170803	838.1	0.02	1900	142	thymus	low
+Petra170929_020	477t	tissue	RNA from tissue (not RNAl) 170803	916.7	0.02	1250	1240	thymus	low
+Petra170929_021	482s	pellet	RNA from pellet 170722	145.7	0.31	809	NA	spleen	low
+Petra170929_022	412s	pellet	RNA from pellet 170720	301.8	0.09	1170	18	spleen	low
+Petra170929_023	451_SPL	tissue	RNA from tissue (not RNAl) 170815	780.5	0.36	1000	36	NA	NA
+Petra170929_024	476s	pellet	RNA from pellet 170722	303.7	1.58	535	NA	spleen	high
+Petra170929_025	489_SPL	pellet	RNA from pellet 170722	189.2	146.27	388	NA	NA	NA
+Petra170929_026	452t	pellet	RNA from tissue 170802	152.9	0.06	98	929	thymus	low
+Petra170929_027	462s	pellet	RNA from pellet 170722	396.3	1.93	2450	63	spleen	high
+Petra170929_028	184t	pellet	RNA from pellet 170802	324.8	0.05	856	966	thymus	low
+Petra170929_029	401t	pellet	RNA from pellet 170803	262	0.18	755	395	thymus	low
+Petra170929_030	419t	pellet	RNA from pellet 170720	377	0.01	132	1400	thymus	low
+Petra170929_031	442s	pellet	RNA from pellet 170720	357.3	0.13	810	49	spleen	low
+Petra170929_032	443t	pellet	RNA from pellet 170802	353.2	0.03	1400	457	thymus	low
