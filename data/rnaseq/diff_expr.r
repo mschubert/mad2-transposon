@@ -18,7 +18,7 @@ de_genes = function(counts, fml) {
     cds = DESeqDataSetFromMatrix(counts, index, fml)
     dds = DESeq2::DESeq(cds)
     res = DESeq2::results(dds)
-    DESeq2::lfcString(res, coef=2)
+#    DESeq2::lfcShrink(res, coef=2)
 }
 
 #' Compute differential expression of gene sets
@@ -28,9 +28,10 @@ de_genes = function(counts, fml) {
 #' @return
 de_sets = function(de_genes, sets) {
     deg = na.omit(de_genes[c('log2FoldChange', 'pvalue')])
-    piano::runGSA(geneLevelStats = setNames(deg$pvalue, rownames(deg)),
-                  directions = setNames(deg$log2FoldChange, rownames(deg)),
-#                  signifMethod = "gsea",
+    deg$pvalue = deg$pvalue * sign(deg$log2FoldChange)
+    piano::runGSA(geneLevelStats = setNames(de_genes$stat, rownames(de_genes)),
+                  geneSetStat = "gsea",
+                  signifMethod = "geneSampling", # samplePermutation needs permStats obj
                   gsc = piano::loadGSC(stack(sets)))
 }
 
@@ -54,4 +55,7 @@ if (is.null(module_name())) {
         unstack()
     size = sapply(go, length)
     go = go[size >= 5 & size <= 200]
+
+    deg = de_genes(counts, ~ tissue)
+    gsa = de_sets(deg, go)
 }
