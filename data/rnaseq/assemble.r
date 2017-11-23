@@ -8,12 +8,12 @@ idx = readr::read_tsv("samples.tsv") %>%
     mutate(Sample = id) %>%
     full_join(readr::read_tsv("groups.tsv"), by="Sample")
 edf = readr::read_tsv("PB170929_raw_readcount_dedup_UMIs.txt")
-expr = data.matrix(edf[,-1])
-rownames(expr) = edf$Gene
+counts = data.matrix(edf[,-1])
+rownames(counts) = edf$Gene
 
-expr = rnaseq$vst(expr)
-narray::intersect(expr, idx$file, along=2)
-colnames(expr) = idx$id
+expr = rnaseq$vst(counts)
+narray::intersect(expr, counts, idx$file, along=2)
+colnames(expr) = colnames(counts) = idx$id
 
 # do PCA/dim reduction plots to see how they cluster
 pca = prcomp(t(expr), scale=FALSE)
@@ -38,4 +38,4 @@ print(p1)
 print(p2)
 dev.off()
 
-save(expr, idx, file="assemble.RData")
+save(expr, counts, idx, file="assemble.RData")
