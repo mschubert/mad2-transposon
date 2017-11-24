@@ -28,11 +28,26 @@ de_genes = function(counts, fml) {
 #' @return
 de_sets = function(de_genes, sets) {
     deg = na.omit(de_genes[c('log2FoldChange', 'pvalue')])
-    deg$pvalue = deg$pvalue * sign(deg$log2FoldChange)
-    piano::runGSA(geneLevelStats = setNames(de_genes$stat, rownames(de_genes)),
-                  geneSetStat = "gsea",
-                  signifMethod = "geneSampling", # samplePermutation needs permStats obj
+    piano::runGSA(#geneLevelStats = setNames(de_genes$stat, rownames(de_genes)),
+                  geneLevelStats = setNames(de_genes$pvalue, rownames(de_genes)),
+                  directions = setNames(de_genes$stat, rownames(de_genes)),
+#                  geneSetStat = "gsea",
+#                  signifMethod = "geneSampling", # samplePermutation needs permStats obj
                   gsc = piano::loadGSC(stack(sets)))
+}
+
+#' Produce a tidy data.frame from the paino run
+#'
+#' @param res   Result object from piano
+#' @param type  Which type of statistic to return; multiple allowed
+#' @return      A data.frame
+clean_piano = function(res, type=c("p", "stat", "adj.p")) {
+    type = sub("p", "p[^A]", type)
+    type = sub("adj.p", "pAdj", type)
+    type = paste(paste0("^", type), collapse="|")
+    fields = grep(type, names(gsa), value=TRUE)
+
+    tibble::as_tibble(cbind(set=names(gsa$gsc), as.data.frame(gsa[fields])))
 }
 
 if (is.null(module_name())) {
