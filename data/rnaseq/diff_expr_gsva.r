@@ -3,6 +3,7 @@ b = import('base')
 io = import('io')
 st = import('stats')
 gs = import('data/genesets')
+idmap = import('process/idmap')
 
 if (is.null(module_name())) {
     # load the gene expression data + sample types
@@ -29,15 +30,28 @@ if (is.null(module_name())) {
     scores = GSVA::gsva(expr, go, kernel=FALSE, parallel.sz=1) %>% t()
 
     cond = cbind(intercept = rep(1, nrow(index)),
-                 narray::mask(index$tissue),
+                 thymus_over_spleen = index$tissue == "thymus",
+                 other_over_spleen = index$tissue == "other",
                  myeloid_leukemia = index$type == "Myeloid leukaemia",
                  stage_late = index$stage == "Late",
                  mad2_high = index$mad2 == "High") + 0
     rownames(cond) = index$id
 
-    assocs = st$lm(scores ~ 0 + cond, atomic="cond") %>%
+    process = . %>%
         mutate(term = sub("^cond", "", term)) %>%
         filter(term != "intercept") %>%
         select(-size) %>%
-        arrange(p.value)
+        group_by(term) %>%
+        mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
+        ungroup() %>%
+        arrange(adj.p, p.value) %>%
+        filter(adj.p < 0.2)
+
+    gene = t(expr)
+    assocs_gene = st$lm(gene ~ 0 + cond, atomic="cond") %>% process() %>%
+        mutate(gene = idmap$gene(gene, to="external_gene_name", dset="mmusculus_gene_ensembl"))
+    assocs_sets = st$lm(scores ~ 0 + cond, atomic="cond") %>% process()
+
+    write.table(assocs_gene, file="de_genes.tsv", row.names=FALSE, quote="", sep="\t")
+    write.table(assocs_sets, file="de_sets.tsv", row.names=FALSE, quote="", sep="\t")
 }
