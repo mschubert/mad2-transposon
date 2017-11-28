@@ -10,6 +10,7 @@ chrs = idmap$gene(rownames(dset$counts), to="chromosome_name", dset="mmusculus_g
 reads = dset$counts[!is.na(chrs),]
 chrs = chrs[!is.na(chrs)]
 reads = narray::map(reads, along=1, sum, subsets=chrs)[as.character(1:19),]
+reads = reads / narray::rrep(colSums(reads), nrow(reads))
 
 # reads per chromosome for euploid controls
 ctl = readr::read_tsv("../../aneuploidy/data/rnaseq/T-ALL_read_count.txt")
@@ -18,11 +19,16 @@ chrs = idmap$gene(ctl$ensembl_gene_id, to="chromosome_name", dset="mmusculus_gen
 ctl_reads = ctl_reads[!is.na(chrs),]
 chrs = chrs[!is.na(chrs)]
 ctl_reads = narray::map(ctl_reads, along=1, sum, subsets=chrs)[as.character(1:19),]
+ctl_reads = ctl_reads / narray::rrep(colSums(ctl_reads), nrow(ctl_reads))
+
+# # compute ploidy z-scores
+# # this does not work well because only 2 control samples (and non-cancer)
+# z_mean = narray::map(ctl_reads, along=2, mean) %>% narray::crep(ncol(reads))
+# z_sd = narray::map(ctl_reads, along=2, sd) %>% narray::crep(ncol(reads))
+# z_ploidy = (reads - z_mean) / z_sd
 
 # infer ploidy from read count difference
-ploidy_multiples = reads / narray::crep(rowSums(ctl_reads), ncol(reads))
-medians = narray::map(ploidy_multiples, along=1, median)
-ploidy = 2 * ploidy_multiples / narray::rrep(medians, nrow(ploidy_multiples))
+ploidy = 2 * reads / narray::crep(rowMeans(ctl_reads), ncol(reads))
 aneuploidy = colSums(abs(2 - ploidy)) #TODO: scale chrom length
 
 # compare to measured ploidy using scWGS
