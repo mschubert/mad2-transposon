@@ -49,7 +49,7 @@ if (is.null(module_name())) {
         filter(term == cond) %>%
         mutate(adj.p=p.adjust(p.value, method="fdr"), label = scores, size=5) %>%
         plt$p_effect("adj.p", thresh=0.1) %>%
-        plt$volcano(..., check_overlap=TRUE, label_top=label_top)
+        plt$volcano(..., repel=repel, label_top=label_top)
 
     assocs_gene$scores = assocs_gene$gene
     pdf("volcano_genes.pdf", width=10, height=10)
