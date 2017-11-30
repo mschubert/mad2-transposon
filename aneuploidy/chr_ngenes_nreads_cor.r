@@ -34,6 +34,8 @@ chr_df_plot = function(min_reads=10) {
 pdf("chr_ngenes_nreads_cor.pdf")
 print(chr_df_plot(-1) + labs(subtitle="all genes"))
 print(chr_df_plot(10) + labs(subtitle="genes w/ >= 10 reads avg"))
+print(chr_df_plot(100) + labs(subtitle="genes w/ >= 100 reads avg"))
+print(chr_df_plot(1000) + labs(subtitle="genes w/ >= 1000 reads avg"))
 dev.off()
 
 # median, quartiles?
