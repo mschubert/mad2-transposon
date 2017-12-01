@@ -21,11 +21,14 @@ idmap = import('process/idmap')
 #' or we should rather go by chromosome:
 #'
 #'                   n_reads^chr
-#' somy = k^chr *  --------------
+#' somy = k^chr *  -------------- = k^chr * frac_reads
 #'                 n_reads^genome
 #'
 #' This data indicates that we should adjust per chromosome, as the correlation
 #' is not stable enough across samples (but better then chromosome length).
+#'
+#' So use single-cell WGS to fit k^chr for each chromosome, and then use those
+#' to infer ploidy for the samples where we don't have it.
 invisible(NULL)
 
 #' Summarize number of reads and genes per chromosome
