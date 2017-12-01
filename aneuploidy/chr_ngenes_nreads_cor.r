@@ -4,6 +4,30 @@ io = import('io')
 df = import('data_frame')
 idmap = import('process/idmap')
 
+#' See if gene number correlates w/ reads across chromosomes
+#'
+#' Reason for this is that for ploidy estimates from RNA-seq, it would be good
+#' if we could fit one parameter per sample, instead of one parameter per sample
+#' per chromosome. This looks like the following:
+#'
+#'    n_reads
+#' --------------  =  const per sample
+#' somy * n_genes
+#'
+#'       n_reads^chr
+#' ----------------------  =  k^genome * n_reads^genome
+#' somy^chr * n_genes^chr
+#'
+#' or we should rather go by chromosome:
+#'
+#'                   n_reads^chr
+#' somy = k^chr *  --------------
+#'                 n_reads^genome
+#'
+#' This data indicates that we should adjust per chromosome, as the correlation
+#' is not stable enough across samples (but better then chromosome length).
+invisible(NULL)
+
 #' Summarize number of reads and genes per chromosome
 #'
 #' @param reads      Matrix of genes (rows) x samples (columns)
