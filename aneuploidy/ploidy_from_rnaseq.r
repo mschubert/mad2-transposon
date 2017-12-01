@@ -61,7 +61,8 @@ p = ggplot(dfs, aes(x=wgs, y=rna)) +
          y = "Ploidy inferred from RNA-seq",
          title = sprintf("RNA-seq for ploidy inference (p=%.2g, r^2=%.2f)",
              mod %>% broom::tidy() %>% filter(term == "wgs") %>% pull(p.value),
-             mod %>% broom::glance() %>% pull(r.squared)))
+             mod %>% broom::glance() %>% pull(r.squared)),
+         subtitle = "assuming total DNA=const, diff euploid lib as reference")
 
 pdf("ploidy_from_rnaseq.pdf")
 print(p)
