@@ -41,10 +41,22 @@ aneuploidy_mean = aneuploidy_separate %>%
     summarize(frac_reads = unique(frac_reads),
               ploidy = mean(ploidy))
 
-#aneuploidy_min = aneuploidy_separate %>%
-#    group_by(sample, seqnames) %>%
-#    summarize(frac_reads = unique(frac_reads),
-#              ploidy = sign(ploidy) * (2 + min(abs(ploidy)-2)))
+#' Plot correlation between measured and predicted aneuploidy
+#'
+#' @param ploidy_df  Data.frame with fields: sample, seqnames, ploidy, ref_ploidy
+#' @param ...        Additional parameters passed to labs(...)
+#' @return           A ggplot2 object
+plot_comparison = function(ploidy_df, ...) {
+    mod = lm(ploidy ~ ref_ploidy, data=ploidy_df)
+    p_sep = ggplot(ploidy_df, aes(x=ref_ploidy, y=ploidy, label=seqnames, color=sample)) +
+        geom_text() +
+        geom_smooth(method="lm", color="black") +
+        labs(x = "Ploidy from single-cell WGS data + AneuFinder",
+             y = "Ploidy inferred from RNA-seq",
+             title = sprintf("RNA-seq for ploidy inference (p=%.2g, r^2=%.2f)",
+                 mod %>% broom::tidy() %>% filter(term == "ref_ploidy") %>% pull(p.value),
+                 mod %>% broom::glance() %>% pull(r.squared)), ...)
+}
 
 # control for individual ploidy predictions w/o input sample
 ctl = aneuploidy_separate %>%
@@ -53,37 +65,21 @@ ctl = aneuploidy_separate %>%
     select(sample, seqnames, ploidy) %>%
     inner_join(kchr %>% select(sample=ref, seqnames, ref_ploidy), by=c("sample", "seqnames"))
 
-mod = lm(ploidy ~ ref_ploidy, data=ctl)
-p_sep = ggplot(ctl, aes(x=ref_ploidy, y=ploidy, label=seqnames, color=sample)) +
-    geom_text() +
-    geom_smooth(method="lm", color="black") +
-    labs(x = "Ploidy from single-cell WGS data + AneuFinder",
-         y = "Ploidy inferred from RNA-seq",
-         title = sprintf("RNA-seq for ploidy inference (p=%.2g, r^2=%.2f)",
-             mod %>% broom::tidy() %>% filter(term == "ref_ploidy") %>% pull(p.value),
-             mod %>% broom::glance() %>% pull(r.squared)))
-
 # control for min deviation ploidy prediction w/o input sample
 ctl2 = ctl %>%
     group_by(seqnames, sample) %>%
     summarize(ploidy = mean(ploidy),
               ref_ploidy = unique(ref_ploidy))
 
-mod = lm(ploidy ~ ref_ploidy, data=ctl2)
-p_mean = ggplot(ctl2, aes(x=ref_ploidy, y=ploidy, label=seqnames, color=sample)) +
-    geom_text() +
-    geom_smooth(method="lm", color="black") +
-    labs(x = "Ploidy from single-cell WGS data + AneuFinder",
-         y = "Ploidy inferred from RNA-seq",
-         title = sprintf("RNA-seq for ploidy inference (p=%.2g, r^2=%.2f)",
-             mod %>% broom::tidy() %>% filter(term == "ref_ploidy") %>% pull(p.value),
-             mod %>% broom::glance() %>% pull(r.squared)))
-
-#TODO: calc min deviation from <ctl> df
+ctl3 = ctl2 %>%
+    group_by(sample) %>%
+    mutate(ploidy = 2 + ploidy - median(ploidy)) %>%
+    ungroup()
 
 pdf("ploidy_cancer_only.pdf")
-print(p_sep)
-print(p_mean)
+print(plot_comparison(ctl, subtitle="predicted from one reference sample"))
+print(plot_comparison(ctl2, subtitle="predicted from 2 ref samples"))
+print(plot_comparison(ctl3, subtitle="predicted from 2 ref samples + median=2"))
 dev.off()
 
 #save(ploidy, aneuploidy, wgs, file="ploidy_from_rnaseq.RData")
