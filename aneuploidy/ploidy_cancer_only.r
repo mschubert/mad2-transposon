@@ -17,7 +17,7 @@ read_df = reshape2::melt(reads, value.name = "frac_reads") %>%
     mutate(seqnames = as.character(seqnames),
            sample = as.character(sample))
 
-# ploidy from scWGS
+# ploidy from scWGS -> data.frame with: seqnames, ploidy, sample
 wgs = c("T401", "T419", "S413") %>%
     paste0("../../aneuploidy/data/singlecell_wgs/T-ALL/", ., ".RData") %>%
     io$load() %>%
@@ -49,10 +49,12 @@ aneuploidy_mean = aneuploidy_separate %>%
 # control for individual ploidy predictions w/o input sample
 ctl = aneuploidy_separate %>%
     filter(sample %in% c("401t", "419t", "413s"),
-           sample != ref)
+           sample != ref) %>%
+    select(sample, seqnames, ploidy) %>%
+    inner_join(kchr %>% select(sample=ref, seqnames, ref_ploidy), by=c("sample", "seqnames"))
 
 mod = lm(ploidy ~ ref_ploidy, data=ctl)
-p_sep = ggplot(ctl, aes(x=ref_ploidy, y=ploidy, label=seqnames, color=ref)) +
+p_sep = ggplot(ctl, aes(x=ref_ploidy, y=ploidy, label=seqnames, color=sample)) +
     geom_text() +
     geom_smooth(method="lm", color="black") +
     labs(x = "Ploidy from single-cell WGS data + AneuFinder",
@@ -62,12 +64,26 @@ p_sep = ggplot(ctl, aes(x=ref_ploidy, y=ploidy, label=seqnames, color=ref)) +
              mod %>% broom::glance() %>% pull(r.squared)))
 
 # control for min deviation ploidy prediction w/o input sample
+ctl2 = ctl %>%
+    group_by(seqnames, sample) %>%
+    summarize(ploidy = mean(ploidy),
+              ref_ploidy = unique(ref_ploidy))
+
+mod = lm(ploidy ~ ref_ploidy, data=ctl2)
+p_mean = ggplot(ctl2, aes(x=ref_ploidy, y=ploidy, label=seqnames, color=sample)) +
+    geom_text() +
+    geom_smooth(method="lm", color="black") +
+    labs(x = "Ploidy from single-cell WGS data + AneuFinder",
+         y = "Ploidy inferred from RNA-seq",
+         title = sprintf("RNA-seq for ploidy inference (p=%.2g, r^2=%.2f)",
+             mod %>% broom::tidy() %>% filter(term == "ref_ploidy") %>% pull(p.value),
+             mod %>% broom::glance() %>% pull(r.squared)))
 
 #TODO: calc min deviation from <ctl> df
 
 pdf("ploidy_cancer_only.pdf")
 print(p_sep)
-#print(p_min)
+print(p_mean)
 dev.off()
 
-save(ploidy, aneuploidy, wgs, file="ploidy_from_rnaseq.RData")
+#save(ploidy, aneuploidy, wgs, file="ploidy_from_rnaseq.RData")
