@@ -48,7 +48,9 @@ aneuploidy_mean = aneuploidy_separate %>%
 #' @return           A ggplot2 object
 plot_comparison = function(ploidy_df, ...) {
     mod = lm(ploidy ~ ref_ploidy, data=ploidy_df)
-    p_sep = ggplot(ploidy_df, aes(x=ref_ploidy, y=ploidy, label=seqnames, color=sample)) +
+    ploidy_df %>%
+        mutate(label=paste(sample, seqnames, sep=":")) %>%
+        ggplot(aes(x=ref_ploidy, y=ploidy, label=label, color=sample)) +
         geom_text() +
         geom_smooth(method="lm", color="black") +
         labs(x = "Ploidy from single-cell WGS data + AneuFinder",
