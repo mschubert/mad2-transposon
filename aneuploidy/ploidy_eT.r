@@ -3,6 +3,7 @@ library(ggrepel)
 io = import('io')
 df = import('data_frame')
 idmap = import('process/idmap')
+aneufinder = import('../../aneuploidy/data/singlecell_wgs/aneufinder')
 
 # reads per chromosome for T-ALLs
 dset = io$load('../data/rnaseq/assemble.RData')
@@ -32,25 +33,22 @@ ploidy = 2 * reads / narray::crep(rowMeans(ctl_reads), ncol(reads))
 aneuploidy = colSums(abs(2 - ploidy)) #TODO: scale chrom length
 
 # compare to measured ploidy using scWGS
-scWGS2aneuploidy = function(sample_id) {
-    mod = io$load(paste0("../../aneuploidy/data/singlecell_wgs/T-ALL/",
-                         sample_id, ".RData"))
-    score = AneuFinder::karyotypeMeasures(mod)$per.chromosome
-    setNames(score[,"Aneuploidy"], rownames(score))
-}
 wgs = c("T401", "T419", "S413") %>%
-    lapply(scWGS2aneuploidy) %>%
+    paste0("../../aneuploidy/data/singlecell_wgs/T-ALL/", ., ".RData") %>%
+    io$load() %>%
+    lapply(aneufinder$consensus_ploidy) %>%
     setNames(c("401t", "419t", "413s")) %>%
-    narray::stack(along=2)
+    df$bind_rows("sample") %>%
+    transmute(sample = sample,
+              chr = seqnames,
+              wgs = ploidy)
 
 names(dimnames(ploidy)) = names(dimnames(wgs)) = c("chr", "sample")
 df_inf = reshape2::melt(ploidy) %>%
-    mutate(rna = value) %>%
+    mutate(rna = value,
+           chr = as.character(chr)) %>%
     select(-value)
-df_obs = reshape2::melt(wgs) %>%
-    mutate(wgs = value) %>%
-    select(-value)
-dfs = inner_join(df_inf, df_obs, by=c("chr", "sample")) %>%
+dfs = inner_join(df_inf, wgs, by=c("chr", "sample")) %>%
     mutate(label = paste(sample, chr, sep=":"))
 mod = lm(rna ~ wgs, data=dfs)
 p = ggplot(dfs, aes(x=wgs, y=rna)) +
