@@ -66,4 +66,4 @@ pdf("ploidy_eT.pdf")
 print(p)
 dev.off()
 
-save(ploidy, aneuploidy, wgs, file="ploidy_from_rnaseq.RData")
+save(ploidy, aneuploidy, wgs, dfs, file="ploidy_eT.RData")

@@ -84,4 +84,4 @@ print(plot_comparison(ctl2, subtitle="predicted from 2 ref samples"))
 print(plot_comparison(ctl3, subtitle="predicted from 2 ref samples + median=2"))
 dev.off()
 
-#save(ploidy, aneuploidy, wgs, file="ploidy_from_rnaseq.RData")
+save(aneuploidy_separate, ctl3, wgs, file="ploidy_cancer_only.RData")
