@@ -64,7 +64,7 @@ p = ggplot(dfs, aes(x=wgs, y=rna)) +
              mod %>% broom::glance() %>% pull(r.squared)),
          subtitle = "assuming total DNA=const, diff euploid lib as reference")
 
-pdf("ploidy_from_rnaseq.pdf")
+pdf("ploidy_eT.pdf")
 print(p)
 dev.off()
 
