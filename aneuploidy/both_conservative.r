@@ -40,3 +40,7 @@ p = ggplot(both, aes(x=wgs, y=rna_both)) +
              mod %>% broom::tidy() %>% filter(term == "wgs") %>% pull(p.value),
              mod %>% broom::glance() %>% pull(r.squared)),
          subtitle = "assuming total DNA=const, diff euploid lib as reference")
+
+pdf("both_conservative.pdf")
+print(p)
+dev.off()
