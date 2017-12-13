@@ -18,13 +18,18 @@ mad2 = expr['ENSMUSG00000029910',]
 # plot sample-level aneuploidy vs mad2 level
 narray::intersect(aneup, mad2)
 
-p = data.frame(sample = names(aneup),
+samples = data.frame(sample = names(aneup),
                aneup = aneup,
                mad2 = mad2) %>%
-    ggplot(aes(x=aneup, y=mad2)) +
-        geom_point() +
-        geom_text_repel(aes(label=sample)) +
-        ggtitle("Inferred aneuploidy vs. Mad2 expression")
+    mutate(mad2_class = ifelse(mad2 > 7, "high", "low"),
+           aneup_class = ifelse(aneup > 7, "high", "low"))
+
+p = ggplot(samples, aes(x=aneup, y=mad2)) +
+    geom_point(aes(shape=mad2_class, color=aneup_class), size=5) +
+    geom_text_repel(aes(label=sample)) +
+    ggtitle("Inferred aneuploidy vs. Mad2 expression")
+
+save(samples, file="aneuploidy_mad2.RData")
 
 pdf("aneuploidy_mad2.pdf")
 print(p)
