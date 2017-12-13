@@ -33,7 +33,11 @@ mad2 = filter(both, aneup_class != "high") %>%
     ungroup() %>%
     group_by(mad2_class) %>%
     mutate(ins_total = sum(ins_gene),
-           condition = paste0("mad2-", mad2_class))
+           condition = paste0("mad2-", mad2_class)) %>%
+    ungroup()
+mad2_ins = mad2 %>%
+    select(condition, ins_total) %>%
+    distinct()
 keep = mad2 %>%
     group_by(gene) %>%
     summarize(ins_gene = sum(ins_gene)) %>%
@@ -60,7 +64,11 @@ aneup = filter(both, mad2_class == "low") %>%
     ungroup() %>%
     group_by(aneup_class) %>%
     mutate(ins_total = sum(ins_gene),
-           condition = paste0("aneup-", aneup_class))
+           condition = paste0("aneup-", aneup_class)) %>%
+    ungroup()
+aneup_ins = aneup %>%
+    select(condition, ins_total) %>%
+    distinct()
 keep = aneup %>%
     group_by(gene) %>%
     summarize(ins_gene = sum(ins_gene)) %>%
@@ -79,4 +87,4 @@ aneup = aneup %>%
     arrange(p.value) %>%
     filter(adj.p < 0.5)
 
-save(mad2, aneup, file="cis_fet.RData")
+save(mad2, mad2_ins, aneup, aneup_ins, file="cis_fet.RData")
