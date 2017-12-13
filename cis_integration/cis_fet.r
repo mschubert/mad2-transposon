@@ -67,6 +67,7 @@ p2 = mad2 %>%
 p2$condition[p2$cond == "ins_rest"] = sub("high", "low", p2$condition[p2$cond=="ins_cond"])
 p2 = ggplot(p2, aes(x=gene, y=n_ins, fill=condition)) +
     geom_bar(stat="identity") +
+    geom_text(aes(label = sprintf("%.2g", adj.p)), y=15, angle=45) +
     theme(axis.text.x = element_text(angle=45, hjust=1))
 p_mad2 = plot_grid(p1, p2, ncol=2, rel_widths=c(1,3))
 
@@ -112,6 +113,7 @@ p2$n_ins[p2$gene == "Intergenic"] = p2$n_ins[p2$gene == "Intergenic"] / 50
 levels(p2$gene)[levels(p2$gene) == "Intergenic"] = "Intergenic / 50"
 p2 = ggplot(p2, aes(x=gene, y=n_ins, fill=condition)) +
     geom_bar(stat="identity") +
+    geom_text(aes(label = sprintf("%.2g", adj.p)), y=15, angle=45) +
     theme(axis.text.x = element_text(angle=45, hjust=1))
 p_aneup = plot_grid(p1, p2, ncol=2, rel_widths=c(1,3))
 
@@ -119,6 +121,5 @@ pdf("cis_fet.pdf")
 print(p_mad2)
 print(p_aneup)
 dev.off()
-
 
 save(mad2, mad2_ins, aneup, aneup_ins, file="cis_fet.RData")
