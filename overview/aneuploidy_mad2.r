@@ -6,13 +6,13 @@ io = import('io')
 
 # load inferred ploidy for all samples
 aneup = io$load('../aneuploidy/ploidy_eT.RData')$aneuploidy
-names(aneup) = paste0(toupper(b$grep("(s|t|S|T)", names(aneup))),
-                      b$grep("([0-9]+)", names(aneup)))
+names(aneup) = paste0(b$grep("([0-9]+)", names(aneup)),
+                      toupper(b$grep("(s|t|S|T)", names(aneup))))
 
 # load Mad2 expression
 expr = io$load('../data/rnaseq/assemble.RData')$expr
-colnames(expr) = paste0(toupper(b$grep("(s|t|S|T)", colnames(expr))),
-                        b$grep("([0-9]+)", colnames(expr)))
+colnames(expr) = paste0(b$grep("([0-9]+)", colnames(expr)),
+                        toupper(b$grep("(s|t|S|T)", colnames(expr))))
 mad2 = expr['ENSMUSG00000029910',]
 
 # plot sample-level aneuploidy vs mad2 level
