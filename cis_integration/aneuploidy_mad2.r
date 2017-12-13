@@ -27,6 +27,8 @@ samples = data.frame(sample = names(aneup),
 p = ggplot(samples, aes(x=aneup, y=mad2)) +
     geom_point(aes(shape=mad2_class, color=aneup_class), size=5) +
     geom_text_repel(aes(label=sample)) +
+    geom_vline(xintercept=7, linetype="dashed") +
+    geom_hline(yintercept=7, linetype="dashed") +
     ggtitle("Inferred aneuploidy vs. Mad2 expression")
 
 save(samples, file="aneuploidy_mad2.RData")
