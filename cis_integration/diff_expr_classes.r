@@ -63,7 +63,8 @@ assocs2 = function(mat, subs, include) {
         df$bind_rows("mat") %>%
         filter(grepl("subs", term)) %>%
         select(-term) %>%
-        mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
+        mutate(size=sum(include),
+               adj.p = p.adjust(p.value, method="fdr")) %>%
         arrange(adj.p, p.value)
 }
 
@@ -78,7 +79,8 @@ gene_mad2_cor = assocs2(genes, samples$mad2_class, samples$aneup_class == "low")
 gene_aneup_cor = assocs2(genes, samples$aneup_class, samples$mad2_class == "low")
 #set_aneup_cor = assocs2(scores, samples$aneup_class, samples$mad2_class == "low")
 
-save(gene_mad2, set_mad2, gene_aneup, set_aneup, file="diff_expr_classes.RData")
+save(gene_mad2, set_mad2, gene_aneup, set_aneup,
+     gene_mad2_cor, gene_aneup_cor, file="diff_expr_classes.RData")
 
 # volcano plots
 volcano = function(assocs, ...) {
