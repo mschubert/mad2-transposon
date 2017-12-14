@@ -1,22 +1,14 @@
 library(dplyr)
 library(cowplot)
 io = import('io')
+sys = import('sys')
 
-# load sample-level aneuploidy w/ cutoffs
-dset = io$load('aneuploidy_mad2.RData')
-cis = io$read_table('171212 CIS RNA seq samples.tsv', header=TRUE) %>%
-    mutate(Gene = stringr::str_trim(as.character(Gene))) %>%
-    group_by(Sample, Gene) %>%
-    summarize(n_ins = n()) %>%
-    ungroup() %>%
-    narray::construct(n_ins ~ Gene + Sample, fill=0) %>%
-    narray::melt()
-colnames(cis) = c("gene", "sample", "n_ins")
-
-both = inner_join(dset, cis, by="sample") %>%
-    select(-aneup, -mad2)
-
-# FET of aneuploidy low/high vs. gene insertions
+#' FET of aneuploidy low/high vs. gene insertions
+#'
+#' @param df  Data.frame with 2 rows (one for each condition - e.g. mad2 high
+#'  and mad2 low) and the columns 'ins_gene' (number of insertions in a gene in
+#'  all samples) and 'ins_total' (number of total insertions across all samples)
+#' @return    Results of a Fisher's Exact test for this gene
 test_gene = function(df) {
     mat = data.matrix(df[,c('ins_gene','ins_total')])
     fisher.test(mat) %>%
@@ -28,98 +20,102 @@ test_gene = function(df) {
                   p.value = p.value)
 }
 
-mad2 = filter(both, aneup_class != "high") %>%
-    group_by(mad2_class, gene) %>%
-    summarize(ins_gene = sum(n_ins)) %>%
-    ungroup() %>%
-    group_by(mad2_class) %>%
-    mutate(ins_total = sum(ins_gene),
-           condition = paste0("mad2-", mad2_class)) %>%
-    ungroup()
-mad2_ins = mad2 %>%
-    select(condition, ins_total) %>%
-    distinct()
-keep = mad2 %>%
-    group_by(gene) %>%
-    summarize(ins_gene = sum(ins_gene)) %>%
-    filter(ins_gene >= 5) %>%
-    pull(gene) %>%
-    as.character()
-mad2 = mad2[mad2$gene %in% keep,]
+#' Test all genes for enrichment in insertions
+#'
+#' @param df  Data.frame with the following fields: 'gene' (identifier),
+#'  'ins_gene' (number of insertions in this gene), 'ins_total' (number of
+#'  insertions total), and 'condition' (which condition was tested for)
+#' @return    Data.frame for result of a Fisher's Exact Test for all genes
+test_all = function(df) {
+    keep = df %>%
+        group_by(gene) %>%
+        summarize(ins_gene = sum(ins_gene)) %>%
+        filter(ins_gene >= 5) %>%
+        pull(gene) %>%
+        as.character()
+    df = df[df$gene %in% keep,]
 
-mad2 = mad2 %>%
-    group_by(gene) %>%
-    tidyr::nest() %>%
-    mutate(result = purrr::map(data, test_gene)) %>%
-    select(-data) %>%
-    tidyr::unnest() %>%
-    mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
-    arrange(p.value)
+    df = df %>%
+        group_by(gene) %>%
+        tidyr::nest() %>%
+        mutate(result = purrr::map(data, test_gene)) %>%
+        select(-data) %>%
+        tidyr::unnest() %>%
+        mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
+        arrange(p.value)
+}
 
-p1 = ggplot(mad2_ins, aes(x=condition, y=ins_total, fill=condition)) +
-    geom_bar(stat="identity") +
-    theme(axis.text.x = element_text(angle=45, hjust=1)) +
-    guides(fill=FALSE)
-p2 = mad2 %>%
-    head(10) %>%
-    mutate(gene = factor(gene, levels=unique(gene))) %>%
-    tidyr::gather("cond", "n_ins", ins_cond, ins_rest)
-p2$condition[p2$cond == "ins_rest"] = sub("high", "low", p2$condition[p2$cond=="ins_cond"])
-p2 = ggplot(p2, aes(x=gene, y=n_ins, fill=condition)) +
-    geom_bar(stat="identity") +
-    geom_text(aes(label = sprintf("%.2g", adj.p)), y=15, angle=45) +
-    theme(axis.text.x = element_text(angle=45, hjust=1))
-p_mad2 = plot_grid(p1, p2, ncol=2, rel_widths=c(1,3))
+#' Plot the frequency of insertions
+#'
+#' @param result  Data.frame with results of 'test_all' function
+#' @return  A ggplot2 object with total number of inserts in groups and highest
+#'    scoring genes (numbers and FDR)
+ins_plot = function(df, result) {
+    ins_all = df %>%
+        select(condition, ins_total) %>%
+        distinct()
 
+    p1 = ggplot(ins_all, aes(x=condition, y=ins_total, fill=condition)) +
+        geom_bar(stat="identity") +
+        theme(axis.text.x = element_text(angle=45, hjust=1)) +
+        guides(fill=FALSE)
+    p2 = result %>%
+        head(10) %>%
+        mutate(gene = factor(gene, levels=unique(gene))) %>%
+        tidyr::gather("cond", "n_ins", ins_cond, ins_rest)
+    p2$condition[p2$cond == "ins_rest"] = sub("high", "low", p2$condition[p2$cond=="ins_cond"])
 
-aneup = filter(both, mad2_class == "low") %>%
-    group_by(aneup_class, gene) %>%
-    summarize(ins_gene = sum(n_ins)) %>%
-    ungroup() %>%
-    group_by(aneup_class) %>%
-    mutate(ins_total = sum(ins_gene),
-           condition = paste0("aneup-", aneup_class)) %>%
-    ungroup()
-aneup_ins = aneup %>%
-    select(condition, ins_total) %>%
-    distinct()
-keep = aneup %>%
-    group_by(gene) %>%
-    summarize(ins_gene = sum(ins_gene)) %>%
-    filter(ins_gene >= 5) %>%
-    pull(gene) %>%
-    as.character()
-aneup = aneup[aneup$gene %in% keep,]
+    if (any(grepl("Intergenic", p2$gene))) {
+        p2$n_ins[p2$gene == "Intergenic"] = p2$n_ins[p2$gene == "Intergenic"] / 50
+        levels(p2$gene)[levels(p2$gene) == "Intergenic"] = "Intergenic / 50"
+    }
 
-aneup = aneup %>%
-    group_by(gene) %>%
-    tidyr::nest() %>%
-    mutate(result = purrr::map(data, test_gene)) %>%
-    select(-data) %>%
-    tidyr::unnest() %>%
-    mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
-    arrange(p.value)
+    p2 = ggplot(p2, aes(x=gene, y=n_ins, fill=condition)) +
+        geom_bar(stat="identity") +
+        geom_text(aes(label = sprintf("%.2g", adj.p)), y=15, angle=45) +
+        theme(axis.text.x = element_text(angle=45, hjust=1))
+    p_mad2 = plot_grid(p1, p2, ncol=2, rel_widths=c(1,3))
+}
 
-p1 = ggplot(aneup_ins, aes(x=condition, y=ins_total, fill=condition)) +
-    geom_bar(stat="identity") +
-    theme(axis.text.x = element_text(angle=45, hjust=1)) +
-    guides(fill=FALSE)
-p2 = aneup %>%
-    head(10) %>%
-    mutate(gene = factor(gene, levels=unique(gene))) %>%
-    tidyr::gather("cond", "n_ins", ins_cond, ins_rest)
-p2$condition[p2$cond == "ins_rest"] = sub("high", "low", p2$condition[p2$cond=="ins_cond"])
-p2$n_ins[p2$gene == "Intergenic"] = p2$n_ins[p2$gene == "Intergenic"] / 50
-levels(p2$gene)[levels(p2$gene) == "Intergenic"] = "Intergenic / 50"
-p2 = ggplot(p2, aes(x=gene, y=n_ins, fill=condition)) +
-    geom_bar(stat="identity") +
-    geom_text(aes(label = sprintf("%.2g", adj.p)), y=15, angle=45) +
-    theme(axis.text.x = element_text(angle=45, hjust=1))
-p_aneup = plot_grid(p1, p2, ncol=2, rel_widths=c(1,3))
+sys$run({
+    # load sample-level aneuploidy w/ cutoffs
+    dset = io$load('aneuploidy_mad2.RData')
+    cis = io$read_table('171212 CIS RNA seq samples.tsv', header=TRUE) %>%
+        mutate(Gene = stringr::str_trim(as.character(Gene))) %>%
+        group_by(Sample, Gene) %>%
+        summarize(n_ins = n()) %>%
+        ungroup() %>%
+        narray::construct(n_ins ~ Gene + Sample, fill=0) %>%
+        narray::melt()
+    colnames(cis) = c("gene", "sample", "n_ins")
 
-pdf("cis_fet.pdf")
-print(p_mad2)
-print(p_aneup)
-dev.off()
+    both = inner_join(dset, cis, by="sample") %>%
+        select(-aneup, -mad2)
 
-save(mad2, mad2_ins, aneup, aneup_ins, file="cis_fet.RData")
+    mad2 = filter(both, aneup_class != "high") %>%
+        group_by(mad2_class, gene) %>%
+        summarize(ins_gene = sum(n_ins)) %>%
+        ungroup() %>%
+        group_by(mad2_class) %>%
+        mutate(ins_total = sum(ins_gene),
+               condition = paste0("mad2-", mad2_class)) %>%
+        ungroup()
+    result_mad2 = test_all(mad2)
+
+    aneup = filter(both, mad2_class == "low") %>%
+        group_by(aneup_class, gene) %>%
+        summarize(ins_gene = sum(n_ins)) %>%
+        ungroup() %>%
+        group_by(aneup_class) %>%
+        mutate(ins_total = sum(ins_gene),
+               condition = paste0("aneup-", aneup_class)) %>%
+        ungroup()
+    result_aneup = test_all(aneup)
+
+    pdf("cis_fet.pdf")
+    print(ins_plot(mad2, result_mad2))
+    print(ins_plot(aneup, result_aneup))
+    dev.off()
+
+    save(mad2, aneup, file="cis_fet.RData")
+})
