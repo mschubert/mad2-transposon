@@ -29,7 +29,8 @@ p = ggplot(samples, aes(x=aneup, y=mad2)) +
     geom_text_repel(aes(label=sample)) +
     geom_vline(xintercept=7, linetype="dashed") +
     geom_hline(yintercept=7, linetype="dashed") +
-    ggtitle("Inferred aneuploidy vs. Mad2 expression")
+    labs(title = "Inferred aneuploidy vs. Mad2 expression",
+         subtitle = "Mad2 comparisons always low aneuploidy, aneuploidy always low mad2")
 
 save(samples, file="aneuploidy_mad2.RData")
 
