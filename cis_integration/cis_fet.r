@@ -48,9 +48,11 @@ test_all = function(df) {
 #' Plot the frequency of insertions
 #'
 #' @param result  Data.frame with results of 'test_all' function
+#' @param df      Data.frame, same as input for 'test_all'
+#' @param title   Plot title (default: empty string)
 #' @return  A ggplot2 object with total number of inserts in groups and highest
 #'    scoring genes (numbers and FDR)
-ins_plot = function(df, result) {
+ins_plot = function(df, result, title="") {
     ins_all = df %>%
         select(condition, ins_total) %>%
         distinct()
@@ -73,7 +75,8 @@ ins_plot = function(df, result) {
     p2 = ggplot(p2, aes(x=gene, y=n_ins, fill=condition)) +
         geom_bar(stat="identity") +
         geom_text(aes(label = sprintf("%.2g", adj.p)), y=15, angle=45) +
-        theme(axis.text.x = element_text(angle=45, hjust=1))
+        theme(axis.text.x = element_text(angle=45, hjust=1)) +
+        ggtitle(title)
     p_mad2 = plot_grid(p1, p2, ncol=2, rel_widths=c(1,3))
 }
 
@@ -92,7 +95,8 @@ sys$run({
     both = inner_join(dset, cis, by="sample") %>%
         select(-aneup, -mad2)
 
-    mad2 = filter(both, aneup_class != "high") %>%
+    prep_mad2 = . %>%
+        filter(aneup_class != "high") %>%
         group_by(mad2_class, gene) %>%
         summarize(ins_gene = sum(n_ins)) %>%
         ungroup() %>%
@@ -100,9 +104,15 @@ sys$run({
         mutate(ins_total = sum(ins_gene),
                condition = paste0("mad2-", mad2_class)) %>%
         ungroup()
+
+    mad2 = prep_mad2(both)
     result_mad2 = test_all(mad2)
 
-    aneup = filter(both, mad2_class == "low") %>%
+#    mad2_coding = prep_mad2(both %>% filter(gene != "Intergenic"))
+#    result_mad2_coding = test_all(mad2_coding)
+
+    prep_aneup = . %>%
+        filter(mad2_class == "low") %>%
         group_by(aneup_class, gene) %>%
         summarize(ins_gene = sum(n_ins)) %>%
         ungroup() %>%
@@ -110,11 +120,18 @@ sys$run({
         mutate(ins_total = sum(ins_gene),
                condition = paste0("aneup-", aneup_class)) %>%
         ungroup()
+
+    aneup = prep_aneup(both)
     result_aneup = test_all(aneup)
 
+#    aneup_coding = prep_aneup(both %>% filter(gene != "Intergenic"))
+#    result_aneup_coding = test_all(aneup_coding)
+
     pdf("cis_fet.pdf")
-    print(ins_plot(mad2, result_mad2))
-    print(ins_plot(aneup, result_aneup))
+    print(ins_plot(mad2, result_mad2, "Mad2, all genes"))
+#    print(ins_plot(mad2_coding, result_mad2_coding, "Mad2, coding genes"))
+    print(ins_plot(aneup, result_aneup, "Aneuploidy, all genes"))
+#    print(ins_plot(aneup_coding, result_aneup_coding, "Aneuploidy, coding genes"))
     dev.off()
 
     save(mad2, aneup, file="cis_fet.RData")
