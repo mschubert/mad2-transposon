@@ -1,8 +1,8 @@
 sample: 30cellseq
 assembly: GRCm38
 directory: seqdata/180309_NB501840_0059_AHLFNMBGX5
-bin_width_ref: /data/p282396/dosage/data/singlecell_wgs/GRCm38_diploid_ref.bam
-blacklist: /data/p282396/dosage/data/singlecell_wgs/GRCm38_diploid_ref.bam
+bin_width_ref: GRCm38_diploid_ref.bam
+blacklist: GRCm38_diploid_ref.bam
 
 files:
     HealthyT: LJ180205_I/LJ180205_I_001.bam

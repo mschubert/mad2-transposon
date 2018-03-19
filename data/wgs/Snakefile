@@ -10,7 +10,8 @@ rule all:
 
 rule samples:
     input:
-        samples = "{sample}.yaml"
+        samples = "{sample}.yaml",
+        diploid_ref = "GRCm38_diploid_ref.bam"
     output:
         model = "{sample}.RData",
         plot = "{sample}.pdf"
@@ -20,10 +21,10 @@ rule samples:
             " --plotfile {output.plot}"
             " {input.samples}"
 
-rule diploid_refs:
+rule diploid_ref:
     input:
-        mouse = expand("./seqdata/180309_NB501840_0059_AHLFNMBGX5/",
-                        bam=set(range(1, 49)) - set([13, 24, 40, 47]))
+        mouse = expand("seqdata/180309_NB501840_0059_AHLFNMBGX5/LJ180205_I/{bam}",
+                bam = ["LJ180205_I_001.bam", "LJ180205_I_002.bam"])
     output:
         mouse = "GRCm38_diploid_ref.bam"
     shell:
