@@ -1,0 +1,31 @@
+import os
+from glob import glob
+files = glob("**/*.yaml", recursive=True)
+fstem = [os.path.splitext(p)[0] for p in files]
+
+rule all:
+    input:
+        expand("{sample}.RData", sample=fstem),
+        expand("{sample}.pdf", sample=fstem)
+
+rule samples:
+    input:
+        samples = "{sample}.yaml"
+    output:
+        model = "{sample}.RData",
+        plot = "{sample}.pdf"
+    shell:
+        "Rscript /data/p282396/ebits/tools/aneufinder/__init__.r"
+            " --outfile {output.model}"
+            " --plotfile {output.plot}"
+            " {input.samples}"
+
+rule diploid_refs:
+    input:
+        mouse = expand("./seqdata/180309_NB501840_0059_AHLFNMBGX5/",
+                        bam=set(range(1, 49)) - set([13, 24, 40, 47]))
+    output:
+        mouse = "GRCm38_diploid_ref.bam"
+    shell:
+        "samtools merge {output.mouse} {input.mouse}; "
+        "samtools index {output.mouse}; "
