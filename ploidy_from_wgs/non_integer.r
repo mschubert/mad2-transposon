@@ -2,16 +2,15 @@ library(ggbio)
 library(dplyr)
 library(magrittr)
 io = import('io')
+sys = import('sys')
 
-plot_cov = function(bins, segs, counts="counts", bin_y="copy.number", seg_y="mean.counts") {
+plot_cov = function(bins, segs, counts="counts", bin_y="copy.number", seg_y="mean.counts",
+                    reads_per_ploidy) {
     #TODO: support different name for 'counts'
     bin_ys = rlang::sym(bin_y)
     seg_ys = rlang::sym(seg_y)
 
-    ploidy_breaks = sort(setdiff(unique(as.data.frame(bins)[[bin_y]]), 0))
-    reads_per_ploidy = as.data.frame(bins) %>%
-        filter(!! bin_ys != 0) %$%
-        median(counts / .[[bin_y]])
+    ploidy_breaks = sort(setdiff(unique(c(1,2,as.data.frame(bins)[[bin_y]])), 0))
 
     ggplot(bins) +
         geom_point(aes(x=midpoint, y=counts), shape=1) +
@@ -34,11 +33,24 @@ sys$run({
     models = io$load("../data/wgs/30cellseq.RData")
     models = models[order(names(models))]
 
-    pdf("non_integer.pdf", 10,4)
+    pdf("non_integer.pdf", 10,6)
     for (i in seq_along(models)) {
         m = models[[i]]
-        mn = sprintf("%s", m$ID) #TODO: add aneuploidy score here
-        print(plot_cov(m$bins, m$segments) + ggtitle(mn))
+        message(m$ID)
+
+        rpp_aneufinder = as.data.frame(m$bins) %>%
+            filter(copy.number != 0) %$%
+            median(counts / copy.number)
+        p1 = plot_cov(m$bins, m$segments, reads_per_ploidy=rpp_aneufinder)
+
+        den = density(m$bins$counts, kernel="gaussian", bw=5)
+        rpp_mode = den$x[den$y==max(den$y)] / 2
+        p2 = plot_cov(m$bins, m$segments, reads_per_ploidy=rpp_mode)
+
+        p = tracks(title = sprintf("%s", m$ID), #TODO: add aneuploidy score here
+                   Aneufinder = p1,
+                   `Mode diploid` = p2)
+        print(p)
     }
     dev.off()
 })
