@@ -19,6 +19,7 @@ rule samples:
         "Rscript /data/p282396/ebits/tools/aneufinder/__init__.r"
             " --outfile {output.model}"
             " --plotfile {output.plot}"
+            " --min_reads 1e5"
             " {input.samples}"
 
 rule diploid_ref:
