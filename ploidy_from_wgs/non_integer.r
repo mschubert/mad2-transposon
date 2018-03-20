@@ -33,6 +33,7 @@ sys$run({
     # load the models we constructed
     models = io$load("../data/wgs/30cellseq.RData")
     models = models[order(names(models))]
+    aneups = list()
 
     pdf("non_integer.pdf", 10,6)
     for (i in seq_along(models)) {
@@ -51,12 +52,16 @@ sys$run({
         aneup = as.data.frame(m$segments) %>%
             mutate(Sample = m$ID,
                    ploidy = mean.counts / rpp_mode) %>%
-            seq$aneuploidy() %$% aneuploidy
+            seq$aneuploidy()
+        aneups[[m$ID]] = aneup
 
-        p = tracks(title = sprintf("%s - aneuploidy: %.2f", m$ID, aneup),
+        p = tracks(title = sprintf("%s - aneuploidy: %.2f", m$ID, aneup$aneuploidy),
                    Aneufinder = p1,
                    `Mode diploid` = p2)
         print(p)
     }
     dev.off()
+
+    aneups = dplyr::bind_rows(aneups)
+    write.table(aneups, file="non_integer.tsv", sep="\t", row.names=FALSE, quote=FALSE)
 })
