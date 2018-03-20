@@ -11,11 +11,13 @@ dens = ggplot(aneup, aes(x=aneuploidy)) +
           axis.text=element_blank(),
           axis.line=element_blank(),
           axis.ticks=element_blank())
-scatter = ggplot(aneup, aes(x=aneuploidy, y=Sample)) +
+
+samples = ggplot(aneup, aes(x=aneuploidy, y=Sample)) +
+#    geom_vline(xintercept=0.05, color="blue", linetype="dashed") +
     geom_segment(aes(xend=aneuploidy, y=Sample, yend=Sample), x=0, color="lightgrey") +
     geom_point() +
     theme(axis.text.y = element_text(size=8))
 
 pdf(4, 10, file="aneuploidy_plot.pdf")
-print(dens + scatter + plot_layout(ncol=1, heights=c(1,12)))
+print(dens + samples + plot_layout(ncol=1, heights=c(1,12)))
 dev.off()
