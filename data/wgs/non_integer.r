@@ -32,6 +32,7 @@ plot_cov = function(bins, segs, counts="counts", bin_y="copy.number", seg_y="mea
 sys$run({
     # load the models we constructed
     models = io$load("30cellseq.RData")
+    models = models[order(names(models))]
 
     pdf("non_integer.pdf", 10,4)
     for (i in seq_along(models)) {
