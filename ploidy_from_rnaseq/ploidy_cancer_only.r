@@ -3,7 +3,7 @@ library(ggrepel)
 io = import('io')
 df = import('data_frame')
 idmap = import('process/idmap')
-aneufinder = import('../../aneuploidy/data/singlecell_wgs/aneufinder')
+aneufinder = import('tools/aneufinder')
 
 # reads per chromosome for T-ALLs
 dset = io$load('../data/rnaseq/assemble.RData')

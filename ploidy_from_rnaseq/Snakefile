@@ -1,0 +1,30 @@
+rule all:
+    input:
+        "ploidy_eT.pdf",
+        "ploidy_cancer_only.pdf",
+        "ploidy_both.pdf"
+
+rule euploid_tumor:
+    input:
+        rscript = "ploidy_eT.r"
+    output:
+        plot = "ploidy_eT.pdf"
+    shell:
+        "Rscript {input.rscript}"
+
+rule cancer_ploidy:
+    input:
+        rscript = "ploidy_cancer_only.r"
+    output:
+        result = "ploidy_cancer_only.RData",
+        plot = "ploidy_cancer_only.pdf"
+    shell:
+        "Rscript {input.rscript}"
+
+rule both:
+    input:
+        rscript = "ploidy_both.r"
+    output:
+        plot = "ploidy_both.pdf"
+    shell:
+        "Rscript {input.rscript}"

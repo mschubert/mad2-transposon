@@ -3,13 +3,11 @@ library(ggrepel)
 io = import('io')
 df = import('data_frame')
 idmap = import('process/idmap')
-aneufinder = import('../../aneuploidy/data/singlecell_wgs/aneufinder')
-
-# 
+aneufinder = import('tools/aneufinder')
 
 # reads per chromosome for T-ALLs
 counts1 = io$load('../data/rnaseq/assemble.RData')$counts
-expr2 = readr::read_tsv("../../aneuploidy/data/rnaseq/T-ALL_read_count.txt")
+expr2 = readr::read_tsv("../data/rnaseq/T-ALL_read_count.txt")
 counts2 = data.matrix(expr2[,c("eT_p0","eT_p2")])
 counts = narray::stack(list(counts1, counts2), along=2) %>% na.omit()
 
