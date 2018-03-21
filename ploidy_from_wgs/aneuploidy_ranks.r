@@ -1,13 +1,14 @@
 library(dplyr)
 library(cowplot)
 library(patchwork)
+io = import('io')
 sys = import('sys')
 
 args = sys$cmd$parse(
-    opt('i', 'infile', 'tsv with aneuploidy scores', 'copy_segments.tsv'),
+    opt('i', 'infile', 'RData aneuploidy scores', 'copy_segments.RData'),
     opt('p', 'plotfile', 'pdf to save plot to', '/dev/null'))
 
-aneup = readr::read_tsv(args$infile) %>%
+aneup = io$load(args$infile)$aneups %>%
     mutate(Sample = forcats::fct_reorder(Sample, aneuploidy))
 
 dens = ggplot(aneup, aes(x=aneuploidy)) +

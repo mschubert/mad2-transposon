@@ -13,19 +13,17 @@ rule copy_segments:
         wgs = wgs("30cellseq.RData")
     output:
         segments = "copy_segments.RData",
-        aneups = "copy_segments.tsv",
         plot = "copy_segments.pdf"
     shell:
         "Rscript {input.rscript}"
             " --infile {input.wgs}"
             " --outfile {output.segments}"
-            " --export {output.aneups}"
             " --plotfile {output.plot}"
 
 rule aneuploidy_ranks:
     input:
         rscript = "aneuploidy_ranks.r",
-        aneups = "copy_segments.tsv"
+        aneups = "copy_segments.RData"
     output:
         plot = "aneuploidy_ranks.pdf"
     shell:

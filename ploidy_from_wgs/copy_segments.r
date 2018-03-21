@@ -32,7 +32,6 @@ plot_cov = function(bins, segs, counts="counts", bin_y="copy.number", seg_y="mea
 sys$run({
     args = sys$cmd$parse(
         opt('i', 'infile', 'aneufinder model file', '../data/wgs/30cellseq.RData'),
-        opt('e', 'export', 'tsv with aneuploidy scores', '/dev/null'),
         opt('o', 'outfile', 'models with copy number segments', '/dev/null'),
         opt('p', 'plotfile', 'compare karyograms to aneufinder', '/dev/null'))
 
@@ -70,8 +69,6 @@ sys$run({
     dev.off()
 
     aneups = dplyr::bind_rows(aneups)
-    write.table(aneups, file=args$export, sep="\t", row.names=FALSE, quote=FALSE)
-
     segments = do.call(c, segments)
     save(aneups, segments, file=args$outfile)
 })
