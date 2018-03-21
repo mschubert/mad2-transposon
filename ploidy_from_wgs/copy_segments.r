@@ -30,12 +30,19 @@ plot_cov = function(bins, segs, counts="counts", bin_y="copy.number", seg_y="mea
 }
 
 sys$run({
+    args = sys$cmd$parse(
+        opt('i', 'infile', 'aneufinder model file', '../data/wgs/30cellseq.RData'),
+        opt('e', 'export', 'tsv with aneuploidy scores', '/dev/null'),
+        opt('o', 'outfile', 'models with copy number segments', '/dev/null'),
+        opt('p', 'plotfile', 'compare karyograms to aneufinder', '/dev/null'))
+
     # load the models we constructed
-    models = io$load("../data/wgs/30cellseq.RData")
+    models = io$load(args$infile)
     models = models[order(names(models))]
     aneups = list()
+    segments = list()
 
-    pdf("non_integer.pdf", 10,6)
+    pdf(args$plotfile, 10,6)
     for (i in seq_along(models)) {
         m = models[[i]]
         message(m$ID)
@@ -49,10 +56,10 @@ sys$run({
         rpp_mode = den$x[den$y==max(den$y)] / 2
         p2 = plot_cov(m$bins, m$segments, reads_per_ploidy=rpp_mode)
 
-        aneup = as.data.frame(m$segments) %>%
+        segments[[m$ID]] = as.data.frame(m$segments) %>%
             mutate(Sample = m$ID,
-                   ploidy = mean.counts / rpp_mode) %>%
-            seq$aneuploidy()
+                   ploidy = mean.counts / rpp_mode)
+        aneup = seq$aneuploidy(segments[[m$ID]])
         aneups[[m$ID]] = aneup
 
         p = tracks(title = sprintf("%s - aneuploidy: %.2f", m$ID, aneup$aneuploidy),
@@ -63,5 +70,8 @@ sys$run({
     dev.off()
 
     aneups = dplyr::bind_rows(aneups)
-    write.table(aneups, file="non_integer.tsv", sep="\t", row.names=FALSE, quote=FALSE)
+    write.table(aneups, file=args$export, sep="\t", row.names=FALSE, quote=FALSE)
+
+    segments = do.call(c, segments)
+    save(aneups, segments, file=args$outfile)
 })

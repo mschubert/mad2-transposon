@@ -1,0 +1,34 @@
+subworkflow wgs:
+    workdir: "../data/wgs"
+    snakefile: "../data/wgs/Snakefile"
+
+rule all:
+    input:
+        "copy_segments.RData",
+        "aneuploidy_ranks.pdf"
+
+rule copy_segments:
+    input:
+        rscript = "copy_segments.r",
+        wgs = wgs("30cellseq.RData")
+    output:
+        segments = "copy_segments.RData",
+        aneups = "copy_segments.tsv",
+        plot = "copy_segments.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --infile {input.wgs}"
+            " --outfile {output.segments}"
+            " --export {output.aneups}"
+            " --plotfile {output.plot}"
+
+rule aneuploidy_ranks:
+    input:
+        rscript = "aneuploidy_ranks.r",
+        aneups = "copy_segments.tsv"
+    output:
+        plot = "aneuploidy_ranks.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --infile {input.aneups}"
+            " --plotfile {output.plot}"
