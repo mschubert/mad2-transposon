@@ -49,7 +49,8 @@ sys$run({
         rpp_aneufinder = as.data.frame(m$bins) %>%
             filter(copy.number != 0) %$%
             median(counts / copy.number)
-        p1 = plot_cov(m$bins, m$segments, reads_per_ploidy=rpp_aneufinder)
+        m$segments$integer_ploidy_reads = m$segments$copy.number * rpp_aneufinder
+        p1 = plot_cov(m$bins, m$segments, seg_y="integer_ploidy_reads", reads_per_ploidy=rpp_aneufinder)
 
         den = density(m$bins$counts, kernel="gaussian", bw=5)
         rpp_mode = den$x[den$y==max(den$y)] / 2

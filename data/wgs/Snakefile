@@ -15,6 +15,8 @@ rule samples:
     output:
         model = "{sample}.RData",
         plot = "{sample}.pdf"
+    resources:
+        mem = 10240
     shell:
         "Rscript /data/p282396/ebits/tools/aneufinder/__init__.r"
             " --outfile {output.model}"
