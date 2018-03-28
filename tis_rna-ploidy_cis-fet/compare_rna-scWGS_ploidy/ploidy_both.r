@@ -44,14 +44,14 @@ eff_reads = dplyr::inner_join(read_df, eff_libsize, by="sample") %>%
 
 # calculate k^chr (cf. chr_ngenes_nreads_cor.r)
 kchr = wgs %>%
-    dplyr::left_join(eff_reads, by=c("sample", "seqnames")) %>%
+    inner_join(eff_reads, by=c("sample", "seqnames")) %>%
     mutate(kchr = ploidy / eff_reads) %>%
     transmute(seqnames=seqnames, ref=sample, ref_ploidy=ploidy, kchr=kchr) %>%
     arrange(seqnames, ref)
 
 # aneuploidy scores for all samples
 aneuploidy_separate = read_df %>%
-    left_join(kchr, by="seqnames") %>%
+    inner_join(kchr, by="seqnames") %>%
     mutate(ploidy = reads * kchr) %>%
     group_by(sample) %>%
     mutate(ploidy = 2 * ploidy / median(ploidy)) %>%
