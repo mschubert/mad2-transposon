@@ -1,0 +1,21 @@
+rule all:
+    input:
+        "panel_ploidy.RData",
+        "violin_compare.pdf"
+
+rule violin:
+    input:
+        rscript = "violin_compare.r"
+    output:
+        plot  = "violin_compare.pdf"
+    shell:
+        "Rscript {input.rscript}"
+
+rule panel:
+    input:
+        rscript = "panel_ploidy.r"
+    output:
+        result = "panel_ploidy.RData",
+        plot  = "panel_ploidy.pdf"
+    shell:
+        "Rscript {input.rscript}"

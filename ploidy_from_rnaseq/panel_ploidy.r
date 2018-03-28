@@ -76,6 +76,4 @@ for (smp in unique(segs$sample))
     print(plot_sample(smp))
 dev.off()
 
-# save aneup scores
-# plot overview
-# plot cor RNA<>DNA
+save(aneup, segs, coords)
