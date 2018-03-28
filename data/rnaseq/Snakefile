@@ -1,0 +1,7 @@
+rule mad2_transposon:
+    input:
+        rscript = "assemble.r"
+    output:
+        result = "assemble.RData"
+    shell:
+        "Rscript {input.rscript}"

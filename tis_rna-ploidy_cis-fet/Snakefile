@@ -1,0 +1,38 @@
+subworkflow rnaseq:
+    workdir: "../data/rnaseq"
+    snakefile: "../data/rnaseq/Snakefile"
+
+rule all:
+    input:
+        "cis_fet.pdf"
+
+rule aneuploidy_mad2:
+    input:
+        rscript = "aneuploidy_mad2.r",
+        rnaseq = rnaseq("assemble.RData")
+    output:
+        result = "aneuploidy_mad2.RData",
+        plot = "aneuploidy_mad2.pdf"
+    shell:
+        "Rscript {input.rscript}"
+
+rule diff_expr_classes:
+    input:
+        rscript = "diff_expr_classes.r",
+        data = "aneuploidy_mad2.RData"
+    output:
+        result = "diff_expr_classes.RData",
+        plot = "diff_expr_classes.pdf"
+    shell:
+        "Rscript {input.rscript}"
+
+rule cis_fet:
+    input:
+        rscript = "cis_fet.r",
+        data = "aneuploidy_mad2.RData",
+        cis = "../data/cis/171212 CIS RNA seq samples.xlsx"
+    output:
+        result = "cis_fet.RData",
+        plot = "cis_fet.pdf"
+    shell:
+        "Rscript {input.rscript}"

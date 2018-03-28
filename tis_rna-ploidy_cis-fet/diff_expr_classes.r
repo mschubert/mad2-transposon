@@ -12,7 +12,7 @@ samples = io$load('aneuploidy_mad2.RData') %>%
     mutate(tissue = b$grep("(S|T)", sample),
            mad2_class = factor(mad2_class, levels=c("low", "high")),
            aneup_class = factor(aneup_class, levels=c("low", "high")))
-ploidy = io$load('../ploidy_eT.RData')$ploidy
+ploidy = io$load('compare_rna-scWGS_ploidy/ploidy_eT.RData')$ploidy
 colnames(ploidy) = paste0(b$grep("([0-9]+)", colnames(ploidy)),
                           toupper(b$grep("(s|t|S|T)", colnames(ploidy))))
 dset = io$load('../data/rnaseq/assemble.RData')
