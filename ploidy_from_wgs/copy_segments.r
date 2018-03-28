@@ -38,7 +38,9 @@ sys$run({
     # load the models we constructed
     models = io$load(args$infile)
     models = models[order(names(models))]
-    aneups = list()
+    bins = lapply(models, function(m) as.data.frame(m$bins)) %>%
+        dplyr::bind_rows(.id="Sample") %>%
+        tbl_df()
     segments = list()
 
     pdf(args$plotfile, 10,6)
@@ -60,7 +62,6 @@ sys$run({
             mutate(Sample = m$ID,
                    ploidy = mean.counts / rpp_mode)
         aneup = seq$aneuploidy(segments[[m$ID]])
-        aneups[[m$ID]] = aneup
 
         p = tracks(title = sprintf("%s - aneuploidy: %.2f", m$ID, aneup$aneuploidy),
                    Aneufinder = p1,
@@ -69,7 +70,6 @@ sys$run({
     }
     dev.off()
 
-    aneups = dplyr::bind_rows(aneups)
     segments = do.call(bind_rows, segments)
-    save(aneups, segments, file=args$outfile)
+    save(bins, segments, file=args$outfile)
 })

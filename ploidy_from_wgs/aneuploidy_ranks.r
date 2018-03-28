@@ -2,13 +2,15 @@ library(dplyr)
 library(cowplot)
 library(patchwork)
 io = import('io')
+seq = import('seq')
 sys = import('sys')
 
 args = sys$cmd$parse(
     opt('i', 'infile', 'RData aneuploidy scores', 'copy_segments.RData'),
     opt('p', 'plotfile', 'pdf to save plot to', '/dev/null'))
 
-aneup = io$load(args$infile)$aneups %>%
+aneup = io$load(args$infile)$segments %>%
+    seq$aneuploidy(sample="Sample") %>%
     mutate(Sample = forcats::fct_reorder(Sample, aneuploidy))
 
 dens = ggplot(aneup, aes(x=aneuploidy)) +

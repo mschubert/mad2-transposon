@@ -1,3 +1,7 @@
+subworkflow rnaseq:
+    workdir: "../../data/rnaseq"
+    snakefile: "../../data/rnaseq/Snakefile"
+
 rule all:
     input:
         expand("ploidy_{type}.{ext}",
@@ -13,7 +17,18 @@ rule no_deps:
     shell:
         "Rscript {input.rscript}"
 
-rule cancer_ploidy:
+rule eT:
+    input:
+        rscript = "ploidy_eT.r",
+        mad2_rna = rnaseq("assemble.RData"),
+        tall = "../../data/rnaseq/T-ALL_read_count.txt"
+    output:
+        result = "ploidy_eT.RData",
+        plot = "ploidy_eT.pdf"
+    shell:
+        "Rscript {input.rscript}"
+
+rule cancer_only:
     input:
         rscript = "ploidy_cancer_only.r"
     output:

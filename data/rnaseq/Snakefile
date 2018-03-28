@@ -1,6 +1,8 @@
 rule mad2_transposon:
     input:
-        rscript = "assemble.r"
+        rscript = "assemble.r",
+        samples = "samples.tsv",
+        reads = "PB170929_raw_readcount_dedup_UMIs.txt"
     output:
         result = "assemble.RData"
     shell:

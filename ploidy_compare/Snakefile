@@ -1,0 +1,22 @@
+subworkflow ploidy_wgs:
+    workdir: "../ploidy_from_wgs"
+    snakefile: "../ploidy_from_wgs/Snakefile"
+
+subworkflow ploidy_rnaseq:
+    workdir: "../ploidy_from_rnaseq"
+    snakefile: "../ploidy_from_rnaseq/Snakefile"
+
+subworkflow ploidy_eT:
+    workdir: "../tis_rna-ploidy_cis-fet"
+    snakefile: "../tis_rna-ploidy_cis-fet/Snakefile"
+
+rule compare_ploidy:
+    input:
+        rscript = "compare_ploidy.r",
+        wgs = ploidy_wgs("copy_segments.RData"),
+        rnaseq = ploidy_rnaseq("panel_ploidy.RData"),
+        eT = ploidy_eT("aneuploidy_mad2.RData")
+    output:
+        plot = "compare_ploidy.pdf"
+    shell:
+        "Rscript {input.rscript}"

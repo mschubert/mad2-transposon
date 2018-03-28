@@ -2,6 +2,10 @@ subworkflow rnaseq:
     workdir: "../data/rnaseq"
     snakefile: "../data/rnaseq/Snakefile"
 
+subworkflow ploidy_eT:
+    workdir: "compare_rna-scWGS_ploidy"
+    snakefile: "compare_rna-scWGS_ploidy/Snakefile"
+
 rule all:
     input:
         "cis_fet.pdf"
@@ -9,7 +13,8 @@ rule all:
 rule aneuploidy_mad2:
     input:
         rscript = "aneuploidy_mad2.r",
-        rnaseq = rnaseq("assemble.RData")
+        rnaseq = rnaseq("assemble.RData"),
+        ploidy = ploidy_eT("ploidy_eT.RData")
     output:
         result = "aneuploidy_mad2.RData",
         plot = "aneuploidy_mad2.pdf"

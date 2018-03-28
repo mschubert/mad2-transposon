@@ -1,3 +1,7 @@
+subworkflow rnaseq:
+    workdir: "../data/rnaseq"
+    snakefile: "../data/rnaseq/Snakefile"
+
 rule all:
     input:
         "panel_ploidy.RData",
@@ -13,7 +17,8 @@ rule violin:
 
 rule panel:
     input:
-        rscript = "panel_ploidy.r"
+        rscript = "panel_ploidy.r",
+        rnaseq = rnaseq("assemble.RData")
     output:
         result = "panel_ploidy.RData",
         plot  = "panel_ploidy.pdf"
