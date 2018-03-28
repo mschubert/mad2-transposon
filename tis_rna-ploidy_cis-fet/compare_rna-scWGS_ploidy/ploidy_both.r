@@ -6,8 +6,8 @@ idmap = import('process/idmap')
 aneufinder = import('tools/aneufinder')
 
 # reads per chromosome for T-ALLs
-counts1 = io$load('../data/rnaseq/assemble.RData')$counts
-expr2 = readr::read_tsv("../data/rnaseq/T-ALL_read_count.txt")
+counts1 = io$load('../../data/rnaseq/assemble.RData')$counts
+expr2 = readr::read_tsv("../../data/rnaseq/T-ALL_read_count.txt")
 counts2 = data.matrix(expr2[,c("eT_p0","eT_p2")])
 counts = narray::stack(list(counts1, counts2), along=2) %>% na.omit()
 
@@ -23,7 +23,7 @@ read_df = reshape2::melt(reads, value.name = "reads") %>%
 
 # ploidy from scWGS -> data.frame with: seqnames, ploidy, sample
 wgs = c("T401", "T419", "S413") %>%
-    paste0("../../aneuploidy/data/singlecell_wgs/T-ALL/", ., ".RData") %>%
+    paste0("../../../dosage/data/singlecell_wgs/T-ALL/", ., ".RData") %>%
     io$load() %>%
     lapply(aneufinder$consensus_ploidy) %>%
     setNames(c("401t", "419t", "413s")) %>%
@@ -106,4 +106,4 @@ print(plot_comparison(ctl2, subtitle="predicted from 2 ref + 2 eT samples"))
 print(plot_comparison(ctl3, subtitle="predicted from 2 ref + 2 eT samples + median=2"))
 dev.off()
 
-#save(ploidy, aneuploidy, wgs, file="ploidy_from_rnaseq.RData")
+save(ctl, ctl2, ctl3, file="ploidy_both.RData")

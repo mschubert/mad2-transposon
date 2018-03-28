@@ -83,7 +83,7 @@ ins_plot = function(df, result, title="") {
 sys$run({
     # load sample-level aneuploidy w/ cutoffs
     dset = io$load('aneuploidy_mad2.RData')
-    cis = io$read_table('171212 CIS RNA seq samples.tsv', header=TRUE) %>%
+    cis = io$read_table('../data/cis/171212 CIS RNA seq samples.tsv', header=TRUE) %>%
         mutate(Gene = stringr::str_trim(as.character(Gene))) %>%
         group_by(Sample, Gene) %>%
         summarize(n_ins = n()) %>%

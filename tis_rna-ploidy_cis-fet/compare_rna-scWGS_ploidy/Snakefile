@@ -1,14 +1,15 @@
 rule all:
     input:
-        "ploidy_eT.pdf",
-        "ploidy_cancer_only.pdf",
-        "ploidy_both.pdf"
+        expand("ploidy_{type}.{ext}",
+                type=['eT', 'both', 'cancer_only'],
+                ext=['RData', 'pdf'])
 
-rule euploid_tumor:
+rule no_deps:
     input:
-        rscript = "ploidy_eT.r"
+        rscript = "{type}.r"
     output:
-        plot = "ploidy_eT.pdf"
+        result = "{type}.RData",
+        plot = "{type}.pdf"
     shell:
         "Rscript {input.rscript}"
 
@@ -25,6 +26,7 @@ rule both:
     input:
         rscript = "ploidy_both.r"
     output:
+        result = "ploidy_both.RData",
         plot = "ploidy_both.pdf"
     shell:
         "Rscript {input.rscript}"

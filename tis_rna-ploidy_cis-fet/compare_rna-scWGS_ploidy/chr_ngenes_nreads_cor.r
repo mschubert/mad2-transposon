@@ -82,11 +82,11 @@ plot_facets = function(read_df) {
 }
 
 if (is.null(module_name())) {
-    tumors = readr::read_tsv("../../aneuploidy/data/rnaseq/T-ALL_read_count.txt")
+    tumors = readr::read_tsv("../../data/rnaseq/T-ALL_read_count.txt")
     tumor_reads = data.matrix(tumors[,c("eT_p0","eT_p2")])
     rownames(tumor_reads) = tumors$ensembl_gene_id
 
-    normals = readr::read_tsv("../../aneuploidy/data/rnaseq/seq_run2.txt")
+    normals = readr::read_tsv("../../data/rnaseq/seq_run2.txt")
     normal_reads = data.matrix(normals[,c("lib11", "lib12")])
     colnames(normal_reads) = c("T372 (wt)", "T373 (wt)")
     rownames(normal_reads) = normals$Gene
@@ -106,4 +106,6 @@ if (is.null(module_name())) {
         print(p2 + subt)
     }
     dev.off()
+
+    save(reads, dfs, file="chr_ngenes_nreads_cor.RData")
 }

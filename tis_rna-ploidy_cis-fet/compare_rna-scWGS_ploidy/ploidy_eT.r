@@ -6,7 +6,7 @@ idmap = import('process/idmap')
 aneufinder = import('tools/aneufinder')
 
 # reads per chromosome for T-ALLs
-dset = io$load('../data/rnaseq/assemble.RData')
+dset = io$load('../../data/rnaseq/assemble.RData')
 chrs = idmap$gene(rownames(dset$counts), to="chromosome_name", dset="mmusculus_gene_ensembl")
 reads = dset$counts[!is.na(chrs),]
 chrs = chrs[!is.na(chrs)]
@@ -14,7 +14,7 @@ reads = narray::map(reads, along=1, sum, subsets=chrs)[as.character(1:19),]
 reads = reads / narray::rrep(colSums(reads), nrow(reads))
 
 # reads per chromosome for euploid controls
-ctl = readr::read_tsv("../../aneuploidy/data/rnaseq/T-ALL_read_count.txt")
+ctl = readr::read_tsv("../../data/rnaseq/T-ALL_read_count.txt")
 ctl_reads = data.matrix(ctl[,c("eT_p0","eT_p2")])
 chrs = idmap$gene(ctl$ensembl_gene_id, to="chromosome_name", dset="mmusculus_gene_ensembl")
 ctl_reads = ctl_reads[!is.na(chrs),]
@@ -34,7 +34,7 @@ aneuploidy = colSums(abs(2 - ploidy)) #TODO: scale chrom length
 
 # compare to measured ploidy using scWGS
 wgs = c("T401", "T419", "S413") %>%
-    paste0("../../aneuploidy/data/singlecell_wgs/T-ALL/", ., ".RData") %>%
+    paste0("../../../dosage/data/singlecell_wgs/T-ALL/", ., ".RData") %>%
     io$load() %>%
     lapply(aneufinder$consensus_ploidy) %>%
     setNames(c("401t", "419t", "413s")) %>%

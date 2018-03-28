@@ -5,7 +5,7 @@ b = import('base')
 io = import('io')
 
 # load inferred ploidy for all samples
-aneup = io$load('../aneuploidy/ploidy_eT.RData')$aneuploidy
+aneup = io$load('compare_rna-scWGS_ploidy/ploidy_eT.RData')$aneuploidy
 names(aneup) = paste0(b$grep("([0-9]+)", names(aneup)),
                       toupper(b$grep("(s|t|S|T)", names(aneup))))
 
