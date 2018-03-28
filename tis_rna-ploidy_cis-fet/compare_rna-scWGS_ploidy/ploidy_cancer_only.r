@@ -6,7 +6,7 @@ idmap = import('process/idmap')
 aneufinder = import('tools/aneufinder')
 
 # reads per chromosome for T-ALLs
-dset = io$load('../data/rnaseq/assemble.RData')
+dset = io$load('../../data/rnaseq/assemble.RData')
 chrs = idmap$gene(rownames(dset$counts), to="chromosome_name", dset="mmusculus_gene_ensembl")
 reads = dset$counts[!is.na(chrs),]
 chrs = chrs[!is.na(chrs)]
@@ -19,7 +19,7 @@ read_df = reshape2::melt(reads, value.name = "frac_reads") %>%
 
 # ploidy from scWGS -> data.frame with: seqnames, ploidy, sample
 wgs = c("T401", "T419", "S413") %>%
-    paste0("../../aneuploidy/data/singlecell_wgs/T-ALL/", ., ".RData") %>%
+    paste0("../../../dosage/data/singlecell_wgs/T-ALL/", ., ".RData") %>%
     io$load() %>%
     lapply(aneufinder$consensus_ploidy) %>%
     setNames(c("401t", "419t", "413s")) %>%
