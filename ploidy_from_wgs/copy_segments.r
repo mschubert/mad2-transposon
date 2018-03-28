@@ -70,6 +70,6 @@ sys$run({
     dev.off()
 
     aneups = dplyr::bind_rows(aneups)
-    segments = do.call(c, segments)
+    segments = do.call(bind_rows, segments)
     save(aneups, segments, file=args$outfile)
 })

@@ -76,4 +76,4 @@ for (smp in unique(segs$sample))
     print(plot_sample(smp))
 dev.off()
 
-save(aneup, segs, coords)
+save(aneup, segs, coords, file="panel_ploidy.RData")
