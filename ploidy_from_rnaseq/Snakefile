@@ -5,6 +5,7 @@ subworkflow rnaseq:
 rule all:
     input:
         "panel_ploidy.RData",
+        "eT_ploidy.RData",
         "violin_compare.pdf"
 
 rule violin:
@@ -22,5 +23,16 @@ rule panel:
     output:
         result = "panel_ploidy.RData",
         plot  = "panel_ploidy.pdf"
+    shell:
+        "Rscript {input.rscript}"
+
+rule eT:
+    input:
+        rscript = "eT_ploidy.r",
+        rnaseq = rnaseq("assemble.RData"),
+        eT = "../tis_rna-ploidy_cis-fet/compare_rna-scWGS_ploidy/ploidy_eT.RData"
+    output:
+        result = "eT_ploidy.RData",
+        plot  = "eT_ploidy.pdf"
     shell:
         "Rscript {input.rscript}"

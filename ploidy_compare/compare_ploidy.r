@@ -2,22 +2,29 @@ library(dplyr)
 library(cowplot)
 library(patchwork)
 io = import('io')
+seq = import('seq')
 
 #args = sys$cmd$parse(
 #    opt('i', 'infile', 'RData aneuploidy scores', 'copy_segments.RData'),
 #    opt('p', 'plotfile', 'pdf to save plot to', '/dev/null'))
 
-dna = io$load("../ploidy_from_wgs/copy_segments.RData")$aneups %>%
+dna = io$load("../ploidy_from_wgs/copy_segments.RData")$segments %>%
+    seq$aneuploidy() %>%
     dplyr::rename(sample = Sample) %>%
-    mutate(sample = sub("(-high)|(-low)", "", sample))
-rna = io$load("../ploidy_from_rnaseq/panel_ploidy.RData")$aneup %>%
+    mutate(sample = sub("(-high)|(-low)", "", sample),
+           sample = paste0(sub("[^ST]+", "", sample), sub("[^0-9]+", "", sample)))
+rna = io$load("../ploidy_from_rnaseq/panel_ploidy.RData")$segments %>%
+    seq$aneuploidy(sample="sample", ploidy="expr") %>%
+    mutate(sample = toupper(gsub("[^0-9stST]+", "", sample)))
+eT2 = io$load("../ploidy_from_rnaseq/eT_ploidy.RData")$segments %>%
+    seq$aneuploidy(sample="sample", ploidy="expr") %>%
     mutate(sample = toupper(gsub("[^0-9stST]+", "", sample)))
 eT = io$load("../tis_rna-ploidy_cis-fet/aneuploidy_mad2.RData") %>%
     transmute(sample=sample, aneuploidy=aneup)
 
 tissues = setNames(c("spleen", "thymus"), c("S","T"))
 
-aneups = list(WGS = dna, `RNA-seq (eDivisive)` = rna, `RNA-seq (eT)` = eT) %>%
+aneups = list(WGS = dna, `RNA-seq (eDivisive)` = rna, `RNA-seq (eT)` = eT, `RNA-seq (eT, new)` = eT2) %>%
     dplyr::bind_rows(.id="type") %>%
     group_by(type) %>%
     mutate(aneuploidy = scale(aneuploidy, center=FALSE)) %>%
@@ -43,7 +50,7 @@ paircor = aneups %>%
     group_by(sample, type, tissue) %>%
     summarize(aneuploidy = mean(aneuploidy)) %>%
     tidyr::spread("type", "aneuploidy") %>%
-    GGally::ggpairs(columns=3:5, aes(shape=tissue))
+    GGally::ggpairs(columns=3:ncol(.), aes(shape=tissue))
 
 pdf(9, 9, file="compare_ploidy.pdf")
 print(dens + samples + plot_layout(ncol=1, heights=c(1,12)))

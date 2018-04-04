@@ -15,6 +15,7 @@ rule compare_ploidy:
         rscript = "compare_ploidy.r",
         wgs = ploidy_wgs("copy_segments.RData"),
         rnaseq = ploidy_rnaseq("panel_ploidy.RData"),
+        rnaseq2 = ploidy_rnaseq("eT_ploidy.RData"),
         eT = ploidy_eT("aneuploidy_mad2.RData")
     output:
         plot = "compare_ploidy.pdf"
