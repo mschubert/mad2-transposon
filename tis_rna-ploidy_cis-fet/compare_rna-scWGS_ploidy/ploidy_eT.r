@@ -37,7 +37,6 @@ wgs = c("T401", "T419", "S413") %>%
     paste0("../../../dosage/data/singlecell_wgs/T-ALL/", ., ".RData") %>%
     io$load() %>%
     lapply(aneufinder$consensus_ploidy) %>%
-    setNames(c("401t", "419t", "413s")) %>%
     df$bind_rows("sample") %>%
     transmute(sample = sample,
               chr = seqnames,

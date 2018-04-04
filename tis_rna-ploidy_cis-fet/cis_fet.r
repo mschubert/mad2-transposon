@@ -89,8 +89,10 @@ sys$run({
         summarize(n_ins = n()) %>%
         ungroup() %>%
         narray::construct(n_ins ~ Gene + Sample, fill=0) %>%
-        narray::melt()
-    colnames(cis) = c("gene", "sample", "n_ins")
+        narray::melt() %>%
+        transmute(gene = Gene,
+                  sample = paste0(sub("[0-9]+", "", Sample), sub("[ST]", "", Sample)),
+                  n_ins = value_df)
 
     both = inner_join(dset, cis, by="sample") %>%
         select(-aneup, -mad2)

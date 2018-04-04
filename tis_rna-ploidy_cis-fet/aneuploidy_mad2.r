@@ -11,8 +11,6 @@ aneup = io$load('compare_rna-scWGS_ploidy/ploidy_eT.RData')$aneuploidy
 
 # load Mad2 expression
 expr = io$load('../data/rnaseq/assemble.RData')$expr
-colnames(expr) = paste0(b$grep("([0-9]+)", colnames(expr)),
-                        toupper(b$grep("(s|t|S|T)", colnames(expr))))
 mad2 = expr['ENSMUSG00000029910',]
 
 # plot sample-level aneuploidy vs mad2 level
