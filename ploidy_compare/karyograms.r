@@ -54,8 +54,10 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
         cur = segs %>% filter(sample == smp)
         coords = as.data.frame(coords) %>% filter(seqnames %in% chrs)
         coords$expr = coords[[smp]]
+
         if (nrow(cur) == 0)
             return(plot_spacer())
+
         ggplot(coords, aes(x=start, y=expr)) +
             geom_point(shape=1, alpha=0.3) +
             geom_hline(yintercept=1:6, color="grey", linetype="dashed") +
@@ -67,16 +69,19 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
     wgs = function(segs, bins, smp, bin_y="copy.number", seg_y="mean.counts") {
         bin_ys = rlang::sym(bin_y)
         seg_ys = rlang::sym(seg_y)
-        reads_per_ploidy = as.data.frame(bins) %>%
-            filter(copy.number != 0) %$%
-            median(counts / copy.number)
-        ploidy_breaks = c(1:6) #sort(setdiff(unique(c(1,2,as.data.frame(bins)[[bin_y]])), 0))
         segs = segs %>% filter(Sample == smp)
+        bins = bins %>% filter(Sample == smp)
+
+        den = density(bins$counts, kernel="gaussian", bw=5)
+        rpp_mode = den$x[den$y==max(den$y)] / 2
+
+        ploidy_breaks = c(1:6) #sort(setdiff(unique(c(1,2,as.data.frame(bins)[[bin_y]])), 0))
         if (nrow(segs) == 0)
             return(plot_spacer())
-        ggplot(bins %>% filter(Sample == smp)) +
+
+        ggplot(bins) +
             geom_point(aes(x=start, y=counts), shape=1) + # x=minpoint;; start+width/2
-            geom_hline(yintercept=ploidy_breaks*reads_per_ploidy, color="grey", linetype="dashed") +
+            geom_hline(yintercept=ploidy_breaks*rpp_mode, color="grey", linetype="dashed") +
             geom_segment(data=as.data.frame(segs), size=2,
                          aes(x=start, xend=end, y=!!seg_ys, yend=!!seg_ys), color="green") +
             facet_grid(. ~ seqnames, scales="free_x") +
@@ -84,9 +89,9 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
                                limits=c(quantile(bins$counts, 0.01), quantile(bins$counts, 0.99)))
     }
 
-    p1 = expr(eT2$segments, eT2$genes, smp) + ylab("eT ratio expr") + ggtitle(smp)
-    p2 = expr(rna$segments, rna$genes, smp) + ylab("RNA panel expr")
-    p3 = wgs(dna$segments, dna$bins, smp) + ylab("WGS read counts")
+    p1 = wgs(dna$segments, dna$bins, smp) + ylab("WGS read counts") + ggtitle(smp)
+    p2 = expr(eT2$segments, eT2$genes, smp) + ylab("eT ratio expr")
+    p3 = expr(rna$segments, rna$genes, smp) + ylab("RNA panel expr")
     p = p1 + p2 + p3 + plot_layout(ncol=1) & mytheme
 }
 
