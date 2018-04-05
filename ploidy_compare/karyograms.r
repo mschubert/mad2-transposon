@@ -85,7 +85,7 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
             geom_segment(data=as.data.frame(segs), size=2,
                          aes(x=start, xend=end, y=!!seg_ys, yend=!!seg_ys), color="green") +
             facet_grid(. ~ seqnames, scales="free_x") +
-            scale_y_continuous(sec.axis=sec_axis(~./reads_per_ploidy, breaks=ploidy_breaks, name="ploidy"),
+            scale_y_continuous(sec.axis=sec_axis(~./rpp_mode, breaks=ploidy_breaks, name="ploidy"),
                                limits=c(quantile(bins$counts, 0.01), quantile(bins$counts, 0.99)))
     }
 
