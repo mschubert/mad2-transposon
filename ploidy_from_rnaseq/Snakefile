@@ -23,6 +23,8 @@ rule panel:
     output:
         result = "panel_ploidy.RData",
         plot  = "panel_ploidy.pdf"
+    resources:
+        walltime = 7200
     shell:
         "Rscript {input.rscript}"
 
@@ -34,5 +36,7 @@ rule eT:
     output:
         result = "eT_ploidy.RData",
         plot  = "eT_ploidy.pdf"
+    resources:
+        walltime = 7200
     shell:
         "Rscript {input.rscript}"

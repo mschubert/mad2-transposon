@@ -35,7 +35,7 @@ extract_segment = function(data) {
         group_by(clust) %>%
         summarize(end = max(start),
                   start = min(start),
-                  expr = median(expr)) %>%
+                  expr = mean(expr)) %>%
         select(-clust)
 }
 segments = as.data.frame(genes) %>%
