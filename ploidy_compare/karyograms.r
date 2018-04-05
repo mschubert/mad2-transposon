@@ -47,10 +47,12 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
         axis.title.x = element_blank(),
         axis.ticks.x = element_blank(),
         panel.spacing = unit(0, "lines"))
+    notheme = theme(
+        axis.title.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank())
 
     expr = function(segs, coords, smp) {
-        smp = sub("-(high|low)", "", smp)
-        smp = paste0(sub("[^ST]+", "", smp), sub("[^0-9]+", "", smp))
         cur = segs %>% filter(sample == smp)
         coords = as.data.frame(coords) %>% filter(seqnames %in% chrs)
         coords$expr = coords[[smp]]
@@ -85,14 +87,37 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
             geom_segment(data=as.data.frame(segs), size=2,
                          aes(x=start, xend=end, y=!!seg_ys, yend=!!seg_ys), color="green") +
             facet_grid(. ~ seqnames, scales="free_x") +
-            scale_y_continuous(sec.axis=sec_axis(~./rpp_mode, breaks=ploidy_breaks, name="ploidy"),
+            scale_y_continuous(sec.axis=sec_axis(~./rpp_mode, breaks=ploidy_breaks),
                                limits=c(quantile(bins$counts, 0.01), quantile(bins$counts, 0.99)))
     }
+    dens = function(bins, field, trans="identity", fill="blue", ...) {
+        ggplot(as.data.frame(bins), aes_string(field)) +
+            geom_vline(xintercept=2, linetype="dashed", alpha=0.3) +
+            geom_density(fill=fill, alpha=0.5) +
+            scale_x_continuous(trans=trans) +
+            coord_flip(...) +
+            notheme
+    }
+
+    rna_smp = sub("-(high|low)", "", smp)
+    rna_smp = paste0(sub("[^ST]+", "", rna_smp), sub("[^0-9]+", "", rna_smp))
 
     p1 = wgs(dna$segments, dna$bins, smp) + ylab("WGS read counts") + ggtitle(smp)
-    p2 = expr(eT2$segments, eT2$genes, smp) + ylab("eT ratio expr")
-    p3 = expr(rna$segments, rna$genes, smp) + ylab("RNA panel expr")
-    p = p1 + p2 + p3 + plot_layout(ncol=1) & mytheme
+    dna_smp = dna$bins %>% filter(Sample == smp)
+    p1_dens = dens(dna_smp, "counts", fill="red",
+            xlim=c(quantile(dna_smp$counts, 0.01), quantile(dna_smp$counts, 0.99))) +
+        theme(axis.title.y = element_blank())
+    p2 = expr(eT2$segments, eT2$genes, rna_smp) + ylab("eT ratio expr")
+    p2_dens = dens(eT2$genes, rna_smp, xlim=c(0.5,6), trans="log2")
+    if (class(try(ggplot_build(p2_dens))) == "try-error")
+        p2_dens = plot_spacer()
+    p3 = expr(rna$segments, rna$genes, rna_smp) + ylab("RNA panel expr")
+    p3_dens = dens(rna$genes, rna_smp, xlim=c(0.5,6), trans="log2")
+    if (class(try(ggplot_build(p3_dens))) == "try-error")
+        p3_dens = plot_spacer()
+#    p = p1 + p2 + p3 + plot_layout(ncol=1) & mytheme
+    p = p1 + p1_dens + p2 + p2_dens + p3 + p3_dens + plot_layout(ncol=2, widths=c(10,1)) & mytheme
+#    cowplot::plot_grid(p1, p2, p3, ncol=1)
 }
 
 pdf(9, 9, file="karyograms.pdf")
