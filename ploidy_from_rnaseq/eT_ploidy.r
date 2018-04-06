@@ -16,7 +16,12 @@ narray::intersect(ctl, cpm, along=1)
 keep = narray::map(ctl, along=2, function(x) all(x > 1 & x < 500))
 ctl = ctl[keep,]
 cpm = cpm[keep,]
+scale_cpm = function(x) {
+    dens = density(x, kernel="gaussian", bw=IQR(x)/5)
+    x + 2 - dens$x[dens$y==max(dens$y)]
+}
 scaled = (2 * cpm / narray::crep(rowMeans(ctl), ncol(cpm))) %>%
+    narray::map(along=1, scale_cpm) %>%
     as.data.frame() %>%
     tibble::rownames_to_column("ensembl_gene_id")
 
@@ -29,13 +34,17 @@ genome = seq$genome("GRCm38")
 seqinfo(genes) = seqinfo(genome)
 
 extract_segment = function(data) {
+    density_modal = function(x) {
+        den = density(x, kernel="gaussian", bw=5)
+        den$x[den$y==max(den$y)]
+    }
     ediv = ecp::e.divisive(as.matrix(data$expr))
     data$clust = ediv$cluster
     data %>%
         group_by(clust) %>%
         summarize(end = max(start),
                   start = min(start),
-                  expr = mean(expr, trim=0.2)) %>%
+                  expr = density_modal(expr)) %>%
         select(-clust)
 }
 segments = as.data.frame(genes) %>%

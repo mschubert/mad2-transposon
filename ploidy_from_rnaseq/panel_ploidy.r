@@ -27,13 +27,17 @@ genome = seq$genome("GRCm38")
 seqinfo(genes) = seqinfo(genome)
 
 extract_segment = function(data) {
+    density_modal = function(x) {
+        den = density(x, kernel="gaussian", bw=5)
+        den$x[den$y==max(den$y)]
+    }
     ediv = ecp::e.divisive(as.matrix(data$expr))
     data$clust = ediv$cluster
     data %>%
         group_by(clust) %>%
         summarize(end = max(start),
                   start = min(start),
-                  expr = mean(expr, trim=0.2)) %>%
+                  expr = density_modal(expr)) %>%
         select(-clust)
 }
 segments = as.data.frame(genes) %>%
