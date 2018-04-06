@@ -111,16 +111,14 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
     p2_dens = dens(eT2$genes, rna_smp, xlim=c(0.5,6), trans="log2")
     if (class(try(ggplot_build(p2_dens))) == "try-error")
         p2_dens = plot_spacer()
-    p3 = expr(rna$segments, rna$genes, rna_smp) + ylab("RNA panel expr")
-    p3_dens = dens(rna$genes, rna_smp, xlim=c(0.5,6), trans="log2")
-    if (class(try(ggplot_build(p3_dens))) == "try-error")
-        p3_dens = plot_spacer()
-#    p = p1 + p2 + p3 + plot_layout(ncol=1) & mytheme
-    p = p1 + p1_dens + p2 + p2_dens + p3 + p3_dens + plot_layout(ncol=2, widths=c(10,1)) & mytheme
-#    cowplot::plot_grid(p1, p2, p3, ncol=1)
+#    p3 = expr(rna$segments, rna$genes, rna_smp) + ylab("RNA panel expr")
+#    p3_dens = dens(rna$genes, rna_smp, xlim=c(0.5,6), trans="log2")
+#    if (class(try(ggplot_build(p3_dens))) == "try-error")
+#        p3_dens = plot_spacer()
+    p = p1 + p1_dens + p2 + p2_dens + plot_layout(ncol=2, widths=c(10,1)) & mytheme
 }
 
-pdf(9, 9, file="karyograms.pdf")
+pdf(9, 6, file="karyograms.pdf")
 for (smp in unique(dna$segments$Sample)) {
     message(smp)
     print(plot_sample(smp))
