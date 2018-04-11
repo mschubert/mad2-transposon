@@ -31,10 +31,11 @@ rule karyograms:
     input:
         rscript = "karyograms.r",
         wgs = ploidy_wgs("copy_segments.RData"),
-        rnaseq = ploidy_rnaseq("panel_ploidy.RData"),
-        rnaseq2 = ploidy_rnaseq("eT_ploidy.RData"),
-        eT = ploidy_eT("aneuploidy_mad2.RData")
+        euploid = ploidy_rnaseq("eT_ploidy.RData")
     output:
         plot = "karyograms.pdf"
     shell:
         "Rscript {input.rscript}"
+            " --euploid {input.euploid}"
+            " --dna {input.wgs}"
+            " --plotfile {output.plot}"

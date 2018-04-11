@@ -5,32 +5,27 @@ library(magrittr)
 b = import('base')
 io = import('io')
 seq = import('seq')
+sys = import('sys')
 
-#args = sys$cmd$parse(
-#    opt('i', 'infile', 'RData aneuploidy scores', 'copy_segments.RData'),
-#    opt('p', 'plotfile', 'pdf to save plot to', '/dev/null'))
+args = sys$cmd$parse(
+    opt('e', 'euploid', 'RNA expr reference RData', '../ploidy_from_rnaseq/eT_ploidy.RData'),
+    opt('d', 'dna', '30-cell DNA WGS', '../ploidy_from_wgs/copy_segments.RData'),
+    opt('p', 'plotfile', 'pdf to save plot to', '/dev/null'))
 
-dna = io$load("../ploidy_from_wgs/copy_segments.RData")
+dna = io$load(args$dna)
 dna_aneup = dna$segments %>%
     seq$aneuploidy() %>%
     dplyr::rename(sample = Sample) %>%
     mutate(sample = sub("(-high)|(-low)", "", sample),
            sample = paste0(sub("[^0-9]+", "", sample), sub("[^ST]+", "", sample)))
-rna = io$load("../ploidy_from_rnaseq/panel_ploidy.RData")
-rna_aneup = rna$segments %>%
+eT = io$load(args$euploid)
+eT_aneup = eT$segments %>%
     seq$aneuploidy(sample="sample", ploidy="expr") %>%
     mutate(sample = toupper(gsub("[^0-9stST]+", "", sample)))
-eT2 = io$load("../ploidy_from_rnaseq/eT_ploidy.RData")
-eT2_aneup = eT2$segments %>%
-    seq$aneuploidy(sample="sample", ploidy="expr") %>%
-    mutate(sample = toupper(gsub("[^0-9stST]+", "", sample)))
-eT_aneup = io$load("../tis_rna-ploidy_cis-fet/aneuploidy_mad2.RData") %>%
-    transmute(sample=sample, aneuploidy=aneup)
 
 tissues = setNames(c("spleen", "thymus"), c("S","T"))
 
-aneups = list(WGS = dna_aneup, `RNA-seq (eDivisive)` = rna_aneup,
-              `RNA-seq (eT)` = eT_aneup, `RNA-seq (eT, new)` = eT2_aneup) %>%
+aneups = list(WGS = dna_aneup, `RNA-seq (eT, eDivisive)` = eT_aneup) %>%
     dplyr::bind_rows(.id="type") %>%
     group_by(type) %>%
     mutate(aneuploidy = scale(aneuploidy, center=FALSE)) %>%
@@ -107,14 +102,10 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
     p1_dens = dens(dna_smp, "counts", fill="red",
             xlim=c(quantile(dna_smp$counts, 0.01), quantile(dna_smp$counts, 0.99))) +
         theme(axis.title.y = element_blank())
-    p2 = expr(eT2$segments, eT2$genes, rna_smp) + ylab("eT ratio expr")
-    p2_dens = dens(eT2$genes, rna_smp, xlim=c(0.5,6), trans="log2")
+    p2 = expr(eT$segments, eT$genes, rna_smp) + ylab("eT ratio expr")
+    p2_dens = dens(eT$genes, rna_smp, xlim=c(0.5,6), trans="log2")
     if (class(try(ggplot_build(p2_dens))) == "try-error")
         p2_dens = plot_spacer()
-#    p3 = expr(rna$segments, rna$genes, rna_smp) + ylab("RNA panel expr")
-#    p3_dens = dens(rna$genes, rna_smp, xlim=c(0.5,6), trans="log2")
-#    if (class(try(ggplot_build(p3_dens))) == "try-error")
-#        p3_dens = plot_spacer()
     p = p1 + p1_dens + p2 + p2_dens + plot_layout(ncol=2, widths=c(10,1)) & mytheme
 }
 
