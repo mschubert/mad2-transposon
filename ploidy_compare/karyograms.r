@@ -100,7 +100,10 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
     rna_smp = sub("-(high|low)", "", smp)
     rna_smp = paste0(sub("[^ST]+", "", rna_smp), hist)
     m = meta$meta[meta$meta$`Hist nr.` == hist,]
-    tit = sprintf("%s - %s", smp, m$Diagnosis)
+    if (nrow(m) == 1)
+        tit = sprintf("%s » %s", smp, m$Diagnosis)
+    else
+        tit = smp
 
     p1 = wgs(dna$segments, dna$bins, smp) + ylab("WGS read counts") + ggtitle(tit)
     dna_smp = dna$bins %>% filter(Sample == smp)
@@ -130,6 +133,8 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
         guides(alpha=FALSE) +
         facet_wrap(~type) +
         scale_alpha_manual(values=c(0.1, 1))
+    if (sum(weights$sample != "other") == 0)
+        pm1 = plot_spacer()
     pm2 = ggplot(icr, aes(x=type, y=counts, fill=gene)) +
         geom_col() + guides(fill=FALSE) + facet_wrap(~header)
     if (class(try(ggplot_build(pm2))) == "try-error")
@@ -138,7 +143,7 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
         ggbeeswarm::geom_quasirandom() +
         facet_wrap(~type, scales="free") +
         scale_alpha_manual(values=c(0.1, 1))
-    if (class(try(ggplot_build(pm3))) == "try-error")
+    if (class(try(ggplot_build(pm3))) == "try-error" || sum(meta$expression$sample != "other") == 0)
         pm3 = plot_spacer()
     pm = pm1 + pm2 + pm3 + plot_layout(nrow=1, widths=c(2,1,length(unique(meta$expression$gene))))
 
