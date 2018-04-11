@@ -10,8 +10,10 @@ sys = import('sys')
 args = sys$cmd$parse(
     opt('e', 'euploid', 'RNA expr reference RData', '../ploidy_from_rnaseq/eT_ploidy.RData'),
     opt('d', 'dna', '30-cell DNA WGS', '../ploidy_from_wgs/copy_segments.RData'),
+    opt('m', 'meta', 'sample .RData', '../data/meta/meta.RData'),
     opt('p', 'plotfile', 'pdf to save plot to', '/dev/null'))
 
+meta = io$load(args$meta)
 dna = io$load(args$dna)
 dna_aneup = dna$segments %>%
     seq$aneuploidy() %>%
@@ -94,10 +96,13 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
             notheme
     }
 
+    hist = sub("[^0-9]+", "", smp)
     rna_smp = sub("-(high|low)", "", smp)
-    rna_smp = paste0(sub("[^ST]+", "", rna_smp), sub("[^0-9]+", "", rna_smp))
+    rna_smp = paste0(sub("[^ST]+", "", rna_smp), hist)
+    m = meta$meta[meta$meta$`Hist nr.` == hist,]
+    tit = sprintf("%s - %s", smp, m$Diagnosis)
 
-    p1 = wgs(dna$segments, dna$bins, smp) + ylab("WGS read counts") + ggtitle(smp)
+    p1 = wgs(dna$segments, dna$bins, smp) + ylab("WGS read counts") + ggtitle(tit)
     dna_smp = dna$bins %>% filter(Sample == smp)
     p1_dens = dens(dna_smp, "counts", fill="red",
             xlim=c(quantile(dna_smp$counts, 0.01), quantile(dna_smp$counts, 0.99))) +
@@ -107,9 +112,40 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
     if (class(try(ggplot_build(p2_dens))) == "try-error")
         p2_dens = plot_spacer()
     p = p1 + p1_dens + p2 + p2_dens + plot_layout(ncol=2, widths=c(10,1)) & mytheme
+
+    meta$meta$sample = ifelse(meta$meta$`Hist nr.` == hist, rna_smp, "other")
+    weights = meta$meta %>%
+        transmute(sample = sample,
+                  type = "Tumor weight",
+                  thymus = as.numeric(`Thymus (mg)`)/1000,
+                  spleen = as.numeric(`Spleen (mg)`)/1000) %>%
+        tidyr::gather("tissue", "grams", -sample, -type)
+    icr = meta$icr %>%
+        filter(id == rna_smp) %>%
+        mutate(header = "Clonality")
+    meta$expression$sample = ifelse(meta$expression$id == rna_smp, rna_smp, "other")
+    meta$expression$type = "Gene expression"
+    pm1 = ggplot(weights, aes(x=tissue, y=grams, alpha=sample)) +
+        ggbeeswarm::geom_quasirandom() +
+        guides(alpha=FALSE) +
+        facet_wrap(~type) +
+        scale_alpha_manual(values=c(0.1, 1))
+    pm2 = ggplot(icr, aes(x=type, y=counts, fill=gene)) +
+        geom_col() + guides(fill=FALSE) + facet_wrap(~header)
+    if (class(try(ggplot_build(pm2))) == "try-error")
+        pm2 = plot_spacer()
+    pm3 = ggplot(meta$expression, aes(x=gene, y=vst, alpha=sample)) +
+        ggbeeswarm::geom_quasirandom() +
+        facet_wrap(~type, scales="free") +
+        scale_alpha_manual(values=c(0.1, 1))
+    if (class(try(ggplot_build(pm3))) == "try-error")
+        pm3 = plot_spacer()
+    pm = pm1 + pm2 + pm3 + plot_layout(nrow=1, widths=c(2,1,length(unique(meta$expression$gene))))
+
+    p / pm + plot_layout(heights=c(2,1))
 }
 
-pdf(9, 6, file="karyograms.pdf")
+pdf(9, 8, file="karyograms.pdf")
 for (smp in unique(dna$segments$Sample)) {
     message(smp)
     print(plot_sample(smp))

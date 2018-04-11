@@ -10,6 +10,10 @@ subworkflow ploidy_eT:
     workdir: "../tis_rna-ploidy_cis-fet"
     snakefile: "../tis_rna-ploidy_cis-fet/Snakefile"
 
+subworkflow meta:
+    workdir: "../data/meta"
+    snakefile: "../data/meta/Snakefile"
+
 rule all:
     input:
         "compare_ploidy.pdf",
@@ -31,11 +35,13 @@ rule karyograms:
     input:
         rscript = "karyograms.r",
         wgs = ploidy_wgs("copy_segments.RData"),
-        euploid = ploidy_rnaseq("eT_ploidy.RData")
+        euploid = ploidy_rnaseq("eT_ploidy.RData"),
+        meta = meta("meta.RData")
     output:
         plot = "karyograms.pdf"
     shell:
         "Rscript {input.rscript}"
             " --euploid {input.euploid}"
             " --dna {input.wgs}"
+            " --meta {input.meta}"
             " --plotfile {output.plot}"
