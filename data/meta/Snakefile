@@ -1,0 +1,16 @@
+subworkflow rnaseq:
+    workdir: "../rnaseq"
+    snakefile: "../rnaseq/Snakefile"
+
+rule all:
+    input:
+        "meta.RData"
+
+rule meta:
+    input:
+        rscript = "meta.r",
+        rna = rnaseq("assemble.RData")
+    output:
+        "meta.RData"
+    shell:
+        "Rscript {input.rscript}"
