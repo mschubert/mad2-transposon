@@ -133,8 +133,8 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
         guides(alpha=FALSE) +
         facet_wrap(~type) +
         scale_alpha_manual(values=c(0.1, 1))
-    if (sum(weights$sample != "other") == 0)
-        pm1 = plot_spacer()
+#    if (sum(weights$sample != "other") == 0)
+#        pm1 = plot_spacer()
     pm2 = ggplot(icr, aes(x=type, y=counts, fill=gene)) +
         geom_col() + guides(fill=FALSE) + facet_wrap(~header)
     if (class(try(ggplot_build(pm2))) == "try-error")
