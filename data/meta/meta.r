@@ -7,26 +7,29 @@ idmap = import('process/idmap')
 
 rna = io$load("../rnaseq/assemble.RData")
 
-genes = edgeR::cpm(rna$counts, log=FALSE) %>%
+meta = readr::read_tsv("meta.tsv")
+
+genes = rna$counts %>%
     idmap$gene(to="external_gene_name", dset="mmusculus_gene_ensembl", summarize=sum)
-genesT = genes[grepl("Trbv", rownames(genes)),] %>%
+
+tcr = genes[grepl("Trbv", rownames(genes)),] %>%
     as.data.frame() %>%
     tibble::rownames_to_column("gene") %>%
     tidyr::gather("id", "cpm", -gene)
-genesB = genes[grepl("Brbv", rownames(genes)),] %>%
+bcr = genes[grepl("Brbv", rownames(genes)),] %>%
     as.data.frame() %>%
     tibble::rownames_to_column("gene") %>%
     tidyr::gather("id", "cpm", -gene)
-other = genes[rownames(genes) %in% c("Mad2l1", "Trp53", "Msh2", "Pten"),] %>%
+icr = bind_rows(list(TCR=tcr, BCR=bcr), .id="type")
+
+expression = genes[rownames(genes) %in% c("Mad2l1", "Trp53", "Msh2", "Pten"),] %>%
+    edgeR::cpm(log=TRUE) %>%
     as.data.frame() %>%
     tibble::rownames_to_column("gene") %>%
     tidyr::gather("id", "cpm", -gene)
 
-meta = rna$idx %>% select(id, type=`Tumour type`, stage=`Early/ Late`)
-gene = bind_rows(list(TCR=genesT, BCR=genesB, General=other), .id="type") %>%
-    select(id, everything())
 weights = rna$idx %>%
-    select(id, spleen=spleen_weight, thymus=thymus_weight) %>%
-    tidyr::gather("tissue", "mg", -id)
+    transmute(id=id, spleen=spleen_weight/1000, thymus=thymus_weight/1000) %>%
+    tidyr::gather("tissue", "grams", -id)
 
-save(meta, weights, gene, file="meta.RData")
+save(meta, weights, icr, expression, file="meta.RData")

@@ -9,6 +9,7 @@ rule all:
 rule meta:
     input:
         rscript = "meta.r",
+        meta = "meta.tsv",
         rna = rnaseq("assemble.RData")
     output:
         "meta.RData"

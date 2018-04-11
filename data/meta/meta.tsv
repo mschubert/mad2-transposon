@@ -1,4 +1,4 @@
-Hist nr.	Date of birth	Date of poly (I:C)	Date of death	Time after poly (I:C) (m)	Age at death (m)	Thymus (mg)	Spleen (mg)	WBC (·109/L)	Diagnosis (Based on pathology & FACS) (t=thymus, s=spleen, l=liver, ln=lymph node, k=kidney, i=intestine)
+Hist nr.	Date of birth	Date of poly (I:C)	Date of death	Time after poly (I:C) (m)	Age at death (m)	Thymus (mg)	Spleen (mg)	WBC (bn/L)	Diagnosis
 145	10/01/13	20/03/13	29/07/13	4.3	6.6	n.a.	1970	n.a.	Other lymphoma (s)
 155	09/01/13	20/03/13	21/08/13	5.1	7.4	380	680	n.a.	T-cell lymphoma (t, s)
 157	03/03/13	05/06/13	13/09/13	3.3	6.4	n.a.	877	n.a.	Other lymphoma (s)
