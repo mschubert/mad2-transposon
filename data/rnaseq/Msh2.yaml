@@ -1,0 +1,55 @@
+# Mad2^{f/f}-LxCre-p53^{f/f}
+# BioScientific kit, poly-A selection, euploid tumors (eT)
+assembly: GRCm38
+paired_end: FALSE
+directory: seqdata/180111_NB501840_0052_AHMTFCBGX3/Petra180111
+
+samples:
+    eT:
+        - PB_eT_p0_S16_R1_001.fastq.gz
+        - PB_eT_p0_S16_R2_001.fastq.gz
+    685s: # healthy spleen
+        - PB_S685_S1_R1_001.fastq.gz
+        - PB_S685_S1_R2_001.fastq.gz
+    686s: # healthy spleen
+        - PB_S686_S3_R1_001.fastq.gz
+        - PB_S686_S3_R2_001.fastq.gz
+    165t:
+        - PB_T165_S7_R1_001.fastq.gz
+        - PB_T165_S7_R2_001.fastq.gz
+    197t:
+        - PB_T179_S8_R1_001.fastq.gz
+        - PB_T179_S8_R2_001.fastq.gz
+    187t:
+        - PB_T187_S9_R1_001.fastq.gz
+        - PB_T187_S9_R2_001.fastq.gz
+    223t:
+        - PB_T223_S10_R1_001.fastq.gz
+        - PB_T223_S10_R2_001.fastq.gz
+    230t:
+        - PB_T230_S11_R1_001.fastq.gz
+        - PB_T230_S11_R2_001.fastq.gz
+    231t:
+        - PB_T231_S12_R1_001.fastq.gz
+        - PB_T231_S12_R2_001.fastq.gz
+    317t:
+        - PB_T317_S5_R1_001.fastq.gz
+        - PB_T317_S5_R2_001.fastq.gz
+    318t:
+        - PB_T318_S6_R1_001.fastq.gz
+        - PB_T318_S6_R2_001.fastq.gz
+    330t:
+        - PB_T330_S13_R1_001.fastq.gz
+        - PB_T330_S13_R2_001.fastq.gz
+    362t:
+        - PB_T362_S14_R1_001.fastq.gz
+        - PB_T362_S14_R2_001.fastq.gz
+    548t:
+        - PB_T548_S15_R1_001.fastq.gz
+        - PB_T548_S15_R2_001.fastq.gz
+    685t: # healthy thymus
+        - PB_T685_S2_R1_001.fastq.gz
+        - PB_T685_S2_R2_001.fastq.gz
+    686t: # healthy thymus
+        - PB_T686_S4_R1_001.fastq.gz
+        - PB_T686_S4_R2_001.fastq.gz

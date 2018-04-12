@@ -1,0 +1,41 @@
+# Mad2^{f/f}-LxCre-p53^{f/f}
+# BioScientific kit, poly-A selection; do not need aneuploidy for T-ALL
+# eTs are Msh -/-
+assembly: GRCm38
+paired_end: FALSE
+directory: seqdata/170720_NB501840_0029_AH7CYLBGX3/petralib
+
+samples:
+    363t:
+        - petralib_001_S10_R1_001.fastq.gz
+        - petralib_001_S10_R2_001.fastq.gz
+    496t:
+        - petralib_002_S11_R1_001.fastq.gz
+        - petralib_002_S11_R2_001.fastq.gz
+    503t:
+        - petralib_003_S12_R1_001.fastq.gz
+        - petralib_003_S12_R2_001.fastq.gz
+    548t:
+        - petralib_004_S13_R1_001.fastq.gz
+        - petralib_004_S13_R2_001.fastq.gz
+    553t:
+        - petralib_005_S14_R1_001.fastq.gz
+        - petralib_005_S14_R2_001.fastq.gz
+    554t:
+        - petralib_006_S15_R1_001.fastq.gz
+        - petralib_006_S15_R2_001.fastq.gz
+    559t:
+        - petralib_007_S16_R1_001.fastq.gz
+        - petralib_007_S16_R2_001.fastq.gz
+    560t:
+        - petralib_008_S17_R1_001.fastq.gz
+        - petralib_008_S17_R2_001.fastq.gz
+    571t:
+        - petralib_009_S18_R1_001.fastq.gz
+        - petralib_009_S18_R2_001.fastq.gz
+    eT_p0:
+        - petralib_010_S19_R1_001.fastq.gz
+        - petralib_010_S19_R2_001.fastq.gz
+    eT_p2:
+        - petralib_011_S20_R1_001.fastq.gz
+        - petralib_011_S20_R2_001.fastq.gz

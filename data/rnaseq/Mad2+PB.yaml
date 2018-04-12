@@ -1,0 +1,103 @@
+# Mad2-Lx-Cre + PiggyBac
+# BioScientific kit, poly-A selection, 32 samples (but no eT control)
+assembly: GRCm38
+paired_end: FALSE
+directory: seqdata/170929_NB501840_0034_AHW75VBGX2/Petra170929
+
+samples:
+    157s:
+        - Petra170929_001_S1_R1_001.fastq.gz
+        - Petra170929_001_S1_R2_001.fastq.gz
+    180t:
+        - Petra170929_002_S2_R1_001.fastq.gz
+        - Petra170929_002_S2_R2_001.fastq.gz
+    404s:
+        - Petra170929_003_S3_R1_001.fastq.gz
+        - Petra170929_003_S3_R2_001.fastq.gz
+    407t:
+        - Petra170929_004_S4_R1_001.fastq.gz
+        - Petra170929_004_S4_R2_001.fastq.gz
+    409s:
+        - Petra170929_005_S5_R1_001.fastq.gz
+        - Petra170929_005_S5_R2_001.fastq.gz
+    411s:
+        - Petra170929_006_S6_R1_001.fastq.gz
+        - Petra170929_006_S6_R2_001.fastq.gz
+    413s:
+        - Petra170929_007_S7_R1_001.fastq.gz
+        - Petra170929_007_S7_R2_001.fastq.gz
+    416s:
+        - Petra170929_008_S8_R1_001.fastq.gz
+        - Petra170929_008_S8_R2_001.fastq.gz
+    417s:
+        - Petra170929_009_S9_R1_001.fastq.gz
+        - Petra170929_009_S9_R2_001.fastq.gz
+    418t:
+        - Petra170929_010_S10_R1_001.fastq.gz
+        - Petra170929_010_S10_R2_001.fastq.gz
+    422s:
+        - Petra170929_011_S11_R1_001.fastq.gz
+        - Petra170929_011_S11_R2_001.fastq.gz
+    424s:
+        - Petra170929_012_S12_R1_001.fastq.gz
+        - Petra170929_012_S12_R2_001.fastq.gz
+    428s:
+        - Petra170929_013_S13_R1_001.fastq.gz
+        - Petra170929_013_S13_R2_001.fastq.gz
+    429s:
+        - Petra170929_014_S14_R1_001.fastq.gz
+        - Petra170929_014_S14_R2_001.fastq.gz
+    431s:
+        - Petra170929_015_S15_R1_001.fastq.gz
+        - Petra170929_015_S15_R2_001.fastq.gz
+    434s:
+        - Petra170929_016_S16_R1_001.fastq.gz
+        - Petra170929_016_S16_R2_001.fastq.gz
+    435s:
+        - Petra170929_017_S17_R1_001.fastq.gz
+        - Petra170929_017_S17_R2_001.fastq.gz
+    437s:
+        - Petra170929_018_S18_R1_001.fastq.gz
+        - Petra170929_018_S18_R2_001.fastq.gz
+    449t:
+        - Petra170929_019_S19_R1_001.fastq.gz
+        - Petra170929_019_S19_R2_001.fastq.gz
+    477t:
+        - Petra170929_020_S20_R1_001.fastq.gz
+        - Petra170929_020_S20_R2_001.fastq.gz
+    482s:
+        - Petra170929_021_S21_R1_001.fastq.gz
+        - Petra170929_021_S21_R2_001.fastq.gz
+    412s:
+        - Petra170929_022_S22_R1_001.fastq.gz
+        - Petra170929_022_S22_R2_001.fastq.gz
+    451s:
+        - Petra170929_023_S23_R1_001.fastq.gz
+        - Petra170929_023_S23_R2_001.fastq.gz
+    476s:
+        - Petra170929_024_S24_R1_001.fastq.gz
+        - Petra170929_024_S24_R2_001.fastq.gz
+    489s:
+        - Petra170929_025_S25_R1_001.fastq.gz
+        - Petra170929_025_S25_R2_001.fastq.gz
+    452t:
+        - Petra170929_026_S26_R1_001.fastq.gz
+        - Petra170929_026_S26_R2_001.fastq.gz
+    462s:
+        - Petra170929_027_S27_R1_001.fastq.gz
+        - Petra170929_027_S27_R2_001.fastq.gz
+    184t:
+        - Petra170929_028_S28_R1_001.fastq.gz
+        - Petra170929_028_S28_R2_001.fastq.gz
+    401t:
+        - Petra170929_029_S29_R1_001.fastq.gz
+        - Petra170929_029_S29_R2_001.fastq.gz
+    419t:
+        - Petra170929_030_S30_R1_001.fastq.gz
+        - Petra170929_030_S30_R2_001.fastq.gz
+    442s:
+        - Petra170929_031_S31_R1_001.fastq.gz
+        - Petra170929_031_S31_R2_001.fastq.gz
+    443t:
+        - Petra170929_032_S32_R1_001.fastq.gz
+        - Petra170929_032_S32_R2_001.fastq.gz

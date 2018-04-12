@@ -1,6 +1,7 @@
 ### seq
 *.bam
 *.bai
+**/seqdata
 
 ### general
 *.xls[x]
