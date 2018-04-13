@@ -1,0 +1,74 @@
+import yaml
+import os.path
+
+def load_yaml(fname):
+    sset = yaml.load(open(fname))
+    sset['samples'] = { k:[os.path.join(sset['directory'], vi) for vi in v]
+            for k,v in sset['samples'].items() }
+    return sset
+
+ssets = ['Mad2+PB', 'Mad2+p53', 'Msh2']
+samples = { sset:load_yaml(sset+".yaml") for sset in ssets }
+
+rule all:
+    input:
+        expand("{sset}.tsv", sset=ssets)
+
+rule star_genome:
+    input:
+        fasta = "../genome/Mus_musculus.GRCm38.dna_rm.toplevel.fa.gz",
+        gtf = "../genome/Mus_musculus.GRCm38.92.gtf.gz"
+    output:
+        genome = "STAR_GRCm38_ens92"
+    shell:
+        "STAR --runMode genomeGenerate"
+            " --genomeFastaFiles {input.fasta}"
+            " --sjdbGTFfile {input.gtf}"
+            " --genomeDir {output.genome}"
+
+rule align:
+    input:
+        genome = "STAR_GRCm38_ens92",
+        fastq = lambda wc: samples[wc.set]['samples'][wc.sample]
+    output:
+        bam = "aligned/{set}/{sample}.bam"
+    shell:
+        "STAR --runMode alignReads"
+            " --genomeLoad LoadAndKeep"
+            " --outSAMtype BAM Unsorted"
+            " --readFilesCommand zcat"
+            " --genomeDir /path/to/STAR/genome/folder"
+            " --outFileNamePrefix {output.bam}"
+            " --readFilesIn {input.fastq}"
+
+rule count:
+    input:
+        gtf = "../genome/Mus_musculus.GRCm38.92.gtf.gz",
+        bams = lambda wc: expand("aligned/{sset}/{samples}.bam",
+                sset=wc.set, samples=samples[wc.set]['samples'].keys())
+    output:
+        counts = "{set}.tsv"
+    shell:
+        "featureCounts"
+            " -a {input.gtf}"
+            " -o {output.counts}"
+            " {input.bams}"
+
+rule mixcr:
+    input:
+        fastq = lambda wc: samples[wc.set]['samples'][wc.sample]
+    output:
+        vdjca = "mixcr/{set}/{sample}.vdjca",
+        align_log = "mixcr/{set}/{sample}_align.log",
+        contigs = "mixcr/{set}/{sample}_contigs.vdjca",
+        assemble_log = "mixcr/{set}/{sample}_assemble.log",
+        clones = "mixcr/{set}/{sample}_clones.clns",
+        outfile = "mixcr/{set}/{sample}.txt"
+    shell:
+        """
+        mkdir -p $(dirname {output.outfile})
+        mixcr align -p rna-seq -r {output.align_log} {input.fastq} {output.vdjca}
+        mixcr assemblePartial {output.vdjca} {output.contigs}
+        mixcr assemble -r {output.assemble_log} {output.contigs} {output.clones}
+        mixcr exportClones {output.clones} {output.outfile}
+        """
