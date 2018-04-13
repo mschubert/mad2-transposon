@@ -12,18 +12,25 @@ samples = { sset:load_yaml(sset+".yaml") for sset in ssets }
 
 rule all:
     input:
-        expand("{sset}.tsv", sset=ssets)
+        expand("{sset}.tsv", sset=ssets),
+        [ expand("mixcr/" + sset + "/{sample}.txt",
+            sample=samples[sset]['samples'].keys()) for sset in ssets]
 
 rule star_genome:
     input:
-        fasta = "../genome/Mus_musculus.GRCm38.dna_rm.toplevel.fa.gz",
-        gtf = "../genome/Mus_musculus.GRCm38.92.gtf.gz"
+        fasta = "../genome/Mus_musculus.GRCm38.dna_rm.toplevel.fa",
+        gtf = "../genome/Mus_musculus.GRCm38.92.gtf"
     output:
         genome = "STAR_GRCm38_ens92"
+    resources:
+        mem = 50000,
+        walltime = 7200
     shell:
+        "mkdir -p {output.genome}; "
         "STAR --runMode genomeGenerate"
             " --genomeFastaFiles {input.fasta}"
             " --sjdbGTFfile {input.gtf}"
+            " --limitGenomeGenerateRAM {resources.mem}000000"
             " --genomeDir {output.genome}"
 
 rule align:
@@ -32,18 +39,24 @@ rule align:
         fastq = lambda wc: samples[wc.set]['samples'][wc.sample]
     output:
         bam = "aligned/{set}/{sample}.bam"
+    resources:
+        memory = 30000,
+        walltime = 7200
     shell:
+        "mkdir -p $(dirname {output.bam}); "
         "STAR --runMode alignReads"
             " --genomeLoad LoadAndKeep"
-            " --outSAMtype BAM Unsorted"
             " --readFilesCommand zcat"
-            " --genomeDir /path/to/STAR/genome/folder"
-            " --outFileNamePrefix {output.bam}"
+            " --genomeDir {input.genome}"
             " --readFilesIn {input.fastq}"
+            " --outSAMtype BAM Unsorted"
+            " --outStd BAM_Unsorted"
+            " --outFileNamePrefix aligned/{wildcards.set}/{wildcards.sample}"
+            " > {output.bam}"
 
 rule count:
     input:
-        gtf = "../genome/Mus_musculus.GRCm38.92.gtf.gz",
+        gtf = "../genome/Mus_musculus.GRCm38.92.gtf",
         bams = lambda wc: expand("aligned/{sset}/{samples}.bam",
                 sset=wc.set, samples=samples[wc.set]['samples'].keys())
     output:
@@ -55,20 +68,31 @@ rule count:
             " {input.bams}"
 
 rule mixcr:
+    """
+    http://mixcr.readthedocs.io/en/latest/rnaseq.html
+    """
     input:
         fastq = lambda wc: samples[wc.set]['samples'][wc.sample]
     output:
         vdjca = "mixcr/{set}/{sample}.vdjca",
         align_log = "mixcr/{set}/{sample}_align.log",
-        contigs = "mixcr/{set}/{sample}_contigs.vdjca",
+        contigs1 = "mixcr/{set}/{sample}_contigs1.vdjca",
+        contigs2 = "mixcr/{set}/{sample}_contigs2.vdjca",
         assemble_log = "mixcr/{set}/{sample}_assemble.log",
         clones = "mixcr/{set}/{sample}_clones.clns",
         outfile = "mixcr/{set}/{sample}.txt"
+    resources:
+        memory = 20000,
+        walltime = 10800
     shell:
         """
         mkdir -p $(dirname {output.outfile})
-        mixcr align -p rna-seq -r {output.align_log} {input.fastq} {output.vdjca}
-        mixcr assemblePartial {output.vdjca} {output.contigs}
-        mixcr assemble -r {output.assemble_log} {output.contigs} {output.clones}
+        mixcr align --species mmu --parameters rna-seq --threads 1 \
+            -OallowPartialAlignments=true \
+            --report {output.align_log} {input.fastq} {output.vdjca}
+        mixcr assemblePartial {output.vdjca} {output.contigs1}
+        mixcr assemblePartial {output.contigs1} {output.contigs2}
+        mixcr assemble --threads 1 --report {output.assemble_log} \
+            {output.contigs2} {output.clones}
         mixcr exportClones {output.clones} {output.outfile}
         """
