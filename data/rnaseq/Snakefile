@@ -24,7 +24,7 @@ rule star_genome:
         genome = "STAR_GRCm38_ens92"
     resources:
         mem = 50000,
-        walltime = 7200
+        walltime = 120
     shell:
         "mkdir -p {output.genome}; "
         "STAR --runMode genomeGenerate"
@@ -40,8 +40,8 @@ rule align:
     output:
         bam = "aligned/{set}/{sample}.bam"
     resources:
-        memory = 30000,
-        walltime = 7200
+        mem = 30000,
+        walltime = 120
     shell:
         "mkdir -p $(dirname {output.bam}); "
         "STAR --runMode alignReads"
@@ -82,8 +82,8 @@ rule mixcr:
         clones = "mixcr/{set}/{sample}_clones.clns",
         outfile = "mixcr/{set}/{sample}.txt"
     resources:
-        memory = 20000,
-        walltime = 10800
+        mem = 20000,
+        walltime = 180
     shell:
         """
         mkdir -p $(dirname {output.outfile})
