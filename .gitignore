@@ -2,6 +2,7 @@
 *.bam
 *.bai
 **/seqdata
+data/genome/*
 
 ### general
 *.xls[x]

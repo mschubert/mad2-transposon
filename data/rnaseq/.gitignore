@@ -1,0 +1,5 @@
+mixcr/*
+aligned/*
+*.tsv
+*.summary
+STAR_*/*
