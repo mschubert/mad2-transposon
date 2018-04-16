@@ -13,8 +13,7 @@ samples = { sset:load_yaml(sset+".yaml") for sset in ssets }
 rule all:
     input:
         expand("{sset}.tsv", sset=ssets),
-        [ expand("mixcr/" + sset + "/{sample}.txt",
-            sample=samples[sset]['samples'].keys()) for sset in ssets]
+        expand("mixcr_{sset}.tsv", sset=ssets)
 
 rule star_genome:
     input:
@@ -96,3 +95,13 @@ rule mixcr:
             {output.contigs2} {output.clones}
         mixcr exportClones {output.clones} {output.outfile}
         """
+
+rule mixcr_combine:
+    input:
+        rscript = "mixcr.r",
+        mixcr = lambda wc: expand("mixcr/{sset}/{sample}.txt",
+                sset=wc.sset, sample=samples[wc.sset]['samples'].keys())
+    output:
+        tsv = "mixcr_{sset}.tsv"
+    shell:
+        "Rscript {input.rscript} -o {output.tsv} {input.mixcr}"
