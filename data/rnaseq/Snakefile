@@ -15,6 +15,12 @@ rule all:
         expand("{sset}.tsv", sset=ssets),
         expand("mixcr_{sset}.tsv", sset=ssets)
 
+rule FAKE_REMOVE:
+    output:
+        "assemble.RData"
+    shell:
+        ""
+
 rule star_genome:
     input:
         fasta = "../genome/Mus_musculus.GRCm38.dna_rm.toplevel.fa",

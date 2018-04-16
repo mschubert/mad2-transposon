@@ -11,9 +11,11 @@ args = sys$cmd$parse(
     opt('e', 'euploid', 'RNA expr reference RData', '../ploidy_from_rnaseq/eT_ploidy.RData'),
     opt('d', 'dna', '30-cell DNA WGS', '../ploidy_from_wgs/copy_segments.RData'),
     opt('m', 'meta', 'sample .RData', '../data/meta/meta.RData'),
+    opt('c', 'mixcr', 'mixcr tsv', '../data/rnaseq/mixcr_Mad2+PB.tsv'),
     opt('p', 'plotfile', 'pdf to save plot to', '/dev/null'))
 
 meta = io$load(args$meta)
+mixcr = io$read_table(args$mixcr, header=TRUE)
 dna = io$load(args$dna)
 dna_aneup = dna$segments %>%
     seq$aneuploidy() %>%
@@ -123,8 +125,8 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
                   thymus = as.numeric(`Thymus (mg)`)/1000,
                   spleen = as.numeric(`Spleen (mg)`)/1000) %>%
         tidyr::gather("tissue", "grams", -sample, -type)
-    icr = meta$icr %>%
-        filter(id == rna_smp) %>%
+    mcr = mixcr %>%
+        filter(sub("[^0-9]+", "", sample) == hist) %>%
         mutate(header = "Clonality")
     meta$expression$sample = ifelse(meta$expression$id == rna_smp, rna_smp, "other")
     meta$expression$type = "Gene expression"
@@ -135,7 +137,7 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
         scale_alpha_manual(values=c(0.1, 1))
 #    if (sum(weights$sample != "other") == 0)
 #        pm1 = plot_spacer()
-    pm2 = ggplot(icr, aes(x=type, y=counts, fill=gene)) +
+    pm2 = ggplot(mcr, aes(x=type, y=cloneCount, fill=as.factor(cloneId))) +
         geom_col() + guides(fill=FALSE) + facet_wrap(~header)
     if (class(try(ggplot_build(pm2))) == "try-error")
         pm2 = plot_spacer()
@@ -145,7 +147,9 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
         scale_alpha_manual(values=c(0.1, 1))
     if (class(try(ggplot_build(pm3))) == "try-error" || sum(meta$expression$sample != "other") == 0)
         pm3 = plot_spacer()
-    pm = pm1 + pm2 + pm3 + plot_layout(nrow=1, widths=c(2,1,length(unique(meta$expression$gene))))
+    pm = pm1 + pm2 + pm3 +
+        plot_layout(nrow=1, widths=c(2,4,length(unique(meta$expression$gene)))) &
+        theme(axis.text.x = element_text(angle=30, hjust=0.8))
 
     p / pm + plot_layout(heights=c(2,1))
 }
