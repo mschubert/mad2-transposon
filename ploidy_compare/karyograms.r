@@ -7,36 +7,6 @@ io = import('io')
 seq = import('seq')
 sys = import('sys')
 
-args = sys$cmd$parse(
-    opt('e', 'euploid', 'RNA expr reference RData', '../ploidy_from_rnaseq/eT_ploidy.RData'),
-    opt('d', 'dna', '30-cell DNA WGS', '../ploidy_from_wgs/copy_segments.RData'),
-    opt('m', 'meta', 'sample .RData', '../data/meta/meta.RData'),
-    opt('c', 'mixcr', 'mixcr tsv', '../data/rnaseq/mixcr_Mad2+PB.tsv'),
-    opt('p', 'plotfile', 'pdf to save plot to', '/dev/null'))
-
-meta = io$load(args$meta)
-mixcr = io$read_table(args$mixcr, header=TRUE)
-dna = io$load(args$dna)
-dna_aneup = dna$segments %>%
-    seq$aneuploidy() %>%
-    dplyr::rename(sample = Sample) %>%
-    mutate(sample = sub("(-high)|(-low)", "", sample),
-           sample = paste0(sub("[^0-9]+", "", sample), sub("[^ST]+", "", sample)))
-eT = io$load(args$euploid)
-eT_aneup = eT$segments %>%
-    seq$aneuploidy(sample="sample", ploidy="expr") %>%
-    mutate(sample = toupper(gsub("[^0-9stST]+", "", sample)))
-
-tissues = setNames(c("spleen", "thymus"), c("S","T"))
-
-aneups = list(WGS = dna_aneup, `RNA-seq (eT, eDivisive)` = eT_aneup) %>%
-    dplyr::bind_rows(.id="type") %>%
-    group_by(type) %>%
-    mutate(aneuploidy = scale(aneuploidy, center=FALSE)) %>%
-    ungroup() %>%
-    mutate(sample = forcats::fct_reorder(sample, aneuploidy),
-           tissue = tissues[sub("Healthy|[0-9]+", "", sample)])
-
 plot_sample = function(smp, chrs=c(1:19,'X')) {
     mytheme = theme(
         panel.grid.major = element_blank(),
@@ -154,9 +124,23 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
     p / pm + plot_layout(heights=c(2,1))
 }
 
-pdf(9, 8, file="karyograms.pdf")
-for (smp in unique(dna$segments$Sample)) {
-    message(smp)
-    print(plot_sample(smp))
+if (is.null(module_name())) {
+    args = sys$cmd$parse(
+        opt('e', 'euploid', 'RNA expr reference RData', '../ploidy_from_rnaseq/eT_ploidy.RData'),
+        opt('d', 'dna', '30-cell DNA WGS', '../ploidy_from_wgs/copy_segments.RData'),
+        opt('m', 'meta', 'sample .RData', '../data/meta/meta.RData'),
+        opt('c', 'mixcr', 'mixcr tsv', '../data/rnaseq/mixcr_Mad2+PB.tsv'),
+        opt('p', 'plotfile', 'pdf to save plot to', '/dev/null'))
+
+    meta = io$load(args$meta)
+    mixcr = io$read_table(args$mixcr, header=TRUE)
+    dna = io$load(args$dna)
+    eT = io$load(args$euploid)
+
+    pdf(9, 8, file="karyograms.pdf")
+    for (smp in unique(dna$segments$Sample)) {
+        message(smp)
+        print(plot_sample(smp))
+    }
+    dev.off()
 }
-dev.off()
