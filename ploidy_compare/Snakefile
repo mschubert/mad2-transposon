@@ -6,10 +6,6 @@ subworkflow ploidy_rnaseq:
     workdir: "../ploidy_from_rnaseq"
     snakefile: "../ploidy_from_rnaseq/Snakefile"
 
-subworkflow ploidy_eT:
-    workdir: "../tis_rna-ploidy_cis-fet"
-    snakefile: "../tis_rna-ploidy_cis-fet/Snakefile"
-
 subworkflow meta:
     workdir: "../data/meta"
     snakefile: "../data/meta/Snakefile"
@@ -24,8 +20,7 @@ rule compare_ploidy:
         rscript = "compare_ploidy.r",
         wgs = ploidy_wgs("copy_segments.RData"),
         rnaseq = ploidy_rnaseq("panel_ploidy.RData"),
-        rnaseq2 = ploidy_rnaseq("eT_ploidy.RData"),
-        eT = ploidy_eT("aneuploidy_mad2.RData"),
+        eT = ploidy_rnaseq("eT_ploidy.RData"),
         merge = "wgs_merge.tsv"
     output:
         plot = "compare_ploidy.pdf",
