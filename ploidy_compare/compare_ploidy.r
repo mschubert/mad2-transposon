@@ -14,14 +14,15 @@ dna = io$load("../ploidy_from_wgs/copy_segments.RData")$segments %>%
 rna = io$load("../ploidy_from_rnaseq/panel_ploidy.RData")$segments %>%
     seq$aneuploidy(sample="sample", ploidy="expr") %>%
     mutate(sample = toupper(gsub("[^0-9stST]+", "", sample)))
-eT2 = io$load("../ploidy_from_rnaseq/eT_ploidy.RData")$segments %>%
+eT = io$load("../ploidy_from_rnaseq/eT_ploidy.RData")$segments %>%
     seq$aneuploidy(sample="sample", ploidy="expr") %>%
     mutate(sample = toupper(gsub("[^0-9stST]+", "", sample)))
-eT = io$load("../tis_rna-ploidy_cis-fet/aneuploidy_mad2.RData") %>%
-    transmute(sample=sample, aneuploidy=aneup)
 
 dna_merge = readr::read_tsv("wgs_merge.tsv") %>%
-    left_join(dna %>% select(subset=sample, aneuploidy))
+    left_join(dna %>% select(subset=sample, aneuploidy)) %>%
+    group_by(sample) %>%
+    summarize(aneuploidy = weighted.mean(aneuploidy, weight)) %>%
+    bind_rows(data.frame(sample="S413", aneuploidy=)) # from scWGS
 dna_label = dna %>%
     mutate(sample = sub("(-high)|(-low)", "", sample),
            sample = paste0(sub("[^ST]+", "", sample), sub("[^0-9]+", "", sample)))
@@ -30,16 +31,14 @@ tissues = setNames(c("spleen", "thymus"), c("S","T"))
 
 aneups = list(WGS = dna_label,
               `WGS (merged)` = dna_merge,
-              `RNA-seq (eT)` = eT2) %>%
+              `RNA-seq (eT)` = eT) %>%
     dplyr::bind_rows(.id="type") %>%
+    filter(!is.na(aneuploidy)) %>%
     mutate(sample = forcats::fct_reorder(sample, aneuploidy),
            tissue = tissues[sub("Healthy|[0-9]+", "", sample)])
 
 aneups %>%
-    group_by(type, sample, tissue) %>%
-    summarize(aneuploidy = ifelse(length(aneuploidy) == 1,
-        aneuploidy, weighted.mean(aneuploidy, weight))) %>%
-    ungroup() %>%
+#    group_by(type, sample, tissue) %>%
     mutate(type = ifelse(grepl("WGS", type), "30-cell WGS", type)) %>%
     write.table("compare_ploidy.tsv", sep="\t", quote=FALSE)
 
