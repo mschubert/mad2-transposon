@@ -19,7 +19,6 @@ rule compare_ploidy:
     input:
         rscript = "compare_ploidy.r",
         wgs = ploidy_wgs("copy_segments.RData"),
-        rnaseq = ploidy_rnaseq("panel_ploidy.RData"),
         eT = ploidy_rnaseq("eT_ploidy.RData"),
         merge = "wgs_merge.tsv"
     output:

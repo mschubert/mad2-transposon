@@ -32,7 +32,7 @@ rule eT:
     input:
         rscript = "eT_ploidy.r",
         rnaseq = rnaseq("assemble.RData"),
-        eT = "../tis_rna-ploidy_cis-fet/compare_rna-scWGS_ploidy/ploidy_eT.RData"
+        eT = "../data/rnaseq/T-ALL_read_count.txt"
     output:
         result = "eT_ploidy.RData",
         plot  = "eT_ploidy.pdf"
