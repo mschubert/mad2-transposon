@@ -24,11 +24,9 @@ eT = io$load("../tis_rna-ploidy_cis-fet/aneuploidy_mad2.RData") %>%
 
 tissues = setNames(c("spleen", "thymus"), c("S","T"))
 
-aneups = list(WGS = dna, `RNA-seq (eDivisive)` = rna, `RNA-seq (eT)` = eT, `RNA-seq (eT, new)` = eT2) %>%
+#aneups = list(WGS = dna, `RNA-seq (eDivisive)` = rna, `RNA-seq (eT)` = eT, `RNA-seq (eT, new)` = eT2) %>%
+aneups = list(WGS = dna, `RNA-seq (eT)` = eT2) %>%
     dplyr::bind_rows(.id="type") %>%
-    group_by(type) %>%
-    mutate(aneuploidy = scale(aneuploidy, center=FALSE)) %>%
-    ungroup() %>%
     mutate(sample = forcats::fct_reorder(sample, aneuploidy),
            tissue = tissues[sub("Healthy|[0-9]+", "", sample)])
 
