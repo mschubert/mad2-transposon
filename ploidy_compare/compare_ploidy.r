@@ -44,11 +44,7 @@ aneups = list(`WGS (merged)` = dna_merge,
     filter(!is.na(aneuploidy)) %>%
     mutate(sample = forcats::fct_reorder(sample, aneuploidy),
            tissue = tissues[sub("Healthy|[0-9]+", "", sample)])
-
-aneups %>%
-#    group_by(type, sample, tissue) %>%
-    mutate(type = ifelse(grepl("WGS", type), "30-cell WGS", type)) %>%
-    write.table("compare_ploidy.tsv", sep="\t", quote=FALSE)
+write.table(aneups, "compare_ploidy.tsv", sep="\t", quote=FALSE, row.names=FALSE)
 
 dens = ggplot(aneups, aes(x=aneuploidy)) +
     geom_density(aes(fill=type), alpha=0.5) +
