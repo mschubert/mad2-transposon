@@ -1,0 +1,60 @@
+sample: S413
+assembly: GRCm38
+directory: seqdata/160318_D00182_0318_AHK7WHBCXX/JS160223_I
+bin_width_ref: GRCm38_diploid_ref.bam
+blacklist: GRCm38_diploid_ref.bam
+
+files:
+  - JS160223_I_001.bam
+  - JS160223_I_002.bam
+  - JS160223_I_003.bam
+  - JS160223_I_004.bam
+  - JS160223_I_005.bam
+  - JS160223_I_006.bam
+  - JS160223_I_007.bam
+  - JS160223_I_008.bam
+  - JS160223_I_009.bam
+  - JS160223_I_010.bam
+  - JS160223_I_011.bam
+  - JS160223_I_012.bam
+  - JS160223_I_013.bam
+  - JS160223_I_014.bam
+  - JS160223_I_015.bam
+  - JS160223_I_016.bam
+  - JS160223_I_017.bam
+  - JS160223_I_018.bam
+  - JS160223_I_019.bam
+  - JS160223_I_020.bam
+  - JS160223_I_021.bam
+  - JS160223_I_022.bam
+  - JS160223_I_023.bam
+  - JS160223_I_024.bam
+  - JS160223_I_025.bam
+  - JS160223_I_026.bam
+  - JS160223_I_027.bam
+  - JS160223_I_028.bam
+  - JS160223_I_029.bam
+  - JS160223_I_030.bam
+  - JS160223_I_031.bam
+  - JS160223_I_032.bam
+  - JS160223_I_033.bam
+  - JS160223_I_034.bam
+  - JS160223_I_035.bam
+  - JS160223_I_036.bam
+  - JS160223_I_037.bam
+  - JS160223_I_038.bam
+  - JS160223_I_039.bam
+  - JS160223_I_040.bam
+  - JS160223_I_041.bam
+  - JS160223_I_042.bam
+  - JS160223_I_043.bam
+  - JS160223_I_044.bam
+  - JS160223_I_045.bam
+  - JS160223_I_046.bam
+  - JS160223_I_047.bam
+  - JS160223_I_048.bam
+
+exclude:
+  - JS160223_I_011.bam : 10 cell control
+  - JS160223_I_029.bam : 0 cell control
+  - JS160223_I_043.bam : 0 cell control

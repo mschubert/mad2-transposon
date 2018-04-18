@@ -1,0 +1,63 @@
+sample: T401
+assembly: GRCm38
+directory: seqdata/160205_D00182_0305_BHJGL5BCXX/BB160120_II
+bin_width_ref: GRCm38_diploid_ref.bam
+blacklist: GRCm38_diploid_ref.bam
+
+files:
+  - BB160120_II_001.bam
+  - BB160120_II_002.bam
+  - BB160120_II_003.bam
+  - BB160120_II_004.bam
+  - BB160120_II_005.bam
+  - BB160120_II_006.bam
+  - BB160120_II_007.bam
+  - BB160120_II_008.bam
+  - BB160120_II_009.bam
+  - BB160120_II_010.bam
+  - BB160120_II_011.bam
+  - BB160120_II_012.bam
+  - BB160120_II_013.bam
+  - BB160120_II_014.bam
+  - BB160120_II_015.bam
+  - BB160120_II_016.bam
+  - BB160120_II_017.bam
+  - BB160120_II_018.bam
+  - BB160120_II_019.bam
+  - BB160120_II_020.bam
+  - BB160120_II_021.bam
+  - BB160120_II_022.bam
+  - BB160120_II_023.bam
+  - BB160120_II_024.bam
+  - BB160120_II_025.bam
+  - BB160120_II_026.bam
+  - BB160120_II_027.bam
+  - BB160120_II_028.bam
+  - BB160120_II_029.bam
+  - BB160120_II_030.bam
+  - BB160120_II_031.bam
+  - BB160120_II_032.bam
+  - BB160120_II_033.bam
+  - BB160120_II_034.bam
+  - BB160120_II_035.bam
+  - BB160120_II_036.bam
+  - BB160120_II_037.bam
+  - BB160120_II_038.bam
+  - BB160120_II_039.bam
+  - BB160120_II_040.bam
+  - BB160120_II_041.bam
+  - BB160120_II_042.bam
+  - BB160120_II_043.bam
+  - BB160120_II_044.bam
+  - BB160120_II_045.bam
+  - BB160120_II_046.bam
+  - BB160120_II_047.bam
+  - BB160120_II_048.bam
+
+exclude:
+  - BB160120_II_007.bam : 10 cell control
+  - BB160120_II_021.bam : 0 cell control
+  - BB160120_II_026.bam : 0 cell control
+  - BB160120_II_032.bam : unlikely
+  - BB160120_II_048.bam : unlikely
+  - BB160120_II_016.bam : unlikely
