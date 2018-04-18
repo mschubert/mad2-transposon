@@ -3,6 +3,7 @@ library(cowplot)
 library(patchwork)
 io = import('io')
 seq = import('seq')
+aneuf = import('tools/aneufinder')
 
 #args = sys$cmd$parse(
 #    opt('i', 'infile', 'RData aneuploidy scores', 'copy_segments.RData'),
@@ -21,16 +22,23 @@ eT = io$load("../ploidy_from_rnaseq/eT_ploidy.RData")$segments %>%
 dna_merge = readr::read_tsv("wgs_merge.tsv") %>%
     left_join(dna %>% select(subset=sample, aneuploidy)) %>%
     group_by(sample) %>%
-    summarize(aneuploidy = weighted.mean(aneuploidy, weight)) %>%
-    bind_rows(data.frame(sample="S413", aneuploidy=)) # from scWGS
+    summarize(aneuploidy = weighted.mean(aneuploidy, weight))
 dna_label = dna %>%
     mutate(sample = sub("(-high)|(-low)", "", sample),
            sample = paste0(sub("[^ST]+", "", sample), sub("[^0-9]+", "", sample)))
 
+sc = c("T401", "S413", "T419")
+sc_wgs = file.path("../data/wgs", paste0(sc, ".RData")) %>%
+    io$load() %>%
+    lapply(aneuf$consensus_ploidy) %>%
+    dplyr::bind_rows(.id="sample") %>%
+    seq$aneuploidy(sample="sample", width="length")
+
 tissues = setNames(c("spleen", "thymus"), c("S","T"))
 
-aneups = list(WGS = dna_label,
-              `WGS (merged)` = dna_merge,
+aneups = list(`WGS (merged)` = dna_merge,
+              `WGS (30-cell)` = dna_label,
+              `WGS (single-cell)` = sc_wgs,
               `RNA-seq (eT)` = eT) %>%
     dplyr::bind_rows(.id="type") %>%
     filter(!is.na(aneuploidy)) %>%
