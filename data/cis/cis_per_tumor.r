@@ -7,7 +7,7 @@ read_one = function(fname) {
     extract_flanking = function(...) {
         cols = unlist(list(...))
         cols = na.omit(cols[grepl("Flanking Gene", names(cols))])
-        data_frame(gene = b$grep("(^[^ ]+)", cols),
+        data_frame(gene_name = b$grep("(^[^ ]+)", cols),
                    ensembl_gene_id = b$grep("(ENS[A-Z0-9]+)", cols),
                    known_cancer = grepl("Cancer Yes", cols))
     }
