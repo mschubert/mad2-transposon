@@ -13,7 +13,12 @@ read_one = function(fname) {
     }
 
     cis = readxl::read_xls(fname)[-1,] %>%
-        transmute(sample = gsub("[:alnum:_]", "", `Tumour ID`),
+        transmute(sample = `Tumour ID` %>%
+                      sub("PB[0-9]+", "", .) %>%
+                      gsub("[^A-Za-z0-9]", "", .) %>%
+                      tolower() %>%
+                      sub("spl", "s", .) %>%
+                      sub("thy", "t", .),
                   chr = Chromosome,
                   strand = `Hit Strand`,
                   gene_name = `Hit Ensembl Gene`,
