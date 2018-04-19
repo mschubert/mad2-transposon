@@ -20,13 +20,15 @@ read_one = function(fname) {
                       sub("spl", "s", .) %>%
                       sub("thy", "t", .),
                   chr = Chromosome,
-                  strand = `Hit Strand`,
-                  gene_name = `Hit Ensembl Gene`,
-                  ensembl_gene_id = X__1 %catch% NA,
-                  known_cancer = grepl("Cancer 1", X__2) %catch% NA,
+                  strand = `Transposon Ori`,
+                  gene_name = b$grep("(^[^ ]+)", `Hit Ensembl Gene`),
+                  ensembl_gene_id = X__1 %catch% b$grep("(ENS[A-Z0-9]+)", `Hit Ensembl Gene`),
+                  known_cancer = grepl("Cancer 1", X__2) %catch% grepl("Cancer 1", `Hit Ensembl Gene`),
                   flanking = purrr::pmap(., extract_flanking),
                   assembly = `Assembly Version`,
-                  reads = `Read Coverage`)
+                  reads = ifelse(`Transposon End` == "3P",
+                                 `Coverage 3'-end`,
+                                 `Coverage 5'-end`))
 }
 
 files = list.files("cis_per_tumor", full.names=TRUE)
