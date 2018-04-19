@@ -15,6 +15,7 @@ aneup = io$read_table("../ploidy_compare/compare_ploidy.tsv", header=TRUE) %>%
     filter(!sample %in% c("S", "T")) %>%
     mutate(sample = paste0(sub("[ST]", "", sample), tolower(sub("[0-9]+", "", sample))))
 
+#TODO: use number of reads, not just if present
 cis = io$load("../data/cis/cis_per_tumor.RData") %>%
     mutate(sample = ifelse(sample == "410bm", "410t", sample),
            sample = ifelse(sample == "415bm", "415s", sample),
@@ -30,7 +31,7 @@ hits = cis %>%
 near = cis %>%
     select(sample, flanking, aneup) %>%
     tidyr::unnest() %>%
-    bind_rows(cis_hits) %>%
+    bind_rows(hits) %>%
     select(-ensembl_gene_id) %>%
     mutate(present = 1) %>%
     distinct()

@@ -1,0 +1,10 @@
+rule all:
+    "dset.RData"
+
+rule merge:
+    input:
+        rscript = "dset_merge.r"
+    output:
+        dset = "dset.RData"
+    shell:
+        "Rscript {input.rscript}"
