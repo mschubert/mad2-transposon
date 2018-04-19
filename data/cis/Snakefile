@@ -1,0 +1,7 @@
+rule all:
+    input:
+        rscript = "cis_per_tumor.r"
+    output:
+        cis = "cis_per_tumor.RData"
+    shell:
+        "Rscript {input.rscript}"
