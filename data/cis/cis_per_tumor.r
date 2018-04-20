@@ -20,6 +20,7 @@ read_one = function(fname) {
                       sub("spl", "s", .) %>%
                       sub("thy", "t", .),
                   chr = Chromosome,
+                  position = as.integer(`Transposon Integration Site`),
                   strand = `Transposon Ori`,
                   gene_name = b$grep("(^[^ ]+)", `Hit Ensembl Gene`),
                   ensembl_gene_id = X__1 %catch% b$grep("(ENS[A-Z0-9]+)", `Hit Ensembl Gene`),
@@ -32,6 +33,20 @@ read_one = function(fname) {
 }
 
 files = list.files("cis_per_tumor", full.names=TRUE)
-cis = lapply(files, read_one) %>%
+nested = lapply(files, read_one) %>%
     dplyr::bind_rows()
+
+hits = nested %>%
+    select(-flanking) %>%
+    mutate(type = "hit")
+
+flanking = nested %>%
+    select(-(gene_name:known_cancer)) %>%
+    tidyr::unnest() %>%
+    mutate(type = "flanking")
+
+cis = dplyr::bind_rows(hits, flanking) %>%
+    select(sample:gene_name, type, everything()) %>%
+    arrange(sample, -reads)
+
 save(cis, file="cis_per_tumor.RData")
