@@ -27,8 +27,8 @@ read_one = function(fname) {
                   flanking = purrr::pmap(., extract_flanking),
                   assembly = `Assembly Version`,
                   reads = ifelse(`Transposon End` == "3P",
-                                 `Coverage 3'-end`,
-                                 `Coverage 5'-end`))
+                                 as.integer(`Coverage 3'-end`),
+                                 as.integer(`Coverage 5'-end`)))
 }
 
 files = list.files("cis_per_tumor", full.names=TRUE)
