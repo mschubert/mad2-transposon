@@ -5,18 +5,47 @@
 # test whether or not each gene has insertion w/ increasing aneuploidy score
 library(dplyr)
 io = import('io')
+sys = import('sys')
 
-dset = io$load("dset.RData")
+args = sys$cmd$parse(
+    opt('r', 'reads', 'min number of reads', '20'),
+    opt('s', 'samples', 'min samples w/ insertions in gene', '5'))
 
-do_fit = function(i, obj="cancer_near", min_reads=20) {
-    gene = dset[[obj]][i,] >= min_reads
-    aneup = dset$aneup$aneup
-    glm(gene ~ aneup, family=binomial(link='logit')) %>%
+cis = io$load("dset.RData")
+samples = cis %>%
+    select(sample, aneup) %>%
+    distinct() %>%
+    mutate(reads = 0)
+
+do_fit = function(data) {
+    no_reads = samples %>% filter(!sample %in% data$sample)
+    data2 = dplyr::bind_rows(data, no_reads) %>%
+        mutate(insertion = reads >= args$reads)
+    stopifnot(nrow(data2) == nrow(samples))
+
+    glm(insertion ~ aneup, family=binomial(link='logit'), data=data2) %>%
         broom::tidy() %>%
         filter(term == "aneup") %>%
         select(-term)
 }
-result = sapply(rownames(dset$cancer_near), do_fit, simplify=FALSE) %>%
-    dplyr::bind_rows(.id="gene") %>%
+
+assoc = . %>%
+    group_by(sample, gene_name, ensembl_gene_id, aneup) %>%
+    summarize(reads = sum(reads)) %>%
+    group_by(gene_name, ensembl_gene_id) %>%
+    filter(sum(!is.na(aneup) & reads >= as.integer(args$reads)) >=
+           as.integer(args$sample)) %>%
+    tidyr::nest() %>%
+    mutate(fit = purrr::map(data, do_fit)) %>%
+    select(-data) %>%
+    tidyr::unnest() %>%
     arrange(p.value) %>%
     mutate(adj.p = p.adjust(p.value, method="fdr"))
+
+hits = assoc(filter(cis, type == "hit"))
+hits_cancer = assoc(filter(cis, type == "hit", known_cancer))
+near = assoc(cis)
+near_cancer = assoc(filter(cis, known_cancer))
+
+save(hits, hits_cancer, near, near_cancer, file="logit.RData")
+# plot volcano, top hit fits
