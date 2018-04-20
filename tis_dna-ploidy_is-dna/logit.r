@@ -8,7 +8,7 @@ io = import('io')
 
 dset = io$load("dset.RData")
 
-do_fit = function(i, obj="cis_hits", min_reads=20) {
+do_fit = function(i, obj="cancer_near", min_reads=20) {
     gene = dset[[obj]][i,] >= min_reads
     aneup = dset$aneup$aneup
     glm(gene ~ aneup, family=binomial(link='logit')) %>%
@@ -16,6 +16,7 @@ do_fit = function(i, obj="cis_hits", min_reads=20) {
         filter(term == "aneup") %>%
         select(-term)
 }
-result = sapply(rownames(dset$cis_hits), do_fit, simplify=FALSE) %>%
+result = sapply(rownames(dset$cancer_near), do_fit, simplify=FALSE) %>%
     dplyr::bind_rows(.id="gene") %>%
-    arrange(p.value)
+    arrange(p.value) %>%
+    mutate(adj.p = p.adjust(p.value, method="fdr"))
