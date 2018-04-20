@@ -21,29 +21,4 @@ cis = io$load("../data/cis/cis_per_tumor.RData") %>%
            sample = ifelse(sample == "452s", "452t", sample)) %>%
     inner_join(aneup)
 
-hits = cis %>%
-    select(sample, gene_name, known_cancer, aneup, reads) %>%
-    group_by(sample, gene_name, known_cancer, aneup) %>%
-    summarize(reads = sum(reads)) %>%
-    ungroup()
-
-near = cis %>%
-    select(sample, flanking, aneup, reads) %>%
-    tidyr::unnest() %>%
-    bind_rows(hits) %>%
-    select(-ensembl_gene_id) %>%
-    group_by(sample, gene_name, known_cancer, aneup) %>%
-    summarize(reads = sum(reads)) %>%
-    ungroup()
-
-cancer_genes = near %>%
-    filter(known_cancer) %>%
-    pull(unique(gene_name))
-
-cis_hits = narray::construct(reads ~ gene_name + sample, data=hits, fill=0)
-cis_near = narray::construct(reads ~ gene_name + sample, data=near, fill=0)
-cancer_hits = cis_hits[rownames(cis_hits) %in% cancer_genes,]
-cancer_near = cis_near[rownames(cis_near) %in% cancer_genes,]
-
-narray::intersect(aneup$sample, cis_hits, cis_near, cancer_hits, cancer_near, along=2)
-save(aneup, cis_hits, cis_near, cancer_hits, cancer_near, file="dset.RData")
+save(cis, file="dset.RData")
