@@ -1,10 +1,24 @@
-rule all:
-    "dset.RData"
+models = ['logit', 'logit-adjNins', 'betareg', 'betareg-1clonal']
 
-rule merge:
+rule all:
+    input:
+        expand("{model}.RData", model=models)
+
+rule dset:
     input:
         rscript = "dset_merge.r"
     output:
         dset = "dset.RData"
     shell:
         "Rscript {input.rscript}"
+
+rule models:
+    input:
+        rscript = "{model}.r",
+        dset = "dset.RData"
+    output:
+        fits = "{model}.RData"
+    shell:
+        "Rscript {input.rscript}"
+            " --samples 5" # gene w/ at least 5 inserts to consider
+            " --outfile {output.fits}"

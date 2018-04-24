@@ -9,7 +9,8 @@ sys = import('sys')
 
 args = sys$cmd$parse(
     opt('r', 'reads', 'min number of reads', '20'),
-    opt('s', 'samples', 'min samples w/ insertions in gene', '5'))
+    opt('s', 'samples', 'min samples w/ insertions in gene', '5'),
+    opt('o', 'outfile', 'file to save to', 'logit.RData'))
 
 cis = io$load("dset.RData")
 samples = cis %>%
@@ -50,4 +51,4 @@ hits_cancer = assoc(filter(cis, type == "hit", known_cancer))
 near = assoc(cis)
 near_cancer = assoc(filter(cis, known_cancer))
 
-save(hits, hits_cancer, near, near_cancer, file="logit-adjNins.RData")
+save(hits, hits_cancer, near, near_cancer, file=args$outfile)

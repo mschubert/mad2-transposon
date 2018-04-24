@@ -9,7 +9,8 @@ io = import('io')
 sys = import('sys')
 
 args = sys$cmd$parse(
-    opt('s', 'samples', 'min samples w/ insertions in gene', '5'))
+    opt('s', 'samples', 'min samples w/ insertions in gene', '5'),
+    opt('o', 'outfile', 'file to save to', 'betareg-1clonal.RData'))
 
 cis = io$load("dset.RData")
 samples = cis %>%
@@ -50,4 +51,4 @@ hits_cancer = assoc(filter(cis, type == "hit", known_cancer))
 near = assoc(cis)
 near_cancer = assoc(filter(cis, known_cancer))
 
-save(hits, hits_cancer, near, near_cancer, file="betareg.RData")
+save(hits, hits_cancer, near, near_cancer, file=args$outfile)
