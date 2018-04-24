@@ -22,10 +22,12 @@ do_fit = function(data) {
     data2 = dplyr::bind_rows(data, no_reads)
     stopifnot(nrow(data2) == nrow(samples))
 
-    betareg(aneup ~ reads, data=data2) %>%
+    mod = betareg(aneup ~ reads, data=data2)
+    mod %>%
         broom::tidy() %>%
         filter(term == "reads") %>%
-        select(-component, -term)
+        select(-component, -term) %>%
+        mutate(mod = list(mod))
 }
 
 assoc = . %>%
@@ -40,7 +42,8 @@ assoc = . %>%
     select(-data) %>%
     tidyr::unnest() %>%
     arrange(p.value) %>%
-    mutate(adj.p = p.adjust(p.value, method="fdr"))
+    mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
+    select(-mod, mod)
 
 hits = assoc(filter(cis, type == "hit"))
 hits_cancer = assoc(filter(cis, type == "hit", known_cancer))
@@ -48,4 +51,3 @@ near = assoc(cis)
 near_cancer = assoc(filter(cis, known_cancer))
 
 save(hits, hits_cancer, near, near_cancer, file="betareg.RData")
-# plot volcano, top hit fits

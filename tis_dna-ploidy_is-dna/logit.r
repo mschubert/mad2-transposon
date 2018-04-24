@@ -23,10 +23,12 @@ do_fit = function(data) {
         mutate(insertion = reads >= as.integer(args$reads))
     stopifnot(nrow(data2) == nrow(samples))
 
-    glm(insertion ~ n_ins_smp + aneup, family=binomial(link='logit'), data=data2) %>%
+    mod = glm(insertion ~ n_ins_smp + aneup, family=binomial(link='logit'), data=data2)
+    mod %>%
         broom::tidy() %>%
         filter(term == "aneup") %>%
-        select(-term)
+        select(-term) %>%
+        mutate(mod = list(mod))
 }
 
 assoc = . %>%
@@ -40,7 +42,8 @@ assoc = . %>%
     select(-data) %>%
     tidyr::unnest() %>%
     arrange(p.value) %>%
-    mutate(adj.p = p.adjust(p.value, method="fdr"))
+    mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
+    select(-mod, mod)
 
 hits = assoc(filter(cis, type == "hit"))
 hits_cancer = assoc(filter(cis, type == "hit", known_cancer))
