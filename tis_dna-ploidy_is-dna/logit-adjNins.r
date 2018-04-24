@@ -23,7 +23,7 @@ do_fit = function(data) {
         mutate(insertion = reads >= as.integer(args$reads))
     stopifnot(nrow(data2) == nrow(samples))
 
-    mod = glm(insertion ~ aneup, family=binomial(link='logit'), data=data2)
+    mod = glm(insertion ~ n_ins_smp + aneup, family=binomial(link='logit'), data=data2)
     mod %>%
         broom::tidy() %>%
         filter(term == "aneup") %>%
@@ -50,4 +50,4 @@ hits_cancer = assoc(filter(cis, type == "hit", known_cancer))
 near = assoc(cis)
 near_cancer = assoc(filter(cis, known_cancer))
 
-save(hits, hits_cancer, near, near_cancer, file="logit-adjNins.RData")
+save(hits, hits_cancer, near, near_cancer, file="logit.RData")
