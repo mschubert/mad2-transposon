@@ -18,6 +18,8 @@ rule models:
         dset = "dset.RData"
     output:
         fits = "{model}.RData"
+    resources:
+        walltime = 600
     shell:
         "Rscript {input.rscript}"
             " --samples 5" # gene w/ at least 5 inserts to consider
