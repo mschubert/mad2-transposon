@@ -29,7 +29,8 @@ do_fit = function(data) {
         broom::tidy() %>%
         filter(term == "aneup") %>%
         select(-term) %>%
-        mutate(mod = list(mod))
+        mutate(size = length(unique(data$sample)),
+               mod = list(mod))
 }
 
 assoc = . %>%

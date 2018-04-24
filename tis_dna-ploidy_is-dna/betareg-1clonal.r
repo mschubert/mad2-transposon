@@ -28,7 +28,8 @@ do_fit = function(data) {
         broom::tidy() %>%
         filter(term == "reads") %>%
         select(-component, -term) %>%
-        mutate(mod = list(mod))
+        mutate(size = length(unique(data$sample)),
+               mod = list(mod))
 }
 
 assoc = . %>%
