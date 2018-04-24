@@ -13,24 +13,24 @@ args = sys$cmd$parse(
 
 cis = io$load("dset.RData")
 samples = cis %>%
-    select(sample, aneup) %>%
+    select(sample, aneup, n_ins_smp) %>%
     distinct() %>%
     mutate(reads = 0)
 
 do_fit = function(data) {
     no_reads = samples %>% filter(!sample %in% data$sample)
     data2 = dplyr::bind_rows(data, no_reads) %>%
-        mutate(insertion = reads >= args$reads)
+        mutate(insertion = reads >= as.integer(args$reads))
     stopifnot(nrow(data2) == nrow(samples))
 
-    glm(insertion ~ aneup, family=binomial(link='logit'), data=data2) %>%
+    glm(insertion ~ n_ins_smp + aneup, family=binomial(link='logit'), data=data2) %>%
         broom::tidy() %>%
         filter(term == "aneup") %>%
         select(-term)
 }
 
 assoc = . %>%
-    group_by(sample, gene_name, ensembl_gene_id, aneup) %>%
+    group_by(sample, gene_name, ensembl_gene_id, aneup, n_ins_smp) %>%
     summarize(reads = sum(reads)) %>%
     group_by(gene_name, ensembl_gene_id) %>%
     filter(sum(!is.na(aneup) & reads >= as.integer(args$reads)) >=
@@ -48,4 +48,3 @@ near = assoc(cis)
 near_cancer = assoc(filter(cis, known_cancer))
 
 save(hits, hits_cancer, near, near_cancer, file="logit.RData")
-# plot volcano, top hit fits

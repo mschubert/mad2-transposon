@@ -34,7 +34,10 @@ read_one = function(fname) {
 
 files = list.files("cis_per_tumor", full.names=TRUE)
 nested = lapply(files, read_one) %>%
-    dplyr::bind_rows()
+    dplyr::bind_rows() %>%
+    group_by(sample) %>%
+    mutate(n_ins_smp = n()) %>%
+    ungroup()
 
 hits = nested %>%
     select(-flanking) %>%
