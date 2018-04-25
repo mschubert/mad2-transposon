@@ -14,8 +14,6 @@ args = sys$cmd$parse(
     opt('o', 'outfile', 'file to save to', 'betareg-1clonal.RData'))
 
 cis = io$load("dset.RData") %>%
-    group_by(sample, gene_name, ensembl_gene_id, hit_dist, aneup) %>%
-    summarize(reads = sum(reads)) %>%
     group_by(sample) %>%
     mutate(reads = as.numeric(args$decay)^hit_dist * reads / sum(reads[hit_dist == 0]))
 
@@ -39,6 +37,8 @@ do_fit = function(data) {
 }
 
 assoc = . %>%
+    group_by(sample, gene_name, ensembl_gene_id, aneup) %>%
+    summarize(reads = sum(reads)) %>%
     group_by(gene_name, ensembl_gene_id) %>%
     filter(sum(!is.na(aneup)) >= as.integer(args$sample)) %>%
     tidyr::nest() %>%

@@ -47,8 +47,8 @@ assoc = . %>%
     mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
     select(-mod, mod)
 
-hits = assoc(filter(cis, type == "hit"))
-hits_cancer = assoc(filter(cis, type == "hit", known_cancer))
+hits = assoc(filter(cis, hit_dist == 0))
+hits_cancer = assoc(filter(cis, hit_dist == 0, known_cancer))
 near = assoc(cis)
 near_cancer = assoc(filter(cis, known_cancer))
 
