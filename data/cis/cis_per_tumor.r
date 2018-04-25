@@ -6,10 +6,13 @@ read_one = function(fname) {
 
     extract_flanking = function(...) {
         cols = unlist(list(...))
-        cols = na.omit(cols[grepl("Flanking Gene", names(cols))])
-        data_frame(gene_name = b$grep("(^[^ ]+)", cols),
-                   ensembl_gene_id = b$grep("(ENS[A-Z0-9]+)", cols),
-                   known_cancer = grepl("Cancer Yes", cols))
+        flank = cols[grepl("Flanking Gene(__[0-9])?$", names(cols))]
+        nona = flank[!is.na(flank)]
+        data_frame(gene_name = b$grep("(^[^ ]+)", nona),
+                   ensembl_gene_id = b$grep("(ENS[A-Z0-9]+)", nona),
+                   known_cancer = grepl("Cancer Yes", nona),
+                   hit_dist = c(rev(seq_along(na.omit(flank[1:5]))),
+                                seq_along(na.omit(flank[6:10]))))
     }
 
     cis = readxl::read_xls(fname)[-1,] %>%
@@ -41,15 +44,14 @@ nested = lapply(files, read_one) %>%
 
 hits = nested %>%
     select(-flanking) %>%
-    mutate(type = "hit")
+    mutate(hit_dist = 0)
 
 flanking = nested %>%
     select(-(gene_name:known_cancer)) %>%
-    tidyr::unnest() %>%
-    mutate(type = "flanking")
+    tidyr::unnest()
 
 cis = dplyr::bind_rows(hits, flanking) %>%
-    select(sample:gene_name, type, everything()) %>%
+    select(sample:gene_name, hit_dist, everything()) %>%
     arrange(sample, -reads)
 
 save(cis, file="cis_per_tumor.RData")
