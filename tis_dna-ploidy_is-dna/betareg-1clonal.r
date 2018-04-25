@@ -10,9 +10,15 @@ sys = import('sys')
 
 args = sys$cmd$parse(
     opt('s', 'samples', 'min samples w/ insertions in gene', '5'),
+    opt('d', 'decay', 'decay factor for flanking genes', '0.7'),
     opt('o', 'outfile', 'file to save to', 'betareg-1clonal.RData'))
 
-cis = io$load("dset.RData")
+cis = io$load("dset.RData") %>%
+    group_by(sample, gene_name, ensembl_gene_id, hit_dist, aneup) %>%
+    summarize(reads = sum(reads)) %>%
+    group_by(sample) %>%
+    mutate(reads = as.numeric(args$decay)^hit_dist * reads / max(reads))
+
 samples = cis %>%
     select(sample, aneup) %>%
     distinct() %>%
@@ -33,10 +39,6 @@ do_fit = function(data) {
 }
 
 assoc = . %>%
-    group_by(sample) %>%
-    mutate(reads = reads / max(reads)) %>%
-    group_by(sample, gene_name, ensembl_gene_id, aneup) %>%
-    summarize(reads = sum(reads)) %>%
     group_by(gene_name, ensembl_gene_id) %>%
     filter(sum(!is.na(aneup)) >= as.integer(args$sample)) %>%
     tidyr::nest() %>%
@@ -47,8 +49,8 @@ assoc = . %>%
     mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
     select(-mod, mod)
 
-hits = assoc(filter(cis, type == "hit"))
-hits_cancer = assoc(filter(cis, type == "hit", known_cancer))
+hits = assoc(filter(cis, hit_dist == 0))
+hits_cancer = assoc(filter(cis, hit_dist == 0, known_cancer))
 near = assoc(cis)
 near_cancer = assoc(filter(cis, known_cancer))
 
