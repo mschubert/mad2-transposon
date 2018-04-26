@@ -28,6 +28,7 @@ do_fit = function(data) {
     stopifnot(nrow(data2) == nrow(samples))
 
     mod = betareg(aneup ~ reads, data=data2)
+    mod$model = na.omit(select(data2, sample, aneup, reads))
     mod %>%
         broom::tidy() %>%
         filter(term == "reads") %>%

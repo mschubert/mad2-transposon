@@ -21,10 +21,11 @@ samples = cis %>%
 do_fit = function(data) {
     no_reads = samples %>% filter(!sample %in% data$sample)
     data2 = dplyr::bind_rows(data, no_reads) %>%
-        mutate(insertion = reads >= as.integer(args$reads))
+        mutate(reads = reads >= as.integer(args$reads))
     stopifnot(nrow(data2) == nrow(samples))
 
-    mod = glm(insertion ~ aneup, family=binomial(link='logit'), data=data2)
+    mod = glm(reads ~ aneup, family=binomial(link='logit'), data=data2)
+    mod$model = na.omit(select(data2, sample, aneup, reads))
     mod %>%
         broom::tidy() %>%
         filter(term == "aneup") %>%

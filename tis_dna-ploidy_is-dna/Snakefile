@@ -1,8 +1,9 @@
 models = ['logit', 'logit-adjNins', 'betareg', 'betareg-1clonal']
+types = ['hits', 'hits_cancer', 'near', 'near_cancer']
 
 rule all:
     input:
-        expand("{model}.RData", model=models)
+        expand("{model}-{type}.pdf", model=models, type=types)
 
 rule dset:
     input:
@@ -24,3 +25,15 @@ rule models:
         "Rscript {input.rscript}"
             " --samples 5" # gene w/ at least 5 inserts to consider
             " --outfile {output.fits}"
+
+rule plot:
+    input:
+        rscript = "plot.r",
+        assocs = "{assocs}.RData"
+    output:
+        plot = "{assocs}-{type}.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --assocs {input.assocs}"
+            " --subset {wildcards.type}"
+            " --plotfile {output.plot}"
