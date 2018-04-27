@@ -32,7 +32,9 @@ highlight$sample = factor(highlight$sample, levels=smp_aneup)
 p21 = ggplot(highlight, aes(x=gene_name, y=sample)) +
     geom_tile(aes(fill=reads)) +
     coord_fixed() +
-    theme(axis.text.x = element_text(angle=65, hjust=1),
+    theme(axis.text.x = element_text(size=10, angle=65, hjust=1),
+          axis.text.y = element_text(size=10),
+          axis.title.x = element_text(size=12),
           legend.position = "left")
 p22 = highlight %>%
     select(sample, aneup) %>%
@@ -40,10 +42,12 @@ p22 = highlight %>%
     ggplot(aes(x=aneup, y=sample)) +
         geom_segment(aes(xend=aneup, yend=sample), x=0, color="lightgrey") +
         geom_point() +
-        theme(axis.text.y = element_blank(),
+        theme(axis.text.x = element_text(size=10),
+              axis.title.x = element_text(size=12),
+              axis.text.y = element_blank(),
               axis.title.y = element_blank())
 
-pdf(args$plotfile, 12, 10)
+pdf(args$plotfile, 10, 8)
 print(p1)
 print(p21 + p22)
 dev.off()
