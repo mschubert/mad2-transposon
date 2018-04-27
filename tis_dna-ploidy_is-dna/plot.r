@@ -22,7 +22,8 @@ highlight = assocs %>%
     mutate(gene_name = b$refactor(gene_name, estimate),
            data = purrr::map(mod, function(m) m$model)) %>%
     select(-mod) %>%
-    tidyr::unnest()
+    tidyr::unnest() %>%
+    mutate(reads = as.numeric(reads))
 smp_aneup = highlight %>%
     arrange(aneup) %>%
     pull(sample) %>%
@@ -30,8 +31,9 @@ smp_aneup = highlight %>%
 highlight$sample = factor(highlight$sample, levels=smp_aneup)
 
 p21 = ggplot(highlight, aes(x=gene_name, y=sample)) +
-    geom_tile(aes(fill=reads)) +
+    geom_tile(aes(fill=reads), color="white") +
     coord_fixed() +
+    viridis::scale_fill_viridis(option="magma", direction=-1) +
     theme(axis.text.x = element_text(size=10, angle=65, hjust=1),
           axis.text.y = element_text(size=10),
           axis.title.x = element_text(size=12),
