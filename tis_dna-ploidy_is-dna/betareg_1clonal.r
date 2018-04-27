@@ -15,8 +15,8 @@ args = sys$cmd$parse(
 
 cis = io$load("dset.RData") %>%
     group_by(sample) %>%
-    mutate(reads = as.numeric(args$decay)^hit_dist * reads / max(reads),
-           reads = -log(reads))
+    mutate(reads = log(reads),
+           reads = as.numeric(args$decay)^hit_dist * reads / max(reads))
 
 samples = cis %>%
     select(sample, aneup) %>%

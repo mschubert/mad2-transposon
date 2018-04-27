@@ -24,9 +24,6 @@ do_fit = function(data) {
         mutate(reads = reads >= as.integer(args$reads))
     stopifnot(nrow(data2) == nrow(samples))
 
-#mod = glm(reads ~ aneup, family=binomial(link='logit'), data=data2)
-#    mod = glm(reads ~ aneup, family=quasipoisson(), data=data2)
-
     mod = glm(aneup ~ reads, family=Gamma(), data=data2)
     mod$model = na.omit(select(data2, sample, aneup, reads))
     mod %>%
