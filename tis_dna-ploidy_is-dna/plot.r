@@ -14,12 +14,12 @@ assocs = io$load(args$assocs)[[args$subset]]
 
 p1 = assocs %>%
     mutate(label = gene_name) %>%
-    plt$p_effect("adj.p") %>%
-    plt$volcano(repel=TRUE, label_top=30)
+    plt$p_effect("p.value") %>%
+    plt$volcano(repel=TRUE, label_top=30) + labs(y="p-value")
 
 highlight = assocs %>%
     head(20) %>%
-    mutate(gene_name = b$refactor(gene_name, estimate),
+    mutate(gene_name = b$refactor(gene_name, statistic),
            data = purrr::map(mod, function(m) m$model)) %>%
     select(-mod) %>%
     tidyr::unnest() %>%

@@ -14,6 +14,7 @@ args = sys$cmd$parse(
     opt('o', 'outfile', 'file to save to', 'gamma2.RData'))
 
 cis = io$load("dset.RData") %>%
+    filter(!is.na(ensembl_gene_id)) %>% # otherwise most reads
     group_by(sample) %>%
     mutate(reads = log(reads),
            reads = as.numeric(args$decay)^hit_dist * reads / max(reads))
