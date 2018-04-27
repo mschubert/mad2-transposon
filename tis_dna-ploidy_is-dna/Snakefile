@@ -1,4 +1,5 @@
-models = ['logit', 'logit-adjNins', 'betareg', 'betareg-1clonal']
+models = ['logit', 'logit-adjNins', 'betareg', 'betareg_1clonal',
+          'lm', 'lm_1clonal']
 types = ['hits', 'hits_cancer', 'near', 'near_cancer']
 
 rule all:
