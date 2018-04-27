@@ -19,6 +19,7 @@ cis = io$load("../data/cis/cis_per_tumor.RData") %>%
     mutate(sample = ifelse(sample == "410bm", "410t", sample),
            sample = ifelse(sample == "415bm", "415s", sample),
            sample = ifelse(sample == "452s", "452t", sample)) %>%
+    filter(sample != "477s") %>%
     inner_join(aneup)
 
 save(cis, file="dset.RData")
