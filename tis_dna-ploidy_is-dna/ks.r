@@ -25,7 +25,7 @@ do_fit = function(data) {
     stopifnot(nrow(data2) == nrow(samples))
 
     x = data2 %>% arrange(aneup) %>% na.omit()
-    mod = ks.test(x$aneup, x$aneup[x$reads])
+    mod = ks.test(x$aneup[x$reads], x$aneup[!x$reads])
     mod$model = na.omit(select(data2, sample, aneup, reads))
     mod %>%
         broom::tidy() %>%
