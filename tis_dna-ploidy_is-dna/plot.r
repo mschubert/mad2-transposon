@@ -1,5 +1,6 @@
 library(dplyr)
 library(patchwork)
+b = import('base')
 io = import('io')
 plt = import('plot')
 sys = import('sys')
@@ -18,7 +19,7 @@ p1 = assocs %>%
 
 highlight = assocs %>%
     head(20) %>%
-    mutate(gene_name = factor(gene_name, levels=gene_name),
+    mutate(gene_name = b$refactor(gene_name, estimate),
            data = purrr::map(mod, function(m) m$model)) %>%
     select(-mod) %>%
     tidyr::unnest()
@@ -42,7 +43,7 @@ p22 = highlight %>%
         theme(axis.text.y = element_blank(),
               axis.title.y = element_blank())
 
-pdf(args$plotfile, 10, 8)
+pdf(args$plotfile, 12, 10)
 print(p1)
 print(p21 + p22)
 dev.off()
