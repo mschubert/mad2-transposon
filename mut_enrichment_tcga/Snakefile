@@ -1,0 +1,19 @@
+cohorts = ['BRCA', 'LUAD', 'SKCM', 'GBM', 'HNSC', 'OV']
+
+rule all:
+    input:
+        expand("{cohort}.{ext}", cohort=cohorts, ext=['pdf', 'RData'])
+
+rule cohort:
+    input:
+        rscript = "cohort2genes.r"
+    output:
+        assocs = "{cohort}.RData",
+        plot = "{cohort}.pdf"
+    resources:
+        mem = 5000
+    shell:
+        "Rscript {input.rscript}"
+            " --cohort {wildcards.cohort}"
+            " --outfile {output.assocs}"
+            " --plotfile {output.plot}"

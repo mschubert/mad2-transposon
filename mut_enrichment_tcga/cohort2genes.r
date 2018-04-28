@@ -1,4 +1,5 @@
 library(dplyr)
+b = import('base')
 sys = import('sys')
 plt = import('plot')
 tcga = import('data/tcga')
@@ -24,6 +25,7 @@ args = sys$cmd$parse(
 
 aneup = tcga$aneuploidy(cohort=args$cohort)
 mut = tcga$mutations() %>%
+    filter(Study == args$cohort) %>%
     rename(Sample = Tumor_Sample_Barcode) %>%
     tcga$filter(along="Sample", primary=TRUE, cancer=TRUE)
 
@@ -44,11 +46,22 @@ result = mut %>%
 p = result %>%
     mutate(size = n,
            label = Hugo_Symbol) %>%
-    plt$p_effect("p.value") %>%
-    plt$volcano(repel=TRUE) + ylab("p-value")
+    plt$p_effect("adj.p") %>%
+    plt$volcano(base.size=0.5, repel=TRUE)
+
+x = mut %>%
+    select(Sample, Hugo_Symbol) %>%
+    mutate(mut = TRUE) %>%
+    tidyr::complete(Sample, Hugo_Symbol, fill=list(mut=FALSE)) %>%
+    inner_join(sdata %>% select(Sample, aneuploidy)) %>%
+    filter(Hugo_Symbol %in% head(result$Hugo_Symbol, 10))
+p2 = ggplot(x, aes(x=Hugo_Symbol, y=aneuploidy)) +
+    ggbeeswarm::geom_quasirandom(aes(fill=mut), shape=21, alpha=0.5) +
+    theme(axis.text.x = element_text(angle=45, hjust=1))
 
 pdf(args$plotfile)
 print(p)
+print(p2)
 dev.off()
 
 save(result, file=args$outfile)
