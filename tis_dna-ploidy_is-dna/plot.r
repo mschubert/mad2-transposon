@@ -34,31 +34,37 @@ plot_tiles = function(highlight, fill="reads") {
     left + right
 }
 
-args = sys$cmd$parse(
-    opt('a', 'assocs', 'assocs .RData', 'betareg_1clonal.RData'),
-    opt('s', 'subset', 'assoc object o use', 'hits'),
-    opt('p', 'plotfile', 'pdf to save to', '/dev/null'))
+select_highlight = function(assocs) {
+    highlight = assocs %>%
+        head(20) %>%
+        mutate(gene_name = b$refactor(gene_name, statistic),
+               data = purrr::map(mod, function(m) m$model)) %>%
+        select(-mod) %>%
+        tidyr::unnest() %>%
+        mutate(reads = as.numeric(reads)) %>%
+        group_by(gene_name) %>%
+        mutate(rel_reads = reads / max(reads)) %>%
+        ungroup()
+    smp_aneup = highlight %>%
+        arrange(aneup) %>%
+        pull(sample) %>%
+        unique()
+    highlight$sample = factor(highlight$sample, levels=smp_aneup)
+    highight
+}
 
-assocs = io$load(args$assocs)[[args$subset]]
+sys$run({
+    args = sys$cmd$parse(
+        opt('a', 'assocs', 'assocs .RData', 'betareg_1clonal.RData'),
+        opt('s', 'subset', 'assoc object o use', 'hits'),
+        opt('p', 'plotfile', 'pdf to save to', '/dev/null'))
 
-highlight = assocs %>%
-    head(20) %>%
-    mutate(gene_name = b$refactor(gene_name, statistic),
-           data = purrr::map(mod, function(m) m$model)) %>%
-    select(-mod) %>%
-    tidyr::unnest() %>%
-    mutate(reads = as.numeric(reads)) %>%
-    group_by(gene_name) %>%
-    mutate(rel_reads = reads / max(reads)) %>%
-    ungroup()
-smp_aneup = highlight %>%
-    arrange(aneup) %>%
-    pull(sample) %>%
-    unique()
-highlight$sample = factor(highlight$sample, levels=smp_aneup)
+    assocs = io$load(args$assocs)[[args$subset]]
+    highlight = select_highlight(assocs)
 
-pdf(args$plotfile, 10, 8)
-print(plot_volcano(assocs))
-print(plot_tiles(highlight, "reads"))
-print(plot_tiles(highlight, "rel_reads"))
-dev.off()
+    pdf(args$plotfile, 10, 8)
+    print(plot_volcano(assocs))
+    print(plot_tiles(highlight, "reads"))
+    print(plot_tiles(highlight, "rel_reads"))
+    dev.off()
+})
