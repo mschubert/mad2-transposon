@@ -30,7 +30,7 @@ do_fit = function(data) {
     mod %>%
         broom::tidy() %>%
         mutate(estimate = mean(x$aneup[x$reads]) - mean(x$aneup),
-               statistic = sign(estimate) * p.value,
+               statistic = sign(estimate) / p.value,
                size = length(unique(data$sample)),
                mod = list(mod))
 }
