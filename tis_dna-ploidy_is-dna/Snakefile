@@ -1,4 +1,4 @@
-models = ['logit', 'logit-adjNins', 'betareg', 'betareg_1clonal',
+models = ['logit', 'logit-adjNins', 'betareg', 'betareg_1clonal', 'betareg_adjNreads', 'betareg_1adjNreads',
           'lm', 'lm_1clonal', 'gamma', 'gamma_adjNins', 'gamma2', 'gamma3', 'ks']
 types = ['hits', 'hits_cancer', 'near', 'near_cancer']
 
@@ -30,9 +30,9 @@ rule models:
 rule plot:
     input:
         rscript = "plot.r",
-        assocs = "{assocs}.RData"
+        assocs = "{model}.RData"
     output:
-        plot = "{assocs}-{type}.pdf"
+        plot = "{model}-{type}.pdf"
     shell:
         "Rscript {input.rscript}"
             " --assocs {input.assocs}"
