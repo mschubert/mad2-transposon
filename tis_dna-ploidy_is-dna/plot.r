@@ -12,8 +12,15 @@ plot_volcano = function(assocs) {
         plt$volcano(repel=TRUE, label_top=30) + labs(y="p-value")
 }
 
-plot_tiles = function(highlight, fill="reads") {
-    left = ggplot(highlight, aes(x=gene_name, y=sample)) +
+plot_tiles = function(cis, genes=NULL, fill="reads") {
+    cis = mutate(cis, sample = b$refactor(sample, aneup))
+    aneup = cis %>% select(sample, aneup) %>% distinct()
+    if (!is.null(genes))
+        cis = mutate(cis, gene_name = factor(gene_name, levels=genes))
+    cis = filter(cis, !is.na(aneup) & !is.na(gene_name)) %>%
+        tidyr::complete(sample, gene_name, fill=list(reads=0))
+
+    left = ggplot(cis, aes(x=gene_name, y=sample)) +
         geom_tile(aes_string(fill=fill), color="white") +
         coord_fixed() +
         viridis::scale_fill_viridis(option="magma", direction=-1) +
@@ -21,16 +28,13 @@ plot_tiles = function(highlight, fill="reads") {
               axis.text.y = element_text(size=10),
               axis.title.x = element_text(size=12),
               legend.position = "left")
-    right = highlight %>%
-        select(sample, aneup) %>%
-        distinct() %>%
-        ggplot(aes(x=aneup, y=sample)) +
-            geom_segment(aes(xend=aneup, yend=sample), x=0, color="lightgrey") +
-            geom_point() +
-            theme(axis.text.x = element_text(size=10),
-                  axis.title.x = element_text(size=12),
-                  axis.text.y = element_blank(),
-                  axis.title.y = element_blank())
+    right = ggplot(aneup, aes(x=aneup, y=sample)) +
+        geom_segment(aes(xend=aneup, yend=sample), x=0, color="lightgrey") +
+        geom_point() +
+        theme(axis.text.x = element_text(size=10),
+              axis.title.x = element_text(size=12),
+              axis.text.y = element_blank(),
+              axis.title.y = element_blank())
     left + right
 }
 
@@ -45,17 +49,11 @@ select_highlight = function(assocs) {
         group_by(gene_name) %>%
         mutate(rel_reads = reads / max(reads)) %>%
         ungroup()
-    smp_aneup = highlight %>%
-        arrange(aneup) %>%
-        pull(sample) %>%
-        unique()
-    highlight$sample = factor(highlight$sample, levels=smp_aneup)
-    highight
 }
 
 sys$run({
     args = sys$cmd$parse(
-        opt('a', 'assocs', 'assocs .RData', 'betareg_1clonal.RData'),
+        opt('a', 'assocs', 'assocs .RData', 'betareg_adjNreads.RData'),
         opt('s', 'subset', 'assoc object o use', 'hits'),
         opt('p', 'plotfile', 'pdf to save to', '/dev/null'))
 
@@ -64,7 +62,7 @@ sys$run({
 
     pdf(args$plotfile, 10, 8)
     print(plot_volcano(assocs))
-    print(plot_tiles(highlight, "reads"))
-    print(plot_tiles(highlight, "rel_reads"))
+    print(plot_tiles(highlight, fill="reads"))
+    print(plot_tiles(highlight, fill="rel_reads"))
     dev.off()
 })

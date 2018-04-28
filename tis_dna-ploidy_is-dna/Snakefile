@@ -4,7 +4,8 @@ types = ['hits', 'hits_cancer', 'near', 'near_cancer']
 
 rule all:
     input:
-        expand("{model}-{type}.pdf", model=models, type=types)
+        expand("{model}-{type}.pdf", model=models, type=types),
+        "glmnet.pdf"
 
 rule dset:
     input:
@@ -37,4 +38,16 @@ rule plot:
         "Rscript {input.rscript}"
             " --assocs {input.assocs}"
             " --subset {wildcards.type}"
+            " --plotfile {output.plot}"
+
+rule glmnet:
+    input:
+        rscript = "glmnet.r"
+    output:
+        dset = "glmnet.RData",
+        plot = "glmnet.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --samples 5"
+            " --outfile {output.dset}"
             " --plotfile {output.plot}"
