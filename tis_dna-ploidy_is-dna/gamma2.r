@@ -30,7 +30,7 @@ do_fit = function(data) {
     stopifnot(nrow(data2) == nrow(samples))
 
     mod = glm(aneup ~ n_ins_smp + reads, family=Gamma(), data=data2) %catch%
-		return(data.frame(estimate=NA))
+        return(data.frame(estimate=NA))
     mod$model = na.omit(select(data2, sample, aneup, reads))
     mod %>%
         broom::tidy() %>%
