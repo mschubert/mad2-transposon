@@ -1,4 +1,4 @@
-cohorts = ['BRCA', 'LUAD', 'SKCM', 'GBM', 'HNSC', 'OV']
+cohorts = ['BRCA', 'LUAD', 'SKCM', 'GBM', 'HNSC', 'OV', 'LAML', 'DLBC']
 
 rule all:
     input:
