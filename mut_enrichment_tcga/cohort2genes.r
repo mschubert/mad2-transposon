@@ -8,6 +8,7 @@ do_fit = function(gene) {
     mdata = mut %>%
         filter(Hugo_Symbol == gene) %>%
         select(Sample) %>%
+        distinct() %>%
         mutate(mut = 1) %>%
         right_join(sdata, by="Sample") %>%
         mutate(mut = ifelse(is.na(mut), 0, mut))
@@ -51,6 +52,7 @@ p = result %>%
 
 x = mut %>%
     select(Sample, Hugo_Symbol) %>%
+    distinct() %>%
     mutate(mut = TRUE) %>%
     tidyr::complete(Sample, Hugo_Symbol, fill=list(mut=FALSE)) %>%
     inner_join(sdata %>% select(Sample, aneuploidy)) %>%
