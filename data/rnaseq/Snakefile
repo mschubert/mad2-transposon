@@ -31,7 +31,6 @@ rule star_genome:
         mem = 50000,
         walltime = 120
     shell:
-        "mkdir -p {output.genome}; "
         "STAR --runMode genomeGenerate"
             " --genomeFastaFiles {input.fasta}"
             " --sjdbGTFfile {input.gtf}"
@@ -48,7 +47,6 @@ rule align:
         mem = 30000,
         walltime = 120
     shell:
-        "mkdir -p $(dirname {output.bam}); "
         "STAR --runMode alignReads"
             " --genomeLoad LoadAndKeep"
             " --readFilesCommand zcat"
@@ -91,7 +89,6 @@ rule mixcr:
         walltime = 180
     shell:
         """
-        mkdir -p $(dirname {output.outfile})
         mixcr align --species mmu --parameters rna-seq --threads 1 \
             -OallowPartialAlignments=true \
             --report {output.align_log} {input.fastq} {output.vdjca}
