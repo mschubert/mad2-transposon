@@ -1,3 +1,21 @@
+# documentation:
+# http://nki-ccb.github.io/imfusion/usage.html
+import yaml
+import os.path
+
+def load_yaml(fname):
+    sset = yaml.load(open(fname))
+    sset['samples'] = { k:[os.path.join(os.path.dirname(fname), sset['directory'], vi)
+        for vi in v] for k,v in sset['samples'].items() }
+    return sset
+
+Mad2PB = load_yaml("../rnaseq/Mad2+PB.yaml")
+
+rule all:
+    input:
+        "insertions.txt",
+        "exon_counts.txt"
+
 #rule transposon_seq:
 #    input:
 #        genbank = "pA6-GrOnc.gb"
@@ -11,6 +29,10 @@
 #        """
 
 rule combined_ref:
+    """
+    added to usr/lib64/python3.5/site-packages/imfusion/external/star.py:
+    --limitGenomeGenerateRAM {mem}
+    """
     input:
         fasta = "../genome/Mus_musculus.GRCm38.dna_rm.toplevel.fa",
         gtf = "../genome/Mus_musculus.GRCm38.92.gtf",
@@ -18,6 +40,9 @@ rule combined_ref:
         transposon_feats = "pA6-GrOnc.tsv"
     output:
         genome = "STAR_GRCm38_ens92_PB"
+    resources:
+        mem = 100000,
+        walltime = 240
     shell:
         "imfusion-build star"
             " --reference_seq {input.fasta}"
@@ -26,3 +51,52 @@ rule combined_ref:
             " --transposon_features {input.transposon_feats}"
             " --output_dir {output.genome}"
             " --blacklist_genes ENSMUSG00000039095 ENSMUSG00000038402"
+
+rule detect_insertions:
+    input:
+        reference = "STAR_GRCm38_ens92_PB",
+        fastq = lambda wc: Mad2PB['samples'][wc.sample][0] # debug
+    output:
+        insertion = "{sample}/insertions.txt"
+    resources:
+        mem = 30000,
+        walltime = 120
+    shell:
+        "imfusion-insertions star"
+            " --fastq {input.fastq}"
+            " --reference {input.reference}"
+            " --output_dir {wildcards.sample}"
+
+rule expression:
+    input:
+        reference = "STAR_GRCm38_ens92_PB",
+        fastq = lambda wc: Mad2PB['samples'][wc.sample][0], # debug
+        insertion = "{sample}/insertions.txt"
+    output:
+        merged = "{sample}/expression.txt"
+    resources:
+        mem = 30000,
+        walltime = 120
+    shell:
+        "imfusion-expression"
+            " --sample_dir {wildcards.sample}"
+            " --reference {input.reference}"
+
+rule merge:
+    input:
+        reference = "STAR_GRCm38_ens92_PB",
+        insertions = expand("{sample}/insertions.txt", sample=Mad2PB['samples'].keys()),
+        expression = expand("{sample}/expression.txt", sample=Mad2PB['samples'].keys())
+    output:
+        insertions = "insertions.txt",
+        expression = "exon_counts.txt"
+    params:
+        samples = Mad2PB['samples'].keys()
+    resources:
+        mem = 30000,
+        walltime = 120
+    shell:
+        "imfusion-merge"
+            " --sample_dirs {params.samples}"
+            " --output {output.insertions}"
+            " --output_expression {output.expression}"
