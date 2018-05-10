@@ -55,7 +55,7 @@ rule combined_ref:
 rule detect_insertions:
     input:
         reference = "STAR_GRCm38_ens92_PB",
-        fastq = lambda wc: Mad2PB['samples'][wc.sample][0] # debug
+        fastq = lambda wc: Mad2PB['samples'][wc.sample]
     output:
         insertion = "{sample}/insertions.txt"
     resources:
@@ -63,14 +63,15 @@ rule detect_insertions:
         walltime = 120
     shell:
         "imfusion-insertions star"
-            " --fastq {input.fastq}"
+            " --fastq {input.fastq[0]}"
+            " --fastq2 {input.fastq[1]}"
             " --reference {input.reference}"
             " --output_dir {wildcards.sample}"
 
 rule expression:
     input:
         reference = "STAR_GRCm38_ens92_PB",
-        fastq = lambda wc: Mad2PB['samples'][wc.sample][0], # debug
+        fastq = lambda wc: Mad2PB['samples'][wc.sample],
         insertion = "{sample}/insertions.txt"
     output:
         merged = "{sample}/expression.txt"
@@ -91,7 +92,7 @@ rule merge:
         insertions = "insertions.txt",
         expression = "exon_counts.txt"
     params:
-        samples = Mad2PB['samples'].keys()
+        samples = list(Mad2PB['samples'].keys())
     resources:
         mem = 30000,
         walltime = 120
