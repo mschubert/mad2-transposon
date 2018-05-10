@@ -59,8 +59,8 @@ rule detect_insertions:
     output:
         insertion = "{sample}/insertions.txt"
     resources:
-        mem = 30000,
-        walltime = 120
+        mem = 60000,
+        walltime = 240
     shell:
         "imfusion-insertions star"
             " --fastq {input.fastq[0]}"
@@ -76,8 +76,8 @@ rule expression:
     output:
         merged = "{sample}/expression.txt"
     resources:
-        mem = 30000,
-        walltime = 120
+        mem = 60000,
+        walltime = 240
     shell:
         "imfusion-expression"
             " --sample_dir {wildcards.sample}"
@@ -93,9 +93,6 @@ rule merge:
         expression = "exon_counts.txt"
     params:
         samples = list(Mad2PB['samples'].keys())
-    resources:
-        mem = 30000,
-        walltime = 120
     shell:
         "imfusion-merge"
             " --sample_dirs {params.samples}"

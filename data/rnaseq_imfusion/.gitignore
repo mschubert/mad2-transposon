@@ -1,5 +1,5 @@
 *.out
-[0-9]+[st]/*
+**/*
 aligned/*
 *.tsv
 *.fasta
