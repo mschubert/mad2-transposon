@@ -13,8 +13,7 @@ Mad2PB = load_yaml("../rnaseq/Mad2+PB.yaml")
 
 rule all:
     input:
-        "insertions.txt",
-        "exon_counts.txt"
+        "merged_ctgs.txt"
 
 #rule transposon_seq:
 #    input:
@@ -98,3 +97,19 @@ rule merge:
             " --sample_dirs {params.samples}"
             " --output {output.insertions}"
             " --output_expression {output.expression}"
+
+rule call_ctgs:
+    input:
+        insertions = "insertions.txt",
+        expression = "exon_counts.txt"
+    output:
+        ctgs = "merged_ctgs.txt"
+    shell:
+        "imfusion-ctg"
+            " --insertions {input.insertions}"
+            " --expression {input.expression}"
+            " --reference STAR_GRCm38_ens92_PB"
+            " --chromosomes 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 X"
+            " --output {output.ctgs}"
+            " --threshold 0.2"
+            " --de_threshold 1"
