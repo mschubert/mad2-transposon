@@ -1,0 +1,31 @@
+subworkflow cis:
+    workdir: "../data/cis"
+    snakefile: "../data/cis/Snakefile"
+
+subworkflow imfusion:
+    workdir: "../data/rnaseq_imfusion"
+    snakefile: "../data/rnaseq_imfusion/Snakefile"
+
+rule all:
+    input: "cis_sanger_results.tsv"
+
+rule hit_table:
+    input:
+        rscript = "cis_sanger.r",
+        dset = cis("cis_per_tumor.RData")
+    output:
+        table = "cis_sanger.tsv"
+    shell:
+        "Rscript {input.rscript} --infile {input.dset} --outfile {output.table}"
+
+rule cis:
+    input:
+        table = "cis_sanger.tsv",
+        reference = imfusion("STAR_GRCm38_ens92_PB")
+    output:
+        assocs = "cis_sanger_results.tsv"
+    shell:
+        "imfusion-ctg"
+            " --insertions {input.table}"
+            " --reference {input.reference}"
+            " --output {output.assocs}"
