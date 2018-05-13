@@ -7,7 +7,7 @@ subworkflow imfusion:
     snakefile: "../data/rnaseq_imfusion/Snakefile"
 
 rule all:
-    input: "cis_sanger_results.tsv"
+    input: "plot_aneup.pdf"
 
 rule hit_table:
     input:
@@ -29,3 +29,20 @@ rule cis:
             " --insertions {input.table}"
             " --reference {input.reference}"
             " --output {output.assocs}"
+
+rule plot:
+    input:
+        rscript = "plot_aneup.r",
+        insertions = "cis_sanger.tsv",
+        dna = "cis_sanger_results.tsv",
+        rna = imfusion("merged_ctgs.txt"),
+        exons = imfusion("exon_counts.txt")
+    output:
+        plot = "plot_aneup.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --insertions {input.dset}"
+            " --dna {input.dna}"
+            " --rna {input.rna}"
+            " --exons {input.exons}"
+            " --plotfile {output.plot}"
