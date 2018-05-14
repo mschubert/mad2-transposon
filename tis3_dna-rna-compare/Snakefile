@@ -10,7 +10,7 @@ genes = ['Erg', 'Ets1', 'Pten', 'Nanos3', 'Rapgef6', 'Rps3']
 
 rule all:
     input:
-        "plot_aneup.pdf",
+        "cis_tiles.pdf",
         expand("{gene}.pdf", gene=genes)
 
 rule hit_table:
@@ -34,16 +34,16 @@ rule cis:
             " --reference {input.reference}"
             " --output {output.assocs}"
 
-rule plot_aneup:
+rule plot_cis:
     input:
-        rscript = "plot_aneup.r",
+        rscript = "cis_tiles.r",
         ins_dna = "cis_sanger.tsv",
         ins_rna = imfusion("insertions.txt"),
         assocs_dna = "cis_sanger_results.tsv",
         assocs_rna = imfusion("merged_ctgs.txt"),
         exons = imfusion("exon_counts.txt")
     output:
-        plot = "plot_aneup.pdf"
+        plot = "cis_tiles.pdf"
     shell:
         "Rscript {input.rscript}"
             " --ins_dna {input.ins_dna}"
