@@ -6,7 +6,7 @@ subworkflow imfusion:
     workdir: "../data/rnaseq_imfusion"
     snakefile: "../data/rnaseq_imfusion/Snakefile"
 
-genes = ['Erg', 'Ets1', 'Pten', 'Xrcc6', 'Nanos3', 'Rapgef6', 'Rps3']
+genes = ['Erg', 'Ets1', 'Pten', 'Nanos3', 'Rapgef6', 'Rps3']
 
 rule all:
     input:
@@ -37,17 +37,19 @@ rule cis:
 rule plot_aneup:
     input:
         rscript = "plot_aneup.r",
-        insertions = "cis_sanger.tsv",
-        dna = "cis_sanger_results.tsv",
-        rna = imfusion("merged_ctgs.txt"),
+        ins_dna = "cis_sanger.tsv",
+        ins_rna = imfusion("insertions.txt"),
+        assocs_dna = "cis_sanger_results.tsv",
+        assocs_rna = imfusion("merged_ctgs.txt"),
         exons = imfusion("exon_counts.txt")
     output:
         plot = "plot_aneup.pdf"
     shell:
         "Rscript {input.rscript}"
-            " --insertions {input.insertions}"
-            " --dna {input.dna}"
-            " --rna {input.rna}"
+            " --ins_dna {input.ins_dna}"
+            " --ins_rna {input.ins_rna}"
+            " --assocs_dna {input.assocs_dna}"
+            " --assocs_rna {input.assocs_rna}"
             " --exons {input.exons}"
             " --plotfile {output.plot}"
 

@@ -15,8 +15,8 @@ sys$run({
         opt('a', 'aneuploidy', 'sample-level aneup scores', '../tis2_assoc-tryout/dset.RData'),
         opt('i', 'ins_dna', 'all DNA insertions table', 'cis_sanger.tsv'),
         opt('j', 'ins_rna', 'all RNA insertions table', '../data/rnaseq_imfusion/insertions.txt'),
-        opt('d', 'dna', 'CIS in DNA', 'cis_sanger_results.tsv'),
-        opt('r', 'rna', 'CTG in RNA', '../data/rnaseq_imfusion/merged_ctgs.txt'),
+        opt('d', 'assocs_dna', 'CIS in DNA', 'cis_sanger_results.tsv'),
+        opt('r', 'assocs_rna', 'CTG in RNA', '../data/rnaseq_imfusion/merged_ctgs.txt'),
         opt('e', 'exons', 'exon expression table', '../data/rnaseq_imfusion/exon_counts.txt'),
         opt('p', 'plotfile', 'pdf to plot to', 'plot_aneup.pdf'))
 
