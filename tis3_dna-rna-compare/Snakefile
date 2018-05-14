@@ -58,6 +58,8 @@ rule plot_insert:
         insertions = imfusion("insertions.txt")
     output:
         plot = "{gene}.pdf"
+    resources:
+        mem = 4000
     shell:
         "Rscript {input.rscript}"
             " --ctgs {input.ctgs}"
