@@ -18,7 +18,7 @@ sys$run({
         opt('d', 'assocs_dna', 'CIS in DNA', 'cis_sanger_results.tsv'),
         opt('r', 'assocs_rna', 'CTG in RNA', '../data/rnaseq_imfusion/merged_ctgs.txt'),
         opt('e', 'exons', 'exon expression table', '../data/rnaseq_imfusion/exon_counts.txt'),
-        opt('p', 'plotfile', 'pdf to plot to', 'plot_aneup.pdf'))
+        opt('p', 'plotfile', 'pdf to plot to', 'cis_tiles.pdf'))
 
     expr = io$read_table(args$exons, header=TRUE)
 
@@ -32,7 +32,7 @@ sys$run({
 #    ins_dna = io$read_table(args$ins_dna, header=TRUE)
     ins_dna = io$load(args$aneuploidy) %>%
         filter(reads >= 20) %>% select(-aneup) # has the right sample identifiers (fix?)
-    cis = io$read_table(args$ins_dna, header=TRUE)
+    cis = io$read_table(args$assocs_dna, header=TRUE)
     ks = io$load("../tis2_assoc-tryout/ks.RData")$hits %>%
         filter(ensembl_gene_id %in% cis$gene_id) %>%
         mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
@@ -55,7 +55,7 @@ sys$run({
         ggtitle("CIS min 5 samples, 20 reads")
 
     ins_rna = io$read_table(args$ins_rna, header=TRUE)
-    ctg = io$read_table(args$rna, header=TRUE) %>%
+    ctg = io$read_table(args$assocs_rna, header=TRUE) %>%
         filter(n_samples > 1)
     rna_tiles = ins_rna %>%
         transmute(sample = factor(sample, levels=grep("^[0-9]+[st]$", colnames(expr), value=TRUE)), # all RNA
@@ -85,7 +85,7 @@ sys$run({
               axis.text.y = element_blank(),
               axis.title.y = element_blank())
 
-    pdf("plot_aneup.pdf", 10, 8)
+    pdf(args$plotfile, 10, 8)
     print(left + mid + right + plot_layout(nrow=1, widths=c(3,1,3)))
     dev.off()
 

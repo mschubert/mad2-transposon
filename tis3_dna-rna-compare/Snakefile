@@ -61,7 +61,7 @@ rule plot_insert:
     output:
         plot = "{gene}.pdf"
     resources:
-        mem = 5000
+        mem = 10000
     shell:
         "Rscript {input.rscript}"
             " --ctgs {input.ctgs}"
