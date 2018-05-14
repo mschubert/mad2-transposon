@@ -1,5 +1,4 @@
 library(dplyr)
-library(plyranges)
 library(Gviz)
 options(ucscChromosomeNames=FALSE)
 b = import('base')
@@ -7,38 +6,48 @@ io = import('io')
 seq = import('seq')
 sys = import('sys')
 
-plot_alignment = function() {
-}
+args = sys$cmd$parse(
+    opt('d', 'dir', 'imfusion directory', '../data/rnaseq_imfusion'),
+    opt('c', 'ctgs', 'imfusion merged CTGs', '../data/rnaseq_imfusion/merged_ctgs.txt'),
+    opt('i', 'insertions', 'imfusion insertions', '../data/rnaseq_imfusion/insertions.txt'),
+    opt('a', 'gtf', 'assembly GTF', '../data/genome/Mus_musculus.GRCm38.92.gtf'),
+    opt('g', 'gene', 'gene name to plot', 'Erg'),
+    opt('f', 'flank', 'plot flank around gene', '10000'),
+    opt('p', 'plotfile', 'PDF to save to', 'Erg.pdf'))
 
-de_ctgs = io$read_table("../data/rnaseq_imfusion/merged_ctgs.txt", header=TRUE)
-ins = io$read_table("../data/rnaseq_imfusion/insertions.txt", header=TRUE)
+args$flank = as.integer(args$flank)
+de_ctgs = io$read_table(args$ctgs, header=TRUE)
+ins = io$read_table(args$insertions, header=TRUE)
 
-sjs = list.files("../data/rnaseq_imfusion", "SJ.out.tab", recursive=TRUE, full.names=TRUE)
+sjs = list.files(args$dir, "SJ.out.tab", recursive=TRUE, full.names=TRUE)
 sjs = sjs[!grepl("_STARpass1", sjs)]
 names(sjs) = b$grep("/([0-9]{3}[st])/", sjs)
 
-bams = list.files("../data/rnaseq_imfusion", "alignment.bam", recursive=TRUE, full.names=TRUE)
+bams = list.files(args$dir, "alignment.bam", recursive=TRUE, full.names=TRUE)
 names(bams) = b$grep("/([0-9]{3}[st])/", bams)
 
-sample = "442s"
-insertion = "INS_4"
-
-ins_id = paste(sample, insertion, sep=".")
-ci = filter(ins, id==ins_id)
 # can also import GTF via rtracklayer
-txdb = GenomicFeatures::makeTxDbFromGFF("../data/genome/Mus_musculus.GRCm38.92.gtf", format="gtf")
-grtrack = GeneRegionTrack(txdb, name=ci$gene_name)
+txdb = GenomicFeatures::makeTxDbFromGFF(args$gtf, format="gtf")
+grtrack = GeneRegionTrack(txdb, name=args$gene)
 gtrack = GenomeAxisTrack(name="GRCm38.92")
-altrack = AlignmentsTrack(bams[sample], type=c("coverage","sashimi"), name="RNA-seq")
-region = filter(genes, external_gene_name == "Erg")
+region = filter(genes, external_gene_name == args$gene)
 
-at = AnnotationTrack(start=ci$position, width=10000, chromosome=ci$seqname,
-                     strand=ci$strand, genome="GRCm38", name="PB")
+sample_with_ins = ins %>%
+    filter(gene_name==args$gene) %>%
+    pull(sample) %>%
+    unique()
 
-plotTracks(list(gtrack, grtrack, at, altrack),
-           from=start(region), to=end(region), chromosome=seqnames(region),
-           extend.right=10000, extend.left=10000,
-           sizes=c(1,2,1,4), cex.main=1,
-           main=with(ci, sprintf("%s: %s @ %s", id, feature_type, gene_name)))
+pdf(args$plotfile)
+for (sample_id in sample_with_ins) {
+    altrack = AlignmentsTrack(bams[sample_id], type=c("coverage","sashimi"), name="RNA-seq")
+    ci = filter(ins, sample==sample_id & gene_name==args$gene)
+    at = AnnotationTrack(start=ci$position, width=10000, chromosome=unique(ci$seqname),
+                         strand=ci$strand, genome="GRCm38", name="PB")
 
-
+    plotTracks(list(gtrack, grtrack, at, altrack),
+               from=start(region), to=end(region), chromosome=seqnames(region),
+               extend.right=args$flank, extend.left=args$flank,
+               sizes=c(1,2,1,4), cex.main=1,
+               main=with(ci, sprintf("%s: %s @ %s", id, feature_type, gene_name)))
+}
+dev.off()
