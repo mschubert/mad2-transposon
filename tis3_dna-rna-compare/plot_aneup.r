@@ -32,7 +32,7 @@ sys$run({
 #    ins_dna = io$read_table(args$ins_dna, header=TRUE)
     ins_dna = io$load(args$aneuploidy) %>%
         filter(reads >= 20) %>% select(-aneup) # has the right sample identifiers (fix?)
-    cis = io$read_table(args$dna, header=TRUE)
+    cis = io$read_table(args$ins_dna, header=TRUE)
     ks = io$load("../tis2_assoc-tryout/ks.RData")$hits %>%
         filter(ensembl_gene_id %in% cis$gene_id) %>%
         mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
