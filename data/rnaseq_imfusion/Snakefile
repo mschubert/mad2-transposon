@@ -92,6 +92,8 @@ rule merge:
         expression = "exon_counts.txt"
     params:
         samples = list(Mad2PB['samples'].keys())
+    resources:
+        mem = 10240
     shell:
         "imfusion-merge"
             " --sample_dirs {params.samples}"

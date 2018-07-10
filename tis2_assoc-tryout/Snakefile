@@ -1,3 +1,11 @@
+subworkflow ploidy_compare:
+    workdir: "../ploidy_compare"
+    snakefile: "../ploidy_compare/Snakefile"
+
+subworkflow data_cis:
+    workdir: "../data/cis"
+    snakefile: "../data/cis/Snakefile"
+
 models = ['logit', 'logit-adjNins', 'betareg', 'betareg_1clonal', 'betareg_adjNreads', 'betareg_1adjNreads',
           'lm', 'lm_1clonal', 'gamma', 'gamma_adjNins', 'gamma2', 'gamma3', 'ks']
 types = ['hits', 'hits_cancer', 'near', 'near_cancer']
@@ -9,7 +17,9 @@ rule all:
 
 rule dset:
     input:
-        rscript = "dset_merge.r"
+        rscript = "dset_merge.r",
+        ploidy = ploidy_compare("compare_ploidy.tsv"),
+        cis = data_cis("cis_per_tumor.RData")
     output:
         dset = "dset.RData"
     shell:

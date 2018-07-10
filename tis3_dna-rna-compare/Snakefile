@@ -6,6 +6,10 @@ subworkflow imfusion:
     workdir: "../data/rnaseq_imfusion"
     snakefile: "../data/rnaseq_imfusion/Snakefile"
 
+subworkflow tis2:
+    workdir: "../tis2_assoc-tryout"
+    snakefile: "../tis2_assoc-tryout/Snakefile"
+
 genes = ['Erg', 'Ets1', 'Pten', 'Nanos3', 'Rapgef6', 'Rps3']
 
 rule all:
@@ -41,7 +45,8 @@ rule plot_cis:
         ins_rna = imfusion("insertions.txt"),
         assocs_dna = "cis_sanger_results.tsv",
         assocs_rna = imfusion("merged_ctgs.txt"),
-        exons = imfusion("exon_counts.txt")
+        exons = imfusion("exon_counts.txt"),
+        aneuploidy = tis2("dset.RData")
     output:
         plot = "cis_tiles.pdf"
     shell:
@@ -51,6 +56,7 @@ rule plot_cis:
             " --assocs_dna {input.assocs_dna}"
             " --assocs_rna {input.assocs_rna}"
             " --exons {input.exons}"
+            " --aneuploidy {input.aneuploidy}"
             " --plotfile {output.plot}"
 
 rule plot_insert:
