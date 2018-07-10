@@ -60,6 +60,7 @@ rule align:
 rule count:
     input:
         gtf = "../genome/Mus_musculus.GRCm38.92.gtf",
+        samples = "{set}.yaml",
         bams = lambda wc: expand("aligned/{sset}/{samples}.bam",
                 sset=wc.set, samples=samples[wc.set]['samples'].keys())
     output:
@@ -102,6 +103,7 @@ rule mixcr:
 rule mixcr_combine:
     input:
         rscript = "mixcr.r",
+        samples = "{sset}.yaml",
         mixcr = lambda wc: expand("mixcr/{sset}/{sample}.txt",
                 sset=wc.sset, sample=samples[wc.sset]['samples'].keys())
     output:
