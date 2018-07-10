@@ -15,7 +15,8 @@ read_one = function(fname) {
                                 seq_along(na.omit(flank[6:10]))))
     }
 
-    cis = readxl::read_xls(fname)[-1,] %>%
+    cis = readxl::read_xls(fname)[-2,] %>%
+        filter(`Tumour ID` != "tumourid") %>%
         transmute(sample = `Tumour ID` %>%
                       sub("PB[0-9]+", "", .) %>%
                       gsub("[^A-Za-z0-9]", "", .) %>%
@@ -32,10 +33,13 @@ read_one = function(fname) {
                   assembly = `Assembly Version`,
                   reads = ifelse(`Transposon End` == "3P",
                                  as.integer(`Coverage 3'-end`),
-                                 as.integer(`Coverage 5'-end`)))
+                                 as.integer(`Coverage 5'-end`))) %>%
+        filter(sample != "tumourid")
 }
 
-files = list.files("cis_per_tumor", full.names=TRUE)
+files1 = list.files("cis_per_tumor", full.names=TRUE)
+files2 = list.files("TraDIS_IS_180622/COMBI_CHROMOSOME_mincov20_xls", full.names=TRUE)
+files = c(files1, files2)
 nested = lapply(files, read_one) %>%
     dplyr::bind_rows() %>%
     group_by(sample) %>%
