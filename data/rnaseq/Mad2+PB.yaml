@@ -197,7 +197,7 @@ samples:
     470s:
         - 180706_NB501840_0090_AHYG7TBGX5/Petra_pool1_180706/32_470-S_S33_R1_001.fastq.gz
         - 180706_NB501840_0090_AHYG7TBGX5/Petra_pool1_180706/32_470-S_S33_R2_001.fastq.gz
-    184t:
+    184t.2:
         - 180706_NB501840_0090_AHYG7TBGX5/Petra_pool1_180706/33_184-T_S32_R1_001.fastq.gz
         - 180706_NB501840_0090_AHYG7TBGX5/Petra_pool1_180706/33_184-T_S32_R2_001.fastq.gz
     421s: # <<<< ----- >>>>>
@@ -263,7 +263,7 @@ samples:
     601s:
         - 180709_NB501840_0091_AH3MFHBGX7/Petra_pool2_180706/21_601-S_S21_R1_001.fastq.gz
         - 180709_NB501840_0091_AH3MFHBGX7/Petra_pool2_180706/21_601-S_S21_R2_001.fastq.gz
-    437s:
+    437s.2:
         - 180709_NB501840_0091_AH3MFHBGX7/Petra_pool2_180706/22_437-S_S22_R1_001.fastq.gz
         - 180709_NB501840_0091_AH3MFHBGX7/Petra_pool2_180706/22_437-S_S22_R2_001.fastq.gz
     631s:
