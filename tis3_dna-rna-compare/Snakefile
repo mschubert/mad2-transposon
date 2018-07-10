@@ -10,7 +10,7 @@ subworkflow tis2:
     workdir: "../tis2_assoc-tryout"
     snakefile: "../tis2_assoc-tryout/Snakefile"
 
-genes = ['Erg', 'Ets1', 'Pten', 'Nanos3', 'Rapgef6', 'Rps3']
+genes = ['Erg', 'Ets1', 'Pten', 'Nanos3', 'Rapgef6', 'Rps3', 'Notch1']
 
 rule all:
     input:

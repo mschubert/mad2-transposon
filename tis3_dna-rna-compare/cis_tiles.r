@@ -85,8 +85,8 @@ sys$run({
               axis.text.y = element_blank(),
               axis.title.y = element_blank())
 
-    pdf(args$plotfile, 10, 8)
-    print(left + mid + right + plot_layout(nrow=1, widths=c(3,1,3)))
+    pdf(args$plotfile, 12, 11)
+    print(left + mid + right + plot_layout(nrow=1, widths=c(3,2.5,2.5)))
     dev.off()
 
 })
