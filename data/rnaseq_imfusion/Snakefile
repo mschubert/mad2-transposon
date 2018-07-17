@@ -84,6 +84,7 @@ rule expression:
 
 rule merge:
     input:
+        samples = "../rnaseq/Mad2+PB.yaml",
         reference = "STAR_GRCm38_ens92_PB",
         insertions = expand("{sample}/insertions.txt", sample=Mad2PB['samples'].keys()),
         expression = expand("{sample}/expression.txt", sample=Mad2PB['samples'].keys())
@@ -102,6 +103,7 @@ rule merge:
 
 rule call_ctgs:
     input:
+        samples = "../rnaseq/Mad2+PB.yaml",
         insertions = "insertions.txt",
         expression = "exon_counts.txt"
     output:
