@@ -65,6 +65,9 @@ rule count:
                 sset=wc.set, samples=samples[wc.set]['samples'].keys())
     output:
         counts = "{set}.tsv"
+    resources:
+        mem = 2000,
+        walltime = 120
     shell:
         "featureCounts"
             " -a {input.gtf}"
