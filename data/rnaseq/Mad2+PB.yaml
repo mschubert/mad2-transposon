@@ -200,7 +200,8 @@ samples:
     184t.2:
         - 180706_NB501840_0090_AHYG7TBGX5/Petra_pool1_180706/33_184-T_S32_R1_001.fastq.gz
         - 180706_NB501840_0090_AHYG7TBGX5/Petra_pool1_180706/33_184-T_S32_R2_001.fastq.gz
-    421s: # <<<< ----- >>>>>
+    # <<<< ----- >>>>>
+    421s:
         - 180709_NB501840_0091_AH3MFHBGX7/Petra_pool2_180706/1_421-S_S1_R1_001.fastq.gz
         - 180709_NB501840_0091_AH3MFHBGX7/Petra_pool2_180706/1_421-S_S1_R2_001.fastq.gz
     456t:
