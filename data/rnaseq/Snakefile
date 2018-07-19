@@ -7,7 +7,8 @@ def load_yaml(fname):
             for k,v in sset['samples'].items() }
     return sset
 
-ssets = ['Mad2+PB', 'Mad2+p53']
+ssets = ['Mad2+PB_batch1', 'Mad2+PB_batch2', 'Mad2+PB_batch3',
+         'Mad2+p53_batch1', 'Mad2+p53_batch2']
 samples = { sset:load_yaml(sset+".yaml") for sset in ssets }
 
 rule all:

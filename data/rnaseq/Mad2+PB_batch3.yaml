@@ -1,0 +1,31 @@
+# Mad2-Lx-Cre + PiggyBac
+# BioScientific kit, poly-A selection, 32 samples (but no eT control)
+assembly: GRCm38
+paired_end: FALSE
+directory: seqdata/180709_NB501840_0091_AH3MFHBGX7/Petra_pool2_180706
+
+samples:
+    421s: [ 1_421-S_S1_R1_001.fastq.gz, 1_421-S_S1_R2_001.fastq.gz ]
+    456t: [ 2_456-T_S2_R1_001.fastq.gz, 2_456-T_S2_R2_001.fastq.gz ]
+    474s: [ 3_474-S_S3_R1_001.fastq.gz, 3_474-S_S3_R2_001.fastq.gz ]
+    485s: [ 4_485-S_S4_R1_001.fastq.gz, 4_485-S_S4_R2_001.fastq.gz ]
+    425s: [ 5_425-S_S5_R1_001.fastq.gz, 5_425-S_S5_R2_001.fastq.gz ]
+    443s: [ 6_443-S_S6_R1_001.fastq.gz, 6_443-S_S6_R2_001.fastq.gz ]
+    618s: [ 7_618-S_S7_R1_001.fastq.gz, 7_618-S_S7_R2_001.fastq.gz ]
+    624s: [ 8_624-S_S8_R1_001.fastq.gz, 8_624-S_S8_R2_001.fastq.gz ]
+    449s: [ 9_449-S_S9_R1_001.fastq.gz, 9_449-S_S9_R2_001.fastq.gz ]
+    628s: [ 10_628-S_S10_R1_001.fastq.gz, 10_628-S_S10_R2_001.fastq.gz ]
+    629s: [ 11_629-S_S11_R1_001.fastq.gz, 11_629-S_S11_R2_001.fastq.gz ]
+    630s: [ 12_630-S_S12_R1_001.fastq.gz, 12_630-S_S12_R2_001.fastq.gz ]
+    632s: [ 13_632-S_S13_R1_001.fastq.gz, 13_632-S_S13_R2_001.fastq.gz ]
+    158t: [ 14_158-T_S14_R1_001.fastq.gz, 14_158-T_S14_R2_001.fastq.gz ]
+    257t: [ 15_257-T_S15_R1_001.fastq.gz, 15_257-T_S15_R2_001.fastq.gz ]
+    260t: [ 16_260-T_S16_R1_001.fastq.gz, 16_260-T_S16_R2_001.fastq.gz ]
+    386t: [ 17_386-T_S17_R1_001.fastq.gz, 17_386-T_S17_R2_001.fastq.gz ]
+    388t: [ 18_388-T_S18_R1_001.fastq.gz, 18_388-T_S18_R2_001.fastq.gz ]
+    180s: [ 19_180-S_S19_R1_001.fastq.gz, 19_180-S_S19_R2_001.fastq.gz ]
+    488s: [ 20_488-S_S20_R1_001.fastq.gz, 20_488-S_S20_R2_001.fastq.gz ]
+    601s: [ 21_601-S_S21_R1_001.fastq.gz, 21_601-S_S21_R2_001.fastq.gz ]
+    437s.b3: [ 22_437-S_S22_R1_001.fastq.gz, 22_437-S_S22_R2_001.fastq.gz ]
+    631s: [ 23_631-S_S23_R1_001.fastq.gz, 23_631-S_S23_R2_001.fastq.gz ]
+    212s: [ 24_212-S_S24_R1_001.fastq.gz, 24_212-S_S24_R2_001.fastq.gz ]

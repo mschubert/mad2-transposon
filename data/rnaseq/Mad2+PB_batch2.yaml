@@ -1,0 +1,40 @@
+# Mad2-Lx-Cre + PiggyBac
+# BioScientific kit, poly-A selection, 32 samples (but no eT control)
+assembly: GRCm38
+paired_end: FALSE
+directory: seqdata/180706_NB501840_0090_AHYG7TBGX5/Petra_pool1_180706
+
+samples:
+    155s: [ 1_155-S_S1_R1_001.fastq.gz, 1_155-S_S1_R2_001.fastq.gz ]
+    402s: [ 2_402-S_S2_R1_001.fastq.gz, 2_402-S_S2_R2_001.fastq.gz ]
+    602t: [ 3_602-T_S3_R1_001.fastq.gz, 3_602-T_S3_R2_001.fastq.gz ]
+    603t: [ 4_603-S_S4_R1_001.fastq.gz, 4_603-S_S4_R2_001.fastq.gz ]
+    605s: [ 5_605-S_S5_R1_001.fastq.gz, 5_605-S_S5_R2_001.fastq.gz ]
+    405s: [ 6_405-S_S6_R1_001.fastq.gz, 6_405-S_S6_R2_001.fastq.gz ]
+    406s: [ 7_406-S_S7_R1_001.fastq.gz, 7_406-S_S7_R2_001.fastq.gz ]
+    410s: [ 8_410-S_S8_R1_001.fastq.gz, 8_410-S_S8_R2_001.fastq.gz ]
+    423t: [ 9_423-T_S9_R1_001.fastq.gz, 9_423-T_S9_R2_001.fastq.gz ]
+    606s: [ 10_606-S_S10_R1_001.fastq.gz, 10_606-S_S10_R2_001.fastq.gz ]
+    607t: [ 11_607-T_S11_R1_001.fastq.gz, 11_607-T_S11_R2_001.fastq.gz ]
+    609s: [ 12_609-S_S12_R1_001.fastq.gz, 12_609-S_S12_R2_001.fastq.gz ]
+    612t: [ 13_612-T_S13_R1_001.fastq.gz, 13_612-T_S13_R2_001.fastq.gz ]
+    613t: [ 14_613-T_S14_R1_001.fastq.gz, 14_613-T_S14_R2_001.fastq.gz ]
+    432s: [ 15_432-S_S15_R1_001.fastq.gz, 15_432-S_S15_R2_001.fastq.gz ]
+    440s: [ 16_440-S_S16_R1_001.fastq.gz, 16_440-S_S16_R2_001.fastq.gz ]
+    444s: [ 17_444-S_S17_R1_001.fastq.gz, 17_444-S_S17_R2_001.fastq.gz ]
+    446s: [ 18_446-S_S18_R1_001.fastq.gz, 18_446-S_S18_R2_001.fastq.gz ]
+    617s: [ 19_617-S_S19_R1_001.fastq.gz, 19_617-S_S19_R2_001.fastq.gz ]
+    620s: [ 20_620-S_S20_R1_001.fastq.gz, 20_620-S_S20_R2_001.fastq.gz ]
+    447s: [ 21_447-S_S21_R1_001.fastq.gz, 21_447-S_S21_R2_001.fastq.gz ]
+    467s: [ 22_467-S_S22_R1_001.fastq.gz, 22_467-S_S22_R2_001.fastq.gz ]
+    622s: [ 23_622-S_S23_R1_001.fastq.gz, 23_622-S_S23_R2_001.fastq.gz ]
+    627s: [ 24_627-S_S24_R1_001.fastq.gz, 24_627-S_S24_R2_001.fastq.gz ]
+    473s: [ 25_473-S_S25_R1_001.fastq.gz, 25_473-S_S25_R2_001.fastq.gz ]
+    481s: [ 26_481-S_S26_R1_001.fastq.gz, 26_481-S_S26_R2_001.fastq.gz ]
+    403t: [ 27_403-T_S27_R1_001.fastq.gz, 27_403-T_S27_R2_001.fastq.gz ]
+    604s: [ 28_604-S_S28_R1_001.fastq.gz, 28_604-S_S28_R2_001.fastq.gz ]
+    615s: [ 29_615-S_S29_R1_001.fastq.gz, 29_615-S_S29_R2_001.fastq.gz ]
+    619s: [ 30_619-S_S30_R1_001.fastq.gz, 30_619-S_S30_R2_001.fastq.gz ]
+    461s: [ 31_461-S_S31_R1_001.fastq.gz, 31_461-S_S31_R2_001.fastq.gz ]
+#    470s: [ 32_470-S_S33_R1_001.fastq.gz, 32_470-S_S33_R2_001.fastq.gz ] # 177 reads total, discard
+    184t.b2: [ 33_184-T_S32_R1_001.fastq.gz, 33_184-T_S32_R2_001.fastq.gz ]
