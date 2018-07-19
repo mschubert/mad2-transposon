@@ -37,7 +37,19 @@ sys$run({
         opt('o', 'outfile', 'save results to .RData', 'merge_rnaseq.RData'),
         opt('p', 'plotfile', 'qc plot pdf', 'merge_rnaseq.pdf'))
 
-    stats = io$read_table(args$stats)
+    stats = io$read_table(args$stats, header=TRUE)
+    colnames(stats) = tools::file_path_sans_ext(basename(colnames(stats)))
+    stats = stats %>%
+        tidyr::gather("sample", "reads", -Status) %>%
+        filter(reads != 0) %>%
+        mutate(sample = factor(sample),
+               Status = factor(Status, levels=rev(unique(sort(Status)))))
+    p = ggplot(stats, aes(x=reorder(sample, -reads, sum), y=reads, fill=Status)) +
+        geom_bar(stat="identity") +
+        labs(x = "sample",
+             title = sprintf("%.2f M reads total", sum(stats$reads)/1e6)) +
+        theme(axis.text.x = element_text(angle=45, hjust=1))
+
     edf = io$read_table(args$infile, header=TRUE, skip=1)
     counts = data.matrix(edf[,-(1:6)])
     colnames(counts) = tools::file_path_sans_ext(basename(colnames(counts)))
@@ -57,6 +69,7 @@ sys$run({
     expr = rnaseq$vst(counts)
 
     pdf(args$plotfile, width=10, height=8)
+    print(p)
     print(plot_pca(expr, idx))
     print(plot_tsne(expr, idx))
     dev.off()
