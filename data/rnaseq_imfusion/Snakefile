@@ -5,11 +5,15 @@ import os.path
 
 def load_yaml(fname):
     sset = yaml.load(open(fname))
-    sset['samples'] = { k:[os.path.join(os.path.dirname(fname), sset['directory'], vi)
+    samples = { k:[os.path.join(os.path.dirname(fname), sset['directory'], vi)
         for vi in v] for k,v in sset['samples'].items() }
-    return sset
+    return samples
 
-Mad2PB = load_yaml("../rnaseq/Mad2+PB.yaml")
+Mad2PB = {
+    **load_yaml("../rnaseq/Mad2+PB_batch1.yaml"),
+    **load_yaml("../rnaseq/Mad2+PB_batch2.yaml"),
+    **load_yaml("../rnaseq/Mad2+PB_batch3.yaml")
+}
 
 rule all:
     input:
@@ -54,7 +58,7 @@ rule combined_ref:
 rule detect_insertions:
     input:
         reference = "STAR_GRCm38_ens92_PB",
-        fastq = lambda wc: Mad2PB['samples'][wc.sample]
+        fastq = lambda wc: Mad2PB[wc.sample]
     output:
         insertion = "{sample}/insertions.txt"
     resources:
@@ -70,7 +74,7 @@ rule detect_insertions:
 rule expression:
     input:
         reference = "STAR_GRCm38_ens92_PB",
-        fastq = lambda wc: Mad2PB['samples'][wc.sample],
+        fastq = lambda wc: Mad2PB[wc.sample],
         insertion = "{sample}/insertions.txt"
     output:
         merged = "{sample}/expression.txt"
@@ -86,13 +90,13 @@ rule merge:
     input:
         samples = "../rnaseq/Mad2+PB.yaml",
         reference = "STAR_GRCm38_ens92_PB",
-        insertions = expand("{sample}/insertions.txt", sample=Mad2PB['samples'].keys()),
-        expression = expand("{sample}/expression.txt", sample=Mad2PB['samples'].keys())
+        insertions = expand("{sample}/insertions.txt", sample=Mad2PB.keys()),
+        expression = expand("{sample}/expression.txt", sample=Mad2PB.keys())
     output:
         insertions = "insertions.txt",
         expression = "exon_counts.txt"
     params:
-        samples = list(Mad2PB['samples'].keys())
+        samples = list(Mad2PB.keys())
     resources:
         mem = 10240
     shell:
