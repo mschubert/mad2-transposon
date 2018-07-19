@@ -1,5 +1,6 @@
 library(dplyr)
 library(ggrepel)
+b = import('base')
 io = import('io')
 sys = import('sys')
 plt = import('plot')
@@ -8,7 +9,7 @@ rnaseq = import('process/rna-seq')
 #' do PCA/dim reduction plots to see how they cluster
 plot_pca = function(expr, idx) {
     pca = prcomp(t(expr), scale=FALSE)
-    p1 = ggplot(cbind(idx, pca$x), aes(x=PC1, y=PC2, color=type)) +
+    p1 = ggplot(cbind(idx, pca$x), aes(x=PC1, y=PC2, color=tissue, shape=type)) +
         geom_point(size=5) +
         geom_text_repel(aes(label=sample), color="black") +
         labs(x = sprintf("PC1 (%.1f%%)", summary(pca)$importance[2,1]*100),
@@ -20,7 +21,7 @@ plot_pca = function(expr, idx) {
 plot_tsne = function(expr, idx) {
     tsne = Rtsne::Rtsne(t(expr), perplexity=5)
     p2 = cbind(idx, x=tsne$Y[,1], y=tsne$Y[,2]) %>%
-        ggplot(aes(x=x, y=y, color=type)) +
+        ggplot(aes(x=x, y=y, color=tissue, shape=type)) +
         geom_point(size=5) +
         geom_text_repel(aes(label=sample), color="black") +
         labs(x = "tsne 1",
@@ -49,7 +50,8 @@ sys$run({
         mutate(tissue = tolower(gsub("[^ST]", "", tissue)),
                tissue = sapply(tissue, strsplit, split=NULL)) %>%
         tidyr::unnest() %>%
-        mutate(sample = paste0(hist_nr, tissue))
+        mutate(type = sapply(type, function(t) b$grep("^([[:alnum:]]+ [[:alnum:]]+)", t)),
+               sample = paste0(hist_nr, tissue))
 
     narray::intersect(idx$sample, counts, along=2)
     expr = rnaseq$vst(counts)
