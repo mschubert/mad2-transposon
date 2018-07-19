@@ -13,14 +13,19 @@ samples = { sset:load_yaml(sset+".yaml") for sset in ssets }
 
 rule all:
     input:
-        expand("{sset}.tsv", sset=ssets),
+        expand("merge_rnaseq.RData", sset=ssets),
         expand("mixcr_{sset}.tsv", sset=ssets)
 
-rule FAKE_REMOVE:
+rule merge_rnaseq:
+    input:
+        rscript = "merge_rnaseq.r",
+        samples = expand("{sset}.tsv", sset=ssets)
     output:
-        "assemble.RData"
+        expr = "merge_rnaseq.RData"
     shell:
-        ""
+        "Rscript {input.rscript}"
+            " -o {output.expr}"
+            " {input.samples}"
 
 rule star_genome:
     input:
