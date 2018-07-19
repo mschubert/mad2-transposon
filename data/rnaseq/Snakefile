@@ -16,16 +16,20 @@ rule all:
         expand("merge_rnaseq.RData", sset=ssets),
         expand("mixcr_{sset}.tsv", sset=ssets)
 
-rule merge_rnaseq:
+rule qc_rnaseq:
     input:
-        rscript = "merge_rnaseq.r",
-        samples = expand("{sset}.tsv", sset=ssets)
+        rscript = "qc_rnaseq.r",
+        counts = "{sset}.tsv",
+        stats = "{sset}.tsv.summary"
     output:
-        expr = "merge_rnaseq.RData"
+        expr = "{sset}.RData",
+        plot = "{sset}.pdf"
     shell:
         "Rscript {input.rscript}"
-            " -o {output.expr}"
-            " {input.samples}"
+            " --infile {input.counts}"
+            " --stats {input.stats}"
+            " --outfile {output.expr}"
+            " --plotfile {output.plot}"
 
 rule star_genome:
     input:
