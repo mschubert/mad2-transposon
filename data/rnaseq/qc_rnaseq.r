@@ -19,7 +19,7 @@ plot_pca = function(expr, idx) {
 
 #' same for tsne
 plot_tsne = function(expr, idx) {
-    tsne = Rtsne::Rtsne(t(expr), perplexity=5)
+    tsne = Rtsne::Rtsne(t(expr), perplexity=round(ncol(expr)/3)-1)
     p2 = cbind(idx, x=tsne$Y[,1], y=tsne$Y[,2]) %>%
         ggplot(aes(x=x, y=y, color=tissue, shape=type)) +
         geom_point(size=5) +
@@ -50,7 +50,7 @@ sys$run({
         mutate(tissue = tolower(gsub("[^ST]", "", tissue)),
                tissue = sapply(tissue, strsplit, split=NULL)) %>%
         tidyr::unnest() %>%
-        mutate(type = sapply(type, function(t) b$grep("^([[:alnum:]]+ [[:alnum:]]+)", t)),
+        mutate(type = sapply(type, function(t) b$grep("^([[^ ^/]]+ [[^ ^/]]+)", t)),
                sample = paste0(hist_nr, tissue))
 
     narray::intersect(idx$sample, counts, along=2)
