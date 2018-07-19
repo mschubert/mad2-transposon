@@ -46,8 +46,11 @@ sys$run({
                Status = factor(Status, levels=rev(unique(sort(Status)))))
     p = ggplot(stats, aes(x=reorder(sample, -reads, sum), y=reads, fill=Status)) +
         geom_bar(stat="identity") +
+        geom_hline(yintercept=5e6, linetype="dashed") +
         labs(x = "sample",
-             title = sprintf("%.2f M reads total", sum(stats$reads)/1e6)) +
+             title = sprintf("%.2f M reads total (avg %.2f M per sample)",
+                             sum(stats$reads)/1e6,
+                             sum(stats$reads)/1e6/length(unique(stats$sample)))) +
         theme(axis.text.x = element_text(angle=45, hjust=1))
 
     edf = io$read_table(args$infile, header=TRUE, skip=1)
