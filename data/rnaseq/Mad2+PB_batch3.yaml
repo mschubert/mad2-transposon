@@ -26,6 +26,6 @@ samples:
     180s: [ 19_180-S_S19_R1_001.fastq.gz, 19_180-S_S19_R2_001.fastq.gz ]
     488s: [ 20_488-S_S20_R1_001.fastq.gz, 20_488-S_S20_R2_001.fastq.gz ]
     601s: [ 21_601-S_S21_R1_001.fastq.gz, 21_601-S_S21_R2_001.fastq.gz ]
-    437s.b3: [ 22_437-S_S22_R1_001.fastq.gz, 22_437-S_S22_R2_001.fastq.gz ]
+    437s: [ 22_437-S_S22_R1_001.fastq.gz, 22_437-S_S22_R2_001.fastq.gz ] # ctl
     631s: [ 23_631-S_S23_R1_001.fastq.gz, 23_631-S_S23_R2_001.fastq.gz ]
     212s: [ 24_212-S_S24_R1_001.fastq.gz, 24_212-S_S24_R2_001.fastq.gz ]

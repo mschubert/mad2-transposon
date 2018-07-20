@@ -37,4 +37,4 @@ samples:
     619s: [ 30_619-S_S30_R1_001.fastq.gz, 30_619-S_S30_R2_001.fastq.gz ]
     461s: [ 31_461-S_S31_R1_001.fastq.gz, 31_461-S_S31_R2_001.fastq.gz ]
 #    470s: [ 32_470-S_S33_R1_001.fastq.gz, 32_470-S_S33_R2_001.fastq.gz ] # 177 reads total, discard
-    184t.b2: [ 33_184-T_S32_R1_001.fastq.gz, 33_184-T_S32_R2_001.fastq.gz ]
+    184t: [ 33_184-T_S32_R1_001.fastq.gz, 33_184-T_S32_R2_001.fastq.gz ] # ctl

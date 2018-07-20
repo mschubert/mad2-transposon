@@ -13,8 +13,17 @@ samples = { sset:load_yaml(sset+".yaml") for sset in ssets }
 
 rule all:
     input:
-        expand("merge_rnaseq.RData", sset=ssets),
+        "assemble.RData",
         expand("mixcr_{sset}.tsv", sset=ssets)
+
+rule assemble_rnaseq:
+    input:
+        rscript = "assemble.r",
+        expr = expand("{sset}.RData", sset=ssets[0:3]) #TODO: meta for qc
+    output:
+        merged = "assemble.RData"
+    shell:
+        "Rscript {input.rscript}"
 
 rule qc_rnaseq:
     input:
