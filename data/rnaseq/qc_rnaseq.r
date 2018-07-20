@@ -1,5 +1,6 @@
 library(dplyr)
 library(ggrepel)
+library(RColorBrewer)
 b = import('base')
 io = import('io')
 sys = import('sys')
@@ -29,15 +30,8 @@ plot_tsne = function(expr, idx) {
              title = "T-SNE plot (non-linear)")
 }
 
-sys$run({
-    args = sys$cmd$parse(
-        opt('i', 'infile', 'read count tsv', 'Mad2+PB_batch3.tsv'),
-        opt('s', 'stats', 'STAR summary file', 'Mad2+PB_batch3.tsv.summary'),
-        opt('m', 'meta', 'sample metadata', '../meta/180620 Overview table mice transposon screen.tsv'),
-        opt('o', 'outfile', 'save results to .RData', 'merge_rnaseq.RData'),
-        opt('p', 'plotfile', 'qc plot pdf', 'merge_rnaseq.pdf'))
-
-    stats = io$read_table(args$stats, header=TRUE)
+#' Plot read count statistics
+plot_stats = function(stats) {
     colnames(stats) = tools::file_path_sans_ext(basename(colnames(stats)))
     stats = stats %>%
         tidyr::gather("sample", "reads", -Status) %>%
@@ -52,6 +46,17 @@ sys$run({
                              sum(stats$reads)/1e6,
                              sum(stats$reads)/1e6/length(unique(stats$sample)))) +
         theme(axis.text.x = element_text(angle=45, hjust=1))
+}
+
+sys$run({
+    args = sys$cmd$parse(
+        opt('i', 'infile', 'read count tsv', 'Mad2+PB_batch3.tsv'),
+        opt('s', 'stats', 'STAR summary file', 'Mad2+PB_batch3.tsv.summary'),
+        opt('m', 'meta', 'sample metadata', '../meta/180620 Overview table mice transposon screen.tsv'),
+        opt('o', 'outfile', 'save results to .RData', 'merge_rnaseq.RData'),
+        opt('p', 'plotfile', 'qc plot pdf', 'merge_rnaseq.pdf'))
+
+    stats = io$read_table(args$stats, header=TRUE)
 
     edf = io$read_table(args$infile, header=TRUE, skip=1)
     counts = data.matrix(edf[,-(1:6)])
@@ -70,9 +75,11 @@ sys$run({
 
     narray::intersect(idx$sample, counts, along=2)
     expr = rnaseq$vst(counts)
+    dd = as.matrix(dist(t(expr)))
 
     pdf(args$plotfile, width=10, height=8)
-    print(p)
+    print(plot_stats(stats))
+    pheatmap::pheatmap(dd, col=colorRampPalette(rev(brewer.pal(9, "Blues")))(255))
     print(plot_pca(expr, idx))
     print(plot_tsne(expr, idx))
     dev.off()
