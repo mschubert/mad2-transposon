@@ -13,7 +13,8 @@ samples = { sset:load_yaml(sset+".yaml") for sset in ssets }
 
 rule all:
     input:
-        "assemble.RData",
+#        "assemble.RData",
+        expand("{sset}.RData", sset=ssets[0:3]),
         expand("mixcr_{sset}.tsv", sset=ssets)
 
 rule assemble_rnaseq:
@@ -42,7 +43,7 @@ rule qc_rnaseq:
 
 rule star_genome:
     input:
-        fasta = "../genome/Mus_musculus.GRCm38.dna_rm.toplevel.fa",
+        fasta = "../genome/Mus_musculus.GRCm38.dna.primary_assembly.fa",
         gtf = "../genome/Mus_musculus.GRCm38.92.gtf"
     output:
         genome = "STAR_GRCm38_ens92"

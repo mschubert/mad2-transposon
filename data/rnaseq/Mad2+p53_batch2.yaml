@@ -2,7 +2,7 @@
 # BioScientific kit, poly-A selection; do not need aneuploidy for T-ALL
 # eTs are Msh -/-
 assembly: GRCm38
-paired_end: FALSE
+paired_end: TRUE
 directory: seqdata/170720_NB501840_0029_AH7CYLBGX3/petralib
 
 samples:

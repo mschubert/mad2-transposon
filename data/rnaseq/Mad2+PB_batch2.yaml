@@ -1,7 +1,7 @@
 # Mad2-Lx-Cre + PiggyBac
 # BioScientific kit, poly-A selection, 32 samples (but no eT control)
 assembly: GRCm38
-paired_end: FALSE
+paired_end: TRUE
 directory: seqdata/180706_NB501840_0090_AHYG7TBGX5/Petra_pool1_180706
 
 samples:
