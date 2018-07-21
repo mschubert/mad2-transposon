@@ -37,7 +37,7 @@ rule combined_ref:
     --limitGenomeGenerateRAM {mem}
     """
     input:
-        fasta = "../genome/Mus_musculus.GRCm38.dna_rm.toplevel.fa",
+        fasta = "../genome/Mus_musculus.GRCm38.dna.primary_assembly.fa",
         gtf = "../genome/Mus_musculus.GRCm38.92.gtf",
         transposon_fasta = "pA6-GrOnc.fasta",
         transposon_feats = "pA6-GrOnc.tsv"
