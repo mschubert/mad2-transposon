@@ -49,7 +49,7 @@ rule star_genome:
         genome = "STAR_GRCm38_ens92"
     resources:
         mem = 50000,
-        walltime = 120
+        walltime = 300
     shell:
         "STAR --runMode genomeGenerate"
             " --genomeFastaFiles {input.fasta}"
@@ -110,7 +110,7 @@ rule mixcr:
         outfile = "mixcr/{set}/{sample}.txt"
     resources:
         mem = 20000,
-        walltime = 180
+        walltime = 240
     shell:
         """
         mixcr align --species mmu --parameters rna-seq --threads 1 \
