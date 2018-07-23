@@ -22,7 +22,8 @@ rule assemble_rnaseq:
         rscript = "assemble.r",
         expr = expand("{sset}.RData", sset=ssets[0:3]) #TODO: meta for qc
     output:
-        merged = "assemble.RData"
+        merged = "assemble.RData",
+        plot = "assemble.pdf"
     shell:
         "Rscript {input.rscript}"
 
@@ -48,9 +49,10 @@ rule star_genome:
     output:
         genome = "STAR_GRCm38_ens92"
     resources:
-        mem = 50000,
-        walltime = 300
+        mem = 100000,
+        walltime = 240
     shell:
+        "mkdir {output.genome};"
         "STAR --runMode genomeGenerate"
             " --genomeFastaFiles {input.fasta}"
             " --sjdbGTFfile {input.gtf}"
