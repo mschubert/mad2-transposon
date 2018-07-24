@@ -21,9 +21,9 @@ cont = lapply(sprintf("Mad2+PB_batch%i.RData", 1:3), load_file)
 
 idx = lapply(cont, function(x) x$idx) %>%
     dplyr::bind_rows()
-expr = lapply(cont, function(x) x$counts) %>%
-    narray::stack(along=2) %>%
-    util$rnaseq$vst()
+counts = lapply(cont, function(x) x$counts) %>%
+    narray::stack(along=2)
+expr = util$rnaseq$vst(counts)
 dd = as.matrix(dist(t(expr)))
 
 annot = as.data.frame(idx)
@@ -38,4 +38,4 @@ print(util$plot_pca(expr, idx))
 print(util$plot_tsne(expr, idx))
 dev.off()
 
-save(idx, expr, file=args$outfile)
+save(idx, counts, expr, file=args$outfile)
