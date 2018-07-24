@@ -17,13 +17,13 @@ wildcard_constraints:
 rule all:
     input:
         "assemble.RData",
-        expand("{sset}.RData", sset=ssets[0:3]),
+        expand("{sset}.RData", sset=ssets),
         expand("mixcr_{sset}.tsv", sset=ssets)
 
 rule assemble_rnaseq:
     input:
         rscript = "assemble.r",
-        expr = expand("{sset}.RData", sset=ssets[0:3]) #TODO: meta for qc
+        expr = expand("{sset}.RData", sset=ssets)
     output:
         merged = "assemble.RData",
         plot = "assemble.pdf"

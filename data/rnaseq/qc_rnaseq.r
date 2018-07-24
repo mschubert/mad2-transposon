@@ -9,6 +9,11 @@ rnaseq = import('process/rna-seq')
 
 #' do PCA/dim reduction plots to see how they cluster
 plot_pca = function(expr, idx) {
+    if (is.null(idx$tissue))
+        idx$tissue = "unknown"
+    if (is.null(idx$type))
+        idx$type = "unknown"
+
     pca = prcomp(t(expr), scale=FALSE)
     p1 = ggplot(cbind(idx, pca$x), aes(x=PC1, y=PC2, color=tissue, shape=type)) +
         geom_point(size=5) +
@@ -20,6 +25,11 @@ plot_pca = function(expr, idx) {
 
 #' same for tsne
 plot_tsne = function(expr, idx) {
+    if (is.null(idx$tissue))
+        idx$tissue = "unknown"
+    if (is.null(idx$type))
+        idx$type = "unknown"
+
     tsne = Rtsne::Rtsne(t(expr), perplexity=round(ncol(expr)/3)-1)
     p2 = cbind(idx, x=tsne$Y[,1], y=tsne$Y[,2]) %>%
         ggplot(aes(x=x, y=y, color=tissue, shape=type)) +
@@ -63,15 +73,18 @@ sys$run({
     colnames(counts) = tools::file_path_sans_ext(basename(colnames(counts)))
     rownames(counts) = edf$Geneid
 
-    idx = io$read_table(args$meta, header=TRUE) %>%
-        transmute(hist_nr = `Hist nr.`,
-                  type = `Diagnosis (Based on pathology & FACS) (t=thymus, s=spleen, l=liver, ln=lymph node, k=kidney, i=intestine)`,
-                  tissue = `RNA sequencing`) %>%
-        mutate(tissue = tolower(gsub("[^ST]", "", tissue)),
-               tissue = sapply(tissue, strsplit, split=NULL)) %>%
-        tidyr::unnest() %>%
-        mutate(type = sapply(type, function(t) b$grep("^([[^ ^/]]+ [[^ ^/]]+)", t)),
-               sample = paste0(hist_nr, tissue))
+    if (grepl("PB" %in% args$infile)) {
+        idx = io$read_table(args$meta, header=TRUE) %>%
+            transmute(hist_nr = `Hist nr.`,
+                      type = `Diagnosis (Based on pathology & FACS) (t=thymus, s=spleen, l=liver, ln=lymph node, k=kidney, i=intestine)`,
+                      tissue = `RNA sequencing`) %>%
+            mutate(tissue = tolower(gsub("[^ST]", "", tissue)),
+                   tissue = sapply(tissue, strsplit, split=NULL)) %>%
+            tidyr::unnest() %>%
+            mutate(type = sapply(type, function(t) b$grep("^([[^ ^/]]+ [[^ ^/]]+)", t)),
+                   sample = paste0(hist_nr, tissue))
+    } else
+        idx = data.frame(sample=colnames(counts))
 
     narray::intersect(idx$sample, counts, along=2)
     expr = rnaseq$vst(counts)
