@@ -9,9 +9,9 @@ rnaseq = import('process/rna-seq')
 
 #' do PCA/dim reduction plots to see how they cluster
 plot_pca = function(expr, idx) {
-    if (is.null(idx$tissue))
+    if (! "tissue" %in% colnames(idx))
         idx$tissue = "unknown"
-    if (is.null(idx$type))
+    if (! "type" %in% colnames(idx))
         idx$type = "unknown"
 
     pca = prcomp(t(expr), scale=FALSE)
@@ -25,9 +25,9 @@ plot_pca = function(expr, idx) {
 
 #' same for tsne
 plot_tsne = function(expr, idx) {
-    if (is.null(idx$tissue))
+    if (! "tissue" %in% colnames(idx))
         idx$tissue = "unknown"
-    if (is.null(idx$type))
+    if (! "type" %in% colnames(idx))
         idx$type = "unknown"
 
     tsne = Rtsne::Rtsne(t(expr), perplexity=round(ncol(expr)/3)-1)
@@ -84,7 +84,8 @@ sys$run({
             mutate(type = sapply(type, function(t) b$grep("^([[^ ^/]]+ [[^ ^/]]+)", t)),
                    sample = paste0(hist_nr, tissue))
     } else
-        idx = data.frame(sample=colnames(counts))
+        idx = data.frame(sample = colnames(counts),
+            tissue = tolower(gsub("[^stST]", "", colnames(counts))))
 
     narray::intersect(idx$sample, counts, along=2)
     expr = rnaseq$vst(counts)

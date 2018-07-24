@@ -77,6 +77,7 @@ rule align:
         "STAR --runMode alignReads"
             " --genomeLoad LoadAndKeep"
             " --readFilesCommand zcat"
+            " --limitOutSJcollapsed 2000000"
             " --genomeDir {input.genome}"
             " --readFilesIn {input.fastq}"
             " --outSAMtype BAM Unsorted"
