@@ -1,8 +1,11 @@
 b = import('base')
 io = import('io')
+sys = import('sys')
 util = import('./qc_rnaseq')
 
-OUTFILE = "assemble.pdf"
+args = sys$cmd$parse(
+    opt('p', 'plotfile', 'pdf', 'assemble.pdf'),
+    opt('o', 'outfile', 'RData', 'assemble.RData'))
 
 load_file = function(fname) {
     cont = io$load(fname)
@@ -28,9 +31,11 @@ rownames(annot) = idx$sample
 annot$hist_nr = NULL
 annot$sample = NULL
 
-pdf(OUTFILE, 16, 14)
+pdf(args$plotfile, 16, 14)
 pheatmap::pheatmap(dd, col=colorRampPalette(rev(brewer.pal(9, "Blues")))(255),
                    annotation=annot)
 print(util$plot_pca(expr, idx))
 print(util$plot_tsne(expr, idx))
 dev.off()
+
+save(idx, expr, file=args$outfile)

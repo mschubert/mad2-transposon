@@ -11,9 +11,12 @@ ssets = ['Mad2+PB_batch1', 'Mad2+PB_batch2', 'Mad2+PB_batch3',
          'Mad2+p53_batch1', 'Mad2+p53_batch2']
 samples = { sset:load_yaml(sset+".yaml") for sset in ssets }
 
+wildcard_constraints:
+    sset = ".*batch.*"
+
 rule all:
     input:
-#        "assemble.RData",
+        "assemble.RData",
         expand("{sset}.RData", sset=ssets[0:3]),
         expand("mixcr_{sset}.tsv", sset=ssets)
 
@@ -26,6 +29,8 @@ rule assemble_rnaseq:
         plot = "assemble.pdf"
     shell:
         "Rscript {input.rscript}"
+            " --outfile {output.merged}"
+            " --plotfile {output.plot}"
 
 rule qc_rnaseq:
     input:
@@ -82,11 +87,11 @@ rule align:
 rule count:
     input:
         gtf = "../genome/Mus_musculus.GRCm38.92.gtf",
-        samples = "{set}.yaml",
+        samples = "{sset}.yaml",
         bams = lambda wc: expand("aligned/{sset}/{samples}.bam",
-                sset=wc.set, samples=samples[wc.set]['samples'].keys())
+                sset=wc.sset, samples=samples[wc.sset]['samples'].keys())
     output:
-        counts = "{set}.tsv"
+        counts = "{sset}.tsv"
     resources:
         mem = 2000,
         walltime = 120
