@@ -6,10 +6,8 @@ library(GenomicRanges)
 io = import('io')
 seq = import('seq')
 
-eT_reads = readr::read_tsv("../data/rnaseq/T-ALL_read_count.txt")
-ref = data.matrix(eT_reads[,c("eT_p0", "eT_p2")])
+ref = io$load("../data/rnaseq/Mad2+p53_batch2.RData")$counts[,c("eT_p0", "eT_p2")]
 ctl = edgeR::cpm(ref)
-rownames(ctl) = rownames(ref) = eT_reads$ensembl_gene_id
 
 load('../data/rnaseq/assemble.RData') # counts, expr, idx
 cpm = edgeR::cpm(counts)
