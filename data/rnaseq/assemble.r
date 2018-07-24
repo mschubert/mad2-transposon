@@ -38,4 +38,11 @@ print(util$plot_pca(expr, idx))
 print(util$plot_tsne(expr, idx))
 dev.off()
 
+colnames(counts) = sub("[0-9]_", "", colnames(counts))
+colnames(expr) = sub("[0-9]_", "", colnames(expr))
+keep = !duplicated(colnames(counts))
+counts = counts[,keep]
+expr = expr[,keep]
+idx = idx[keep,]
+
 save(idx, counts, expr, file=args$outfile)

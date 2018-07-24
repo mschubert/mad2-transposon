@@ -73,7 +73,7 @@ sys$run({
     colnames(counts) = tools::file_path_sans_ext(basename(colnames(counts)))
     rownames(counts) = edf$Geneid
 
-    if (grepl("PB" %in% args$infile)) {
+    if (grepl("PB", args$infile)) {
         idx = io$read_table(args$meta, header=TRUE) %>%
             transmute(hist_nr = `Hist nr.`,
                       type = `Diagnosis (Based on pathology & FACS) (t=thymus, s=spleen, l=liver, ln=lymph node, k=kidney, i=intestine)`,
