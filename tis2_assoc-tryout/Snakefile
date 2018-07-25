@@ -32,7 +32,8 @@ rule models:
     output:
         fits = "{model}.RData"
     resources:
-        walltime = 600
+        memory = 4096,
+        walltime = 300
     shell:
         "Rscript {input.rscript}"
             " --samples 5" # gene w/ at least 5 inserts to consider
