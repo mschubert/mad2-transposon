@@ -6,10 +6,10 @@ subworkflow cis:
 
 rule interval_match:
     input:
-        rscript = "interval_match_fet.r",
+        rscript = "poisson.r",
         data = cis("cis_per_tumor.RData")
     output:
-        result = "interval_match_fet.RData"
+        result = "poisson.RData"
     shell:
         "Rscript {input.rscript} --data {input.data} --outfile {output.result}"
 
