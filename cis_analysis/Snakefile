@@ -1,0 +1,23 @@
+subworkflow cis:
+    workdir: "../data/cis"
+    snakefile: "../data/cis/Snakefile"
+
+# keep separate for now, bc gene set analysis
+
+rule interval_match:
+    input:
+        rscript = "interval_match_fet.r",
+        data = cis("cis_per_tumor.RData")
+    output:
+        result = "interval_match_fet.RData"
+    shell:
+        "Rscript {input.rscript} --data {input.data} --outfile {output.result}"
+
+rule cimpl:
+    input:
+        rscript = "kernel_cimpl.r",
+        data = cis("cis_per_tumor.RData")
+    output:
+        result = "kernel_cimpl.RData"
+    shell:
+        "Rscript {input.rscript} --data {input.data} --outfile {output.result}"
