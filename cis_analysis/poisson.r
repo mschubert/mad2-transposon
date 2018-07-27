@@ -4,6 +4,8 @@ io = import('io')
 seq = import('seq')
 sys = import('sys')
 
+#TODO: only allow one insertion per sample and region?
+
 args = sys$cmd$parse(
     opt('i', 'infile', 'cis RData', '../data/cis/cis_per_tumor.RData'),
     opt('u', 'upstream', 'bp to include before gene', '1000'), #TOOD: 10k (?)
