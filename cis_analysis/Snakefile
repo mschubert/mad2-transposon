@@ -2,12 +2,17 @@ subworkflow cis:
     workdir: "../data/cis"
     snakefile: "../data/cis/Snakefile"
 
+rule all:
+    input:
+        "poisson.RData",
+        "kernel_cimpl.RData"
+
 # keep separate for now, bc gene set analysis
 
 rule interval_match:
     input:
         rscript = "poisson.r",
-        data = cis("cis_per_tumor.RData")
+        data = "analysis_set.RData"
     output:
         result = "poisson.RData"
     shell:
@@ -16,8 +21,17 @@ rule interval_match:
 rule cimpl:
     input:
         rscript = "kernel_cimpl.r",
-        data = cis("cis_per_tumor.RData")
+        data = "analysis_set.RData"
     output:
         result = "kernel_cimpl.RData"
     shell:
         "Rscript {input.rscript} --data {input.data} --outfile {output.result}"
+
+rule anaysis_set:
+    input:
+        rscript = "analysis_set.r",
+        data = cis("cis_per_tumor.RData")
+    output:
+        aset = "analysis_set.RData"
+    shell:
+        "Rscript {input.rscript} --infile {input.data} --outfile {output.aset}"
