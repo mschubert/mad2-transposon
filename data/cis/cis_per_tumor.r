@@ -37,9 +37,10 @@ read_one = function(fname) {
         filter(sample != "tumourid")
 }
 
+files0 = list.files("pilot", full.names=TRUE)
 files1 = list.files("cis_per_tumor", full.names=TRUE)
 files2 = list.files("TraDIS_IS_180622/COMBI_CHROMOSOME_mincov20_xls", full.names=TRUE)
-files = c(files1, files2)
+files = c(files0, files1, files2)
 nested = lapply(files, read_one) %>%
     dplyr::bind_rows() %>%
     group_by(sample) %>%
