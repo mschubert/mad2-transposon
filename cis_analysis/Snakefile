@@ -12,20 +12,20 @@ rule all:
 rule interval_match:
     input:
         rscript = "poisson.r",
-        data = "analysis_set.RData"
+        aset = "analysis_set.RData"
     output:
         result = "poisson.RData"
     shell:
-        "Rscript {input.rscript} --data {input.data} --outfile {output.result}"
+        "Rscript {input.rscript} --infile {input.aset} --outfile {output.result}"
 
 rule cimpl:
     input:
         rscript = "kernel_cimpl.r",
-        data = "analysis_set.RData"
+        aset = "analysis_set.RData"
     output:
         result = "kernel_cimpl.RData"
     shell:
-        "Rscript {input.rscript} --data {input.data} --outfile {output.result}"
+        "Rscript {input.rscript} --infile {input.aset} --outfile {output.result}"
 
 rule anaysis_set:
     input:
