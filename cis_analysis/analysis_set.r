@@ -38,11 +38,12 @@ exclude = c(
 )
 
 # s&t different tumors: 184, 443 (RNA also both)
-# missing: 145s, 155s, 157s, 180s, 184s, 410s
+# missing: 145s, 155s, 157s, 180s, 184s, 212s, 410s
 
 ins = io$load(args$infile) %>%
     dplyr::select(sample, chr, position, reads) %>% # ignore strand
     distinct() %>%
+    mutate(sample = ifelse(sample == "410uln", "410s", sample)) %>%
     filter(!sample %in% exclude,
            grepl("[0-9]{3}[st]", sample),
            reads >= as.integer(args$reads)) %>%
