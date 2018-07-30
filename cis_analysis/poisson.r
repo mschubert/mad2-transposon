@@ -32,7 +32,8 @@ samples = seq$intersect(ins, genes) %>%
     select(sample, external_gene_name, reads) %>%
     group_by(sample, external_gene_name) %>%
     summarize(n_ins = dplyr::n(),
-              reads = sum(reads))
+              reads = sum(reads)) %>%
+    ungroup()
 
 ptest = function(n_ins, len, rate) poisson.test(n_ins, len * n_smp, rate)$p.value
 result = as.data.frame(GenomicRanges::mcols(genes)) %>%
