@@ -2,14 +2,30 @@ subworkflow cis:
     workdir: "../data/cis"
     snakefile: "../data/cis/Snakefile"
 
+subworkflow aneup:
+    workdir: "../ploidy_compare"
+    snakefile: "../ploidy_compare/Snakefile"
+
 rule all:
     input:
         "poisson.RData",
-        "kernel_cimpl.RData"
+        "kernel_cimpl.RData",
+        "aneuploidy_assocs.RData"
 
-# keep separate for now, bc gene set analysis
+rule aneuploidy_assocs:
+    input:
+        rscript = "aneuploidy_assocs.r",
+        poisson = "poisson.RData",
+        aneup = aneup("analysis_set")
+    output:
+        result = "aneuploidy_assocs.RData"
+    shell:
+        "Rscript {input.rscript}"
+            " --aneup {input.aneup}"
+            " --poisson {input.poisson}"
+            " --outfile {output.result}"
 
-rule interval_match:
+rule poisson: # keep separate for now, bc gene set analysis
     input:
         rscript = "poisson.r",
         aset = "analysis_set.RData"
@@ -27,7 +43,7 @@ rule cimpl:
     shell:
         "Rscript {input.rscript} --infile {input.aset} --outfile {output.result}"
 
-rule anaysis_set:
+rule anaylsis_set:
     input:
         rscript = "analysis_set.r",
         data = cis("cis_per_tumor.RData")
