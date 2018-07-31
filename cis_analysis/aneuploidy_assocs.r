@@ -18,7 +18,7 @@ ks_test = function(data) {
         broom::tidy() %>%
         mutate(estimate = mean(data$aneup[data$reads]) - mean(data$aneup),
                statistic = sign(estimate) / p.value,
-               size = length(unique(data$sample)),
+               size = sum(data$reads),
                mod = list(mod))
 }
 
@@ -55,7 +55,7 @@ result = dset$samples %>%
     select(-data) %>%
     tidyr::unnest() %>%
     mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
-    select(external_gene_name, estimate, statistic, p.value, adj.p) %>%
+    select(external_gene_name, size, estimate, statistic, p.value, adj.p) %>%
     arrange(adj.p, p.value)
 
-#TODO: plot cis_tiles
+save(result, file=args$outfile)
