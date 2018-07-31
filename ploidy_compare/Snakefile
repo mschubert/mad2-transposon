@@ -13,7 +13,17 @@ subworkflow meta:
 rule all:
     input:
         "compare_ploidy.pdf",
-        "karyograms.pdf"
+        "karyograms.pdf",
+        "analysis_set.RData"
+
+rule analysis_set:
+    input:
+        rscript = "analysis_set.r",
+        ploidy = "compare_ploidy.tsv"
+    output:
+        table = "analysis_set.RData"
+    shell:
+        "Rscript {input.rscript} --infile {input.ploidy} --outfile {output.table}"
 
 rule compare_ploidy:
     input:
