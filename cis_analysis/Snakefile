@@ -10,7 +10,8 @@ rule all:
     input:
         "poisson.RData",
         "kernel_cimpl.RData",
-        "aneuploidy_assocs.RData"
+        "aneuploidy_assocs.RData",
+        "aneup_de.pdf"
 
 rule aneuploidy_assocs:
     input:
@@ -24,6 +25,23 @@ rule aneuploidy_assocs:
             " --aneup {input.aneup}"
             " --poisson {input.poisson}"
             " --outfile {output.result}"
+
+rule aneup_de:
+    input:
+        rscript = "aneup_de.r",
+        poisson = "poisson.RData",
+        expr = "../data/rnaseq/assemble.RData",
+        aneup = aneup("analysis_set.RData")
+    output:
+        data = "aneup_de.RData",
+        plot = "aneup_de.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --cis {input.poisson}"
+            " --expr {input.expr}"
+            " --aneup {input.aneup}"
+            " --outfile {output.data}"
+            " --plotfile {output.plot}"
 
 rule poisson: # keep separate for now, bc gene set analysis
     input:
