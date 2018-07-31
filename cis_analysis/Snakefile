@@ -16,7 +16,7 @@ rule aneuploidy_assocs:
     input:
         rscript = "aneuploidy_assocs.r",
         poisson = "poisson.RData",
-        aneup = aneup("analysis_set")
+        aneup = aneup("analysis_set.RData")
     output:
         result = "aneuploidy_assocs.RData"
     shell:
