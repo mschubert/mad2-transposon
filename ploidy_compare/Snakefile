@@ -14,7 +14,21 @@ rule all:
     input:
         "compare_ploidy.pdf",
         "karyograms.pdf",
-        "analysis_set.RData"
+        "analysis_set.RData",
+        "gene_copies.RData"
+
+rule gene_copies:
+    input:
+        rscript = "gene_copies.r",
+        dna = ploidy_wgs("copy_segments.RData"),
+        fractions = "wgs_merge.tsv"
+    output:
+        mat = "gene_copies.RData"
+    shell:
+        "Rscript {input.rscript}"
+            " --dna {input.dna}"
+            " --fractions {input.fractions}"
+            " --outfile {output.mat}"
 
 rule analysis_set:
     input:
