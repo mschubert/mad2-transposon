@@ -2,6 +2,7 @@ library(dplyr)
 library(WGCNA)
 io = import('io')
 sys = import('sys')
+idmap = import('process/idmap')
 
 args = sys$cmd$parse(
     opt('e', 'expr', 'gene expression RData', '../data/rnaseq/assemble.RData'),
@@ -12,23 +13,26 @@ args = sys$cmd$parse(
     opt('p', 'plotfile', 'pdf', 'aneup_de.pdf'))
 
 aneup = io$load(args$aneup)
-cis = io$load(args$cis)
-is_cis = cis$result %>% filter(adj.p < 1e-3) %>% pull(external_gene_name)
-traits = cis$samples %>%
+ins = io$load(args$cis)
+is_cis = ins$result %>% filter(adj.p < 1e-3) %>% pull(external_gene_name)
+cis = ins$samples %>%
     filter(external_gene_name %in% is_cis) %>%
     narray::construct(n_ins ~ sample + external_gene_name, fill=0)
-traits = (!is.na(traits) & traits!=0) + 0
+cis = (!is.na(cis) & cis!=0) + 0
 
 eset = io$load(args$expr) # filter on read count, variance?
-expr = t(eset$expr[rowMeans(eset$counts >= 10) >= 0.1,])
+rownames(eset$expr) = eset$gene
+expr = t(eset$expr[rowMeans(eset$counts >= 10) >= 0.1 | eset$gene %in% is_cis,])
 idx = eset$idx %>% transmute(sample=paste0(hist_nr, tissue), tissue, type)
-narray::intersect(expr, idx$sample, traits, along=1) # loses 7 samples
+narray::intersect(expr, idx$sample, aneup$sample, cis, along=1) # loses 7 samples
 pca = prcomp(t(expr), scale=TRUE)
-traits = cbind(pca$rotation[,1:4],
-    aneup=aneup$aneup[match(rownames(traits), aneup$sample)], traits)
+traits_ins = cbind(pca$rotation[,1:4], aneup=aneup$aneup, cis)
+traits_expr = cbind(pca$rotation[,1:4], aneup=aneup$aneup, expr[,colnames(cis)])
 
 powers = c(c(1:10), seq(from = 12, to=20, by=2))
 sft = pickSoftThreshold(expr, powerVector = powers, verbose = 5)
+
+pdf(args$plotfile)
 
 plot(sft$fitIndices$Power, -sign(sft$fitIndices$slope)*sft$fitIndices$SFT.R.sq,
      xlab="Soft Threshold (power)",ylab="Scale Free Topology Model Fit,signed R^2",
@@ -48,24 +52,29 @@ plotDendroAndColors(net$dendrograms[[1]], mergedColors[net$blockGenes[[1]]],
 
 MEs0 = moduleEigengenes(expr, net$colors)$eigengenes
 MEs = orderMEs(MEs0)
-moduleTraitCor = cor(MEs, traits, use = "p")
-moduleTraitPvalue = corPvalueStudent(moduleTraitCor, nrow(idx))
 
-mtp = moduleTraitPvalue[,narray::map(moduleTraitPvalue, along=1, min) < 1e-2]
-mtc = moduleTraitCor[,colnames(mtp)]
+plot_trait_cor = function(traits, pval=1e-2) {
+    moduleTraitCor = cor(MEs, traits, use = "p")
+    moduleTraitPvalue = corPvalueStudent(moduleTraitCor, nrow(idx))
 
-textMatrix = paste(signif(mtc, 2), "\n(",signif(mtp, 1), ")", sep = "")
-dim(textMatrix) = dim(mtc)
-labeledHeatmap(Matrix = mtc,
-    xLabels = colnames(mtc),
-    yLabels = names(MEs),
-    ySymbols = names(MEs),
-    colorLabels = FALSE,
-    colors = greenWhiteRed(50),
-    textMatrix = textMatrix,
-    setStdMargins = FALSE,
-    cex.text = 0.5,
-    zlim = c(-1,1),
-    main = paste("Module-trait relationships"))
+    mtp = moduleTraitPvalue[,narray::map(moduleTraitPvalue, along=1, min) < pval]
+    mtc = moduleTraitCor[,colnames(mtp)]
+
+    textMatrix = paste(signif(mtc, 2), "\n(",signif(mtp, 1), ")", sep = "")
+    dim(textMatrix) = dim(mtc)
+    labeledHeatmap(Matrix = mtc,
+        xLabels = colnames(mtc),
+        yLabels = names(MEs),
+        ySymbols = names(MEs),
+        colorLabels = FALSE,
+        colors = greenWhiteRed(50),
+        textMatrix = textMatrix,
+        setStdMargins = FALSE,
+        cex.text = 0.5,
+        zlim = c(-1,1),
+        main = paste("Module-trait relationships"))
+}
+plot_trait_cor(traits_ins)
+plot_trait_cor(traits_expr)
 
 dev.off()
