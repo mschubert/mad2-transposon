@@ -10,11 +10,13 @@ args = sys$cmd$parse(
     opt('c', 'cis', 'sites per sample', '../cis_analysis/poisson.RData'),
     opt('a', 'aneup', 'aneuploidy score', '../ploidy_compare/analysis_set.RData'),
     opt('o', 'outfile', 'results RData', 'aneup_de.RData'),
-    opt('p', 'plotfile', 'pdf', 'aneup_de.pdf'))
+    opt('p', 'plotfile', 'pdf', 'wgcna.pdf'))
 
 aneup = io$load(args$aneup)
 ins = io$load(args$cis)
-is_cis = ins$result %>% filter(adj.p < 1e-3) %>% pull(external_gene_name)
+is_cis = ins$result %>% filter(adj.p < 1e-3) %>% pull(external_gene_name) %>% unique()
+is_cis_strict = ins$result %>% filter(adj.p < 1e-10) %>% pull(external_gene_name) %>% unique()
+is_cis_strict = is_cis_strict[!grepl("^Gm", is_cis_strict)]
 cis = ins$samples %>%
     filter(external_gene_name %in% is_cis) %>%
     narray::construct(n_ins ~ sample + external_gene_name, fill=0)
@@ -23,16 +25,16 @@ cis = (!is.na(cis) & cis!=0) + 0
 eset = io$load(args$expr) # filter on read count, variance?
 rownames(eset$expr) = eset$gene
 expr = t(eset$expr[rowMeans(eset$counts >= 10) >= 0.1 | eset$gene %in% is_cis,])
-idx = eset$idx %>% transmute(sample=paste0(hist_nr, tissue), tissue, type)
+idx = eset$idx %>% select(sample, tissue, type)
 narray::intersect(expr, idx$sample, aneup$sample, cis, along=1) # loses 7 samples
 pca = prcomp(t(expr), scale=TRUE)
 traits_ins = cbind(pca$rotation[,1:4], aneup=aneup$aneup, cis)
-traits_expr = cbind(pca$rotation[,1:4], aneup=aneup$aneup, expr[,colnames(cis)])
+traits_expr = cbind(pca$rotation[,1:4], aneup=aneup$aneup, expr[,is_cis_strict])
 
 powers = c(c(1:10), seq(from = 12, to=20, by=2))
 sft = pickSoftThreshold(expr, powerVector = powers, verbose = 5)
 
-pdf(args$plotfile)
+pdf(args$plotfile, 10, 7)
 
 plot(sft$fitIndices$Power, -sign(sft$fitIndices$slope)*sft$fitIndices$SFT.R.sq,
      xlab="Soft Threshold (power)",ylab="Scale Free Topology Model Fit,signed R^2",
@@ -53,12 +55,16 @@ plotDendroAndColors(net$dendrograms[[1]], mergedColors[net$blockGenes[[1]]],
 MEs0 = moduleEigengenes(expr, net$colors)$eigengenes
 MEs = orderMEs(MEs0)
 
-plot_trait_cor = function(traits, pval=1e-2) {
+plot_trait_cor = function(traits, title, pval) {
     moduleTraitCor = cor(MEs, traits, use = "p")
     moduleTraitPvalue = corPvalueStudent(moduleTraitCor, nrow(idx))
 
     mtp = moduleTraitPvalue[,narray::map(moduleTraitPvalue, along=1, min) < pval]
     mtc = moduleTraitCor[,colnames(mtp)]
+
+    ord_cols = colnames(mtc)[hclust(dist(t(mtc)))$order]
+    mtp = mtp[,ord_cols]
+    mtc = mtc[,ord_cols]
 
     textMatrix = paste(signif(mtc, 2), "\n(",signif(mtp, 1), ")", sep = "")
     dim(textMatrix) = dim(mtc)
@@ -72,9 +78,9 @@ plot_trait_cor = function(traits, pval=1e-2) {
         setStdMargins = FALSE,
         cex.text = 0.5,
         zlim = c(-1,1),
-        main = paste("Module-trait relationships"))
+        main = title)
 }
-plot_trait_cor(traits_ins)
-plot_trait_cor(traits_expr)
+plot_trait_cor(traits_ins, "insertions", pval=0.01)
+plot_trait_cor(traits_expr, "expression", pval=0.01)
 
 dev.off()
