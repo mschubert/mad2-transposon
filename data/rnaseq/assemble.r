@@ -2,6 +2,7 @@ b = import('base')
 io = import('io')
 sys = import('sys')
 util = import('./qc_rnaseq')
+idmap = import('process/idmap')
 
 args = sys$cmd$parse(
     opt('p', 'plotfile', 'pdf', 'assemble.pdf'),
@@ -26,10 +27,8 @@ counts = lapply(cont, function(x) x$counts) %>%
 expr = util$rnaseq$vst(counts)
 dd = as.matrix(dist(t(expr)))
 
-annot = as.data.frame(idx)
+annot = as.data.frame(idx) %>% select(type, tissue, batch)
 rownames(annot) = idx$sample
-annot$hist_nr = NULL
-annot$sample = NULL
 
 pdf(args$plotfile, 16, 14)
 pheatmap::pheatmap(dd, col=colorRampPalette(rev(brewer.pal(9, "Blues")))(255),
@@ -43,6 +42,10 @@ colnames(expr) = sub("[0-9]_", "", colnames(expr))
 keep = !duplicated(colnames(counts))
 counts = counts[,keep]
 expr = expr[,keep]
-idx = idx[keep,]
+idx = idx[keep,] %>%
+    mutate(sample = paste0(hist_nr, tissue))
 
-save(idx, counts, expr, file=args$outfile)
+genes = idmap$gene(rownames(expr),
+    to="external_gene_name", dset="mmusculus_gene_ensembl")
+
+save(idx, counts, expr, genes, file=args$outfile)
