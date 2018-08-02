@@ -63,8 +63,9 @@ plot_trait_cor = function(traits, title, pval) {
     mtc = moduleTraitCor[,colnames(mtp)]
 
     ord_cols = colnames(mtc)[hclust(dist(t(mtc)))$order]
-    mtp = mtp[,ord_cols]
-    mtc = mtc[,ord_cols]
+    ord_rows = rownames(mtc)[hclust(dist(mtc))$order]
+    mtp = mtp[ord_rows, ord_cols]
+    mtc = mtc[ord_rows, ord_cols]
 
     textMatrix = paste(signif(mtc, 2), "\n(",signif(mtp, 1), ")", sep = "")
     dim(textMatrix) = dim(mtc)
