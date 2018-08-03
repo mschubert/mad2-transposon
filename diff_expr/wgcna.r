@@ -34,6 +34,7 @@ traits_ins = cbind(pca$rotation[,1:4], aneup=aneup$aneup, cis)
 traits_expr = cbind(aneup=aneup$aneup, expr[,is_cis_strict])
 
 pdf(args$plotfile, 15, 15)
+old_par = par()
 
 powers = c(c(1:10), seq(from = 12, to=20, by=2))
 sft = pickSoftThreshold(expr, powerVector = powers, verbose = 5)
@@ -59,6 +60,7 @@ merged = mergeCloseModules(expr, dynamicColors, cutHeight=0.1, verbose = 3)
 plotDendroAndColors(geneTree, cbind(dynamicColors, merged$colors),
     c("Dynamic Tree Cut", "Merged dynamic"),
     dendroLabels = FALSE, hang = 0.03, addGuide = TRUE, guideHang = 0.05)
+par(old_par)
 
 plot_trait_cor = function(traits, title, pval, abs=FALSE) {
     moduleTraitCor = cor(MEs, traits, use = "p")
