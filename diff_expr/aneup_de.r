@@ -30,7 +30,7 @@ eset = DESeq2::DESeqDataSetFromMatrix(counts, colData=idx, ~tissue) %>%
 
 # pca plts
 vs = DESeq2::getVarianceStabilizedData(eset)
-pca = prcomp(t(vs), scale=TRUE)
+pca = prcomp(t(vs), scale=F) #TRUE)
 ggplot(cbind(idx, pca$x), aes(x=PC1, y=PC2, color=type, shape=tissue)) +
     geom_point(aes(size=aneup)) +
     geom_text_repel(aes(label=sample), color="black") +
@@ -50,6 +50,7 @@ tab = lfcShrink(res1, coef="aneup") %>% #, type="apeglm") %>%
 
 # res2 = DESeq2::DESeq(eset, test="LRT", reduced=~tissue + type) # higher pvals overall
 
+pdf(args$plotfile)
 
 ggplot(cbind(idx, pca$x), aes(x=PC3, y=PC4, color=type, shape=tissue)) +
     geom_point(aes(size=aneup)) +
