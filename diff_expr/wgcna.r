@@ -3,6 +3,7 @@ library(WGCNA)
 io = import('io')
 sys = import('sys')
 idmap = import('process/idmap')
+gnet = import('tools/genenet')
 
 args = sys$cmd$parse(
     opt('e', 'expr', 'gene expression RData', '../data/rnaseq/assemble.RData'),
@@ -29,7 +30,7 @@ idx = eset$idx %>% select(sample, tissue, type)
 narray::intersect(expr, idx$sample, aneup$sample, cis, along=1) # loses 7 samples
 pca = prcomp(t(expr), scale=TRUE)
 traits_ins = cbind(pca$rotation[,1:4], aneup=aneup$aneup, cis)
-traits_expr = cbind(pca$rotation[,1:4], aneup=aneup$aneup, expr[,is_cis_strict])
+traits_expr = cbind(aneup=aneup$aneup, expr[,is_cis_strict])
 
 powers = c(c(1:10), seq(from = 12, to=20, by=2))
 sft = pickSoftThreshold(expr, powerVector = powers, verbose = 5)
@@ -81,7 +82,13 @@ plot_trait_cor = function(traits, title, pval) {
         zlim = c(-1,1),
         main = title)
 }
+plot_trait_cor(MEs, "modules", pval=0.01)
 plot_trait_cor(traits_ins, "insertions", pval=0.01)
 plot_trait_cor(traits_expr, "expression", pval=0.01)
+print(gnet$plot_pcor_net(gnet$pcor(t(traits_expr)), fdr=0.2))
+
+both = cbind(MEs, traits_expr)
+plot_trait_cor(both, "modules+expr", pval=0.01)
+print(gnet$plot_pcor_net(gnet$pcor(t(both)), fdr=0.1))
 
 dev.off()
