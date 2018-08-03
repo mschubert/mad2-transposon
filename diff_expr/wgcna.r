@@ -32,34 +32,38 @@ pca = prcomp(t(expr), scale=TRUE)
 traits_ins = cbind(pca$rotation[,1:4], aneup=aneup$aneup, cis)
 traits_expr = cbind(aneup=aneup$aneup, expr[,is_cis_strict])
 
+pdf(args$plotfile, 15, 15)
+
 powers = c(c(1:10), seq(from = 12, to=20, by=2))
 sft = pickSoftThreshold(expr, powerVector = powers, verbose = 5)
-
-pdf(args$plotfile, 10, 7)
-
 plot(sft$fitIndices$Power, -sign(sft$fitIndices$slope)*sft$fitIndices$SFT.R.sq,
      xlab="Soft Threshold (power)",ylab="Scale Free Topology Model Fit,signed R^2",
      main = paste("Scale independence"))
 
-net = blockwiseModules(expr, power = sft$powerEstimate,
-    TOMType = "unsigned", minModuleSize = 30,
-    reassignThreshold = 0, mergeCutHeight = 0.25,
-    numericLabels = TRUE, pamRespectsDendro = FALSE,
-    verbose = 3)
+adjacency = adjacency(expr, power=6)
+TOM = TOMsimilarity(adjacency)
+geneTree = hclust(as.dist(1-TOM), method = "average")
+dynamicMods = cutreeDynamic(dendro = geneTree, distM = 1-TOM,
+    deepSplit = 2, pamRespectsDendro = FALSE, minClusterSize = 30)
+table(dynamicMods)
+dynamicColors = labels2colors(dynamicMods)
+table(dynamicColors)
 
-mergedColors = labels2colors(net$colors)
-plotDendroAndColors(net$dendrograms[[1]], mergedColors[net$blockGenes[[1]]],
-    "Module colors",
-    dendroLabels = FALSE, hang = 0.03,
-    addGuide = TRUE, guideHang = 0.05)
+# merge similar modules
+MEList = moduleEigengenes(expr, colors = dynamicColors)
+METree = hclust(as.dist(1-cor(MEList$eigengenes)), method = "average")
+plot(METree, main = "Clustering of module eigengenes", xlab = "", sub = "")
+abline(h=0.1, col = "red")
+merged = mergeCloseModules(expr, dynamicColors, cutHeight=0.1, verbose = 3)
+plotDendroAndColors(geneTree, cbind(dynamicColors, merged$colors),
+    c("Dynamic Tree Cut", "Merged dynamic"),
+    dendroLabels = FALSE, hang = 0.03, addGuide = TRUE, guideHang = 0.05)
 
-MEs0 = moduleEigengenes(expr, net$colors)$eigengenes
-MEs = orderMEs(MEs0)
-
-plot_trait_cor = function(traits, title, pval) {
+plot_trait_cor = function(traits, title, pval, abs=FALSE) {
     moduleTraitCor = cor(MEs, traits, use = "p")
+    if (abs)
+        moduleTraitCor = abs(moduleTraitCor)
     moduleTraitPvalue = corPvalueStudent(moduleTraitCor, nrow(idx))
-
     mtp = moduleTraitPvalue[,narray::map(moduleTraitPvalue, along=1, min) < pval]
     mtc = moduleTraitCor[,colnames(mtp)]
 
@@ -70,25 +74,22 @@ plot_trait_cor = function(traits, title, pval) {
 
     textMatrix = paste(signif(mtc, 2), "\n(",signif(mtp, 1), ")", sep = "")
     dim(textMatrix) = dim(mtc)
-    labeledHeatmap(Matrix = mtc,
-        xLabels = colnames(mtc),
-        yLabels = names(MEs),
-        ySymbols = names(MEs),
-        colorLabels = FALSE,
-        colors = greenWhiteRed(50),
-        textMatrix = textMatrix,
-        setStdMargins = FALSE,
-        cex.text = 0.5,
-        zlim = c(-1,1),
-        main = title)
+    labeledHeatmap(Matrix = mtc, xLabels = colnames(mtc), yLabels = names(MEs),
+        ySymbols = names(MEs), colorLabels = FALSE, colors = greenWhiteRed(50),
+        textMatrix = textMatrix, setStdMargins = FALSE, cex.text = 0.5,
+        zlim = c(-1,1), main = title)
 }
+MEs = orderMEs(merged$newMEs)
 plot_trait_cor(MEs, "modules", pval=0.01)
 plot_trait_cor(traits_ins, "insertions", pval=0.01)
 plot_trait_cor(traits_expr, "expression", pval=0.01)
-print(gnet$plot_pcor_net(gnet$pcor(t(traits_expr)), fdr=0.2))
+print(gnet$plot_pcor_net(gnet$pcor(t(traits_expr)), fdr=0.3))
 
 both = cbind(MEs, traits_expr)
 plot_trait_cor(both, "modules+expr", pval=0.01)
-print(gnet$plot_pcor_net(gnet$pcor(t(both)), fdr=0.1))
+plot_trait_cor(both, "modules+expr (absolute cor)", pval=0.01, abs=TRUE)
+#plot_trait_cor(both, "highlight ins expr", pval=0.01, abs=TRUE)
+#print(gnet$plot_bootstrapped_pcor(t(both), fdr=0.3))
+print(gnet$plot_pcor_net(gnet$pcor(t(both)), p=0.05))
 
 dev.off()
