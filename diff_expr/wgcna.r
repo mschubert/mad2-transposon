@@ -4,13 +4,14 @@ io = import('io')
 sys = import('sys')
 idmap = import('process/idmap')
 gnet = import('tools/genenet')
+plt = import('plot')
 
 args = sys$cmd$parse(
     opt('e', 'expr', 'gene expression RData', '../data/rnaseq/assemble.RData'),
 #    opt('c', 'copies', 'gene copy matrix', '../ploidy_compare/gene_copies.RData'),
     opt('c', 'cis', 'sites per sample', '../cis_analysis/poisson.RData'),
     opt('a', 'aneup', 'aneuploidy score', '../ploidy_compare/analysis_set.RData'),
-    opt('o', 'outfile', 'results RData', 'aneup_de.RData'),
+    opt('o', 'outfile', 'results RData', 'wgcna.RData'),
     opt('p', 'plotfile', 'pdf', 'wgcna.pdf'))
 
 aneup = io$load(args$aneup)
@@ -61,8 +62,11 @@ plotDendroAndColors(geneTree, cbind(dynamicColors, merged$colors),
 
 plot_trait_cor = function(traits, title, pval, abs=FALSE) {
     moduleTraitCor = cor(MEs, traits, use = "p")
-    if (abs)
+    if (abs) {
         moduleTraitCor = abs(moduleTraitCor)
+        col = plt$brew$seq(1:50)
+    } else
+        col = plt$brew$div(1:50)
     moduleTraitPvalue = corPvalueStudent(moduleTraitCor, nrow(idx))
     mtp = moduleTraitPvalue[,narray::map(moduleTraitPvalue, along=1, min) < pval]
     mtc = moduleTraitCor[,colnames(mtp)]
@@ -75,14 +79,14 @@ plot_trait_cor = function(traits, title, pval, abs=FALSE) {
     textMatrix = paste(signif(mtc, 2), "\n(",signif(mtp, 1), ")", sep = "")
     dim(textMatrix) = dim(mtc)
     labeledHeatmap(Matrix = mtc, xLabels = colnames(mtc), yLabels = names(MEs),
-        ySymbols = names(MEs), colorLabels = FALSE, colors = greenWhiteRed(50),
-        textMatrix = textMatrix, setStdMargins = FALSE, cex.text = 0.5,
-        zlim = c(-1,1), main = title)
+        ySymbols = names(MEs), colorLabels = FALSE, colors = col,
+        textMatrix = textMatrix, cex.text=0.5, main = title)
 }
 MEs = orderMEs(merged$newMEs)
 plot_trait_cor(MEs, "modules", pval=0.01)
 plot_trait_cor(traits_ins, "insertions", pval=0.01)
 plot_trait_cor(traits_expr, "expression", pval=0.01)
+plot_trait_cor(traits_expr, "expression (absolute)", pval=0.01, abs=TRUE)
 print(gnet$plot_pcor_net(gnet$pcor(t(traits_expr)), fdr=0.3))
 
 both = cbind(MEs, traits_expr)
@@ -90,6 +94,8 @@ plot_trait_cor(both, "modules+expr", pval=0.01)
 plot_trait_cor(both, "modules+expr (absolute cor)", pval=0.01, abs=TRUE)
 #plot_trait_cor(both, "highlight ins expr", pval=0.01, abs=TRUE)
 #print(gnet$plot_bootstrapped_pcor(t(both), fdr=0.3))
-print(gnet$plot_pcor_net(gnet$pcor(t(both)), p=0.05))
+print(gnet$plot_pcor_net(gnet$pcor(t(both)), pval=0.05, node_text=4, edge_text=2))
 
 dev.off()
+
+save(merged, MEList, METree, MEs, file=args$outfile)
