@@ -100,5 +100,5 @@ print(gnet$plot_pcor_net(gnet$pcor(t(both)), pval=0.05, node_text=4, edge_text=2
 
 dev.off()
 
-genes = unstack(data.frame(colnames(expr), merged$colors))
+genes = unstack(na.omit(data.frame(colnames(expr), merged$colors)))
 save(merged, genes, MEs, file=args$outfile)
