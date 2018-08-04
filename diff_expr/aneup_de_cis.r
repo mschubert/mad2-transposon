@@ -20,17 +20,23 @@ idx = colData(eset) %>%
     as.data.frame() %>%
     left_join(cis) %>%
     mutate(ins = ifelse(is.na(ins), 0, 1),
-           noins = (!ins) + 0)
+           noins = (!ins) + 0,
+           aneup_ins = 2*(ins-0.5) * aneup)
 eset@colData = DataFrame(idx)
 
-design(eset) = ~ tissue + type + aneup * ins
-res = DESeq2::DESeq(eset)
-DESeq2::resultsNames(res)
+design(eset) = ~ tissue + type + ins * aneup
+res1 = DESeq2::estimateDispersions(eset) %>%
+    DESeq2::nbinomWaldTest(maxit=1000)
+
+design(eset) = ~ tissue + type + ins + aneup_ins
+res2 = DESeq2::estimateDispersions(eset) %>%
+    DESeq2::nbinomWaldTest(maxit=1000)
 
 pdf(args$plotfile)
-print(util$plot_pcs(idx, eset$pca, 1, 2)) #todo: annotate ins
-for (name in c("aneup", "ins", "aneup.ins"))
-    print(util$plot_volcano(res, name))
+print(util$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))
+for (name in c("aneup", "ins", "ins.aneup"))
+    print(util$plot_volcano(res1, name))
+print(util$plot_volcano(res2, "aneup_ins"))
 dev.off()
 
 save(res, file=args$outfile)

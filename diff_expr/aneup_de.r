@@ -7,15 +7,19 @@ sys = import('sys')
 plt = import('plot')
 idmap = import('process/idmap')
 
-plot_pcs = function(idx, pca, x, y) {
+plot_pcs = function(idx, pca, x, y, hl=c()) {
     imp = summary(pca)$importance[2,c(x,y)] * 100
     pcs = names(imp)
-    ggplot(cbind(idx, pca$x), aes_string(x=pcs[1], y=pcs[2], color="type", shape="tissue")) +
-        geom_point(aes(size=aneup)) +
+    df = cbind(idx, pca$x) %>% mutate(ins=sample %in% hl)
+    ggplot(df, aes_string(x=pcs[1], y=pcs[2])) +
+        geom_point(aes(size=aneup, shape=tissue, fill=type, color=ins), stroke=1) +
+        scale_shape_manual(values=c(22:30)) +
+        scale_color_manual(values=c("#ffffff00", "black")) +
         geom_text_repel(aes(label=sample), color="black") +
         labs(x = sprintf("%s (%.1f%%)", pcs[1], imp[1]),
              y = sprintf("%s (%.1f%%)", pcs[2], imp[2]),
-             title = "PCA plot")
+             title = "PCA plot") +
+        guides(fill = guide_legend(override.aes=list(shape=21)))
 }
 
 plot_volcano = function(res, coef, highlight=NULL) {
