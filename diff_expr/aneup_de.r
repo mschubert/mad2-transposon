@@ -4,6 +4,32 @@ library(ggrepel)
 library(DESeq2)
 io = import('io')
 sys = import('sys')
+plt = import('plot')
+idmap = import('process/idmap')
+
+plot_pcs = function(idx, pca, x, y) {
+    imp = summary(pca)$importance[2,c(x,y)] * 100
+    pcs = names(imp)
+    ggplot(cbind(idx, pca$x), aes_string(x=pcs[1], y=pcs[2], color="type", shape="tissue")) +
+        geom_point(aes(size=aneup)) +
+        geom_text_repel(aes(label=sample), color="black") +
+        labs(x = sprintf("%s (%.1f%%)", pcs[1], imp[1]),
+             y = sprintf("%s (%.1f%%)", pcs[2], imp[2]),
+             title = "PCA plot")
+}
+
+plot_volcano = function(res, coef) {
+    DESeq2::lfcShrink(res, coef=coef) %>% #, type="apeglm") %>%
+        as.data.frame() %>%
+        tibble::rownames_to_column("ensembl_gene_id") %>%
+        tbl_df() %>%
+        arrange(pvalue) %>%
+        mutate(label = idmap$gene(ensembl_gene_id, to="external_gene_name",
+                                  dset="mmusculus_gene_ensembl"),
+               size = log10(baseMean + 1)) %>%
+        plt$p_effect("pvalue", "log2FoldChange", thresh=0.01) %>%
+        plt$volcano(base.size=5, label_top=50, repel=TRUE) + ggtitle(coef)
+}
 
 args = sys$cmd$parse(
     opt('e', 'expr', 'gene expression RData', '../data/rnaseq/assemble.RData'),
@@ -15,9 +41,10 @@ args = sys$cmd$parse(
 gene_copies = io$load(args$copies)
 exprset = io$load(args$expr)
 idx = exprset$idx %>%
-    mutate(sample = paste0(hist_nr, tissue)) %>%
+    mutate(sample = paste0(hist_nr, tissue),
+           type = sub("(^[^ ]+).*", "\\1", type)) %>%
     left_join(io$load(args$aneup)) %>%
-    mutate(type = ifelse(is.na(type), "NA", tissue), #TODO: add annotations
+    mutate(type = ifelse(is.na(type), "NA", type), #TODO: add annotations
            tissue = factor(tissue), type=factor(type))
 counts = exprset$counts
 narray::intersect(gene_copies, counts, along=1)
@@ -25,48 +52,17 @@ narray::intersect(gene_copies, counts, idx$sample, along=2)
 
 # vst w/ copy num corr
 eset = DESeq2::DESeqDataSetFromMatrix(counts, colData=idx, ~tissue) %>%
-    DESeq2::estimateSizeFactors(normMatrix=gene_copies) %>%
-    DESeq2::estimateDispersions()
-
-# pca plts
+    DESeq2::estimateSizeFactors(normMatrix=gene_copies)
 vs = DESeq2::getVarianceStabilizedData(eset)
-pca = prcomp(t(vs), scale=F) #TRUE)
-ggplot(cbind(idx, pca$x), aes(x=PC1, y=PC2, color=type, shape=tissue)) +
-    geom_point(aes(size=aneup)) +
-    geom_text_repel(aes(label=sample), color="black") +
-    labs(x = sprintf("PC1 (%.1f%%)", summary(pca)$importance[2,1]*100),
-         y = sprintf("PC2 (%.1f%%)", summary(pca)$importance[2,2]*100),
-         title = "PCA plot")
-
 design(eset) = ~ tissue + type + aneup
-res1 = DESeq2::DESeq(eset) #, test="LRT", full=~tissue+type, reduced=~tissue)
-resultsNames(res1)
-#tab = lfcShrink(res1, coef="tissue_t_vs_s") %>% #, type="apeglm") %>%
-tab = lfcShrink(res1, coef="aneup") %>% #, type="apeglm") %>%
-    as.data.frame() %>%
-    tibble::rownames_to_column("ensembl_gene_id") %>%
-    tbl_df() %>%
-    arrange(pvalue)
-
-# res2 = DESeq2::DESeq(eset, test="LRT", reduced=~tissue + type) # higher pvals overall
+res = DESeq2::DESeq(eset) #, test="LRT", full=~tissue+type, reduced=~tissue)
+DESeq2::resultsNames(res)
 
 pdf(args$plotfile)
-
-ggplot(cbind(idx, pca$x), aes(x=PC3, y=PC4, color=type, shape=tissue)) +
-    geom_point(aes(size=aneup)) +
-    geom_text_repel(aes(label=sample), color="black") +
-    labs(x = sprintf("PC3 (%.1f%%)", summary(pca)$importance[2,3]*100),
-         y = sprintf("PC4 (%.1f%%)", summary(pca)$importance[2,4]*100),
-         title = "PCA plot")
-
-ggplot(cbind(idx, pca$x), aes(x=PC5, y=PC6, color=type, shape=tissue)) +
-    geom_point(aes(size=aneup)) +
-    geom_text_repel(aes(label=sample), color="black") +
-    labs(x = sprintf("PC5 (%.1f%%)", summary(pca)$importance[2,5]*100),
-         y = sprintf("PC6 (%.1f%%)", summary(pca)$importance[2,6]*100),
-         title = "PCA plot")
+pca = prcomp(t(vs[apply(vs, 1, var) > 0,]), center=TRUE, scale=FALSE)
+plot_pcs(idx, pca, 1, 2)
+plot_pcs(idx, pca, 3, 4)
+plot_pcs(idx, pca, 5, 6)
+for (name in setdiff(DESeq2::resultsNames(res), "Intercept"))
+    print(plot_volcano(res, name))
 dev.off()
-
-# select number of PCs to regress out
-
-# do DEseq on counts w/ normmatrix
