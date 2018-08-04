@@ -19,7 +19,7 @@ plot_pcs = function(idx, pca, x, y) {
 }
 
 plot_volcano = function(res, coef, highlight=NULL) {
-    DESeq2::lfcShrink(res, coef=coef) %>% #, type="apeglm") %>%
+    DESeq2::lfcShrink(res, coef=coef, type="apeglm") %>%
         as.data.frame() %>%
         tibble::rownames_to_column("ensembl_gene_id") %>%
         tbl_df() %>%
