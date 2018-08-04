@@ -56,18 +56,18 @@ sys$run({
     narray::intersect(gene_copies, counts, idx$sample, along=2)
 
     # vst w/ copy num corr
-    eset = DESeq2::DESeqDataSetFromMatrix(counts, colData=idx, ~tissue) %>%
+    eset = DESeq2::DESeqDataSetFromMatrix(counts, colData=idx, ~tissue+type) %>%
         DESeq2::estimateSizeFactors(normMatrix=gene_copies)
-    vs = DESeq2::getVarianceStabilizedData(eset)
+    vs = DESeq2::getVarianceStabilizedData(DESeq2::estimateDispersions(eset))
     design(eset) = ~ tissue + type + aneup
     res = DESeq2::DESeq(eset) #, test="LRT", full=~tissue+type, reduced=~tissue)
     DESeq2::resultsNames(res)
 
     pdf(args$plotfile)
     pca = prcomp(t(vs[apply(vs, 1, var) > 0,]), center=TRUE, scale=FALSE)
-    plot_pcs(idx, pca, 1, 2)
-    plot_pcs(idx, pca, 3, 4)
-    plot_pcs(idx, pca, 5, 6)
+    print(plot_pcs(idx, pca, 1, 2))
+    print(plot_pcs(idx, pca, 3, 4))
+    print(plot_pcs(idx, pca, 5, 6))
     for (name in setdiff(DESeq2::resultsNames(res), "Intercept"))
         print(plot_volcano(res, name, cis_genes))
     dev.off()
