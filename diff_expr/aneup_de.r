@@ -18,7 +18,7 @@ plot_pcs = function(idx, pca, x, y) {
              title = "PCA plot")
 }
 
-plot_volcano = function(res, coef) {
+plot_volcano = function(res, coef, highlight=NULL) {
     DESeq2::lfcShrink(res, coef=coef) %>% #, type="apeglm") %>%
         as.data.frame() %>%
         tibble::rownames_to_column("ensembl_gene_id") %>%
@@ -26,18 +26,23 @@ plot_volcano = function(res, coef) {
         arrange(pvalue) %>%
         mutate(label = idmap$gene(ensembl_gene_id, to="external_gene_name",
                                   dset="mmusculus_gene_ensembl"),
+               circle = label %in% highlight,
                size = log10(baseMean + 1)) %>%
         plt$p_effect("pvalue", "log2FoldChange", thresh=0.01) %>%
-        plt$volcano(base.size=5, label_top=50, repel=TRUE) + ggtitle(coef)
+        plt$volcano(base.size=5, label_top=30, repel=TRUE) + ggtitle(coef)
 }
 
 args = sys$cmd$parse(
     opt('e', 'expr', 'gene expression RData', '../data/rnaseq/assemble.RData'),
     opt('c', 'copies', 'gene copy matrix', '../ploidy_compare/gene_copies.RData'),
     opt('a', 'aneup', 'aneuploidy score', '../ploidy_compare/analysis_set.RData'),
+    opt('i', 'cis', 'cis site RData', '../cis_analysis/poisson.RData'),
     opt('o', 'outfile', 'results RData', 'aneup_de.RData'),
     opt('p', 'plotfile', 'pdf', 'aneup_de.pdf'))
 
+cis_genes = io$load(args$cis)$result %>%
+    filter(adj.p < 1e-5) %>%
+    pull(external_gene_name)
 gene_copies = io$load(args$copies)
 exprset = io$load(args$expr)
 idx = exprset$idx %>%
@@ -64,5 +69,5 @@ plot_pcs(idx, pca, 1, 2)
 plot_pcs(idx, pca, 3, 4)
 plot_pcs(idx, pca, 5, 6)
 for (name in setdiff(DESeq2::resultsNames(res), "Intercept"))
-    print(plot_volcano(res, name))
+    print(plot_volcano(res, name, cis_genes))
 dev.off()
