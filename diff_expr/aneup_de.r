@@ -41,8 +41,8 @@ sys$run({
         opt('o', 'outfile', 'results RData', 'aneup_de.RData'),
         opt('p', 'plotfile', 'pdf', 'aneup_de.pdf'))
 
-    cis = io$load(args$cis)$result
-    cis_genes = cis %>% filter(adj.p < 1e-3) %>% pull(external_gene_name)
+    cis = io$load(args$cis)
+    cis_genes = cis$result %>% filter(adj.p < 1e-3) %>% pull(external_gene_name)
     gene_copies = io$load(args$copies)
     exprset = io$load(args$expr)
     idx = exprset$idx %>%
