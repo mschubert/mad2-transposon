@@ -28,13 +28,13 @@ design(eset) = ~ tissue + type + ins * aneup
 res1 = DESeq2::estimateDispersions(eset) %>%
     DESeq2::nbinomWaldTest(maxit=1000)
 
-design(eset) = ~ tissue + type + ins + aneup_ins
+design(eset) = ~ tissue + type + ins + aneup + aneup_ins
 res2 = DESeq2::estimateDispersions(eset) %>%
     DESeq2::nbinomWaldTest(maxit=1000)
 
 pdf(args$plotfile)
 print(util$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))
-for (name in c("aneup", "ins", "ins.aneup"))
+for (name in c("ins", "ins.aneup"))
     print(util$plot_volcano(res1, name))
 print(util$plot_volcano(res2, "aneup_ins"))
 dev.off()
