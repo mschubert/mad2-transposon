@@ -42,6 +42,8 @@ rule de_ins:
     output:
         result = "ins/{ins}.RData",
         plot = "ins/{ins}.pdf"
+    resources:
+        walltime = 60
     shell:
         "Rscript {input.rscript}"
             " --ins {wildcards.ins}"
