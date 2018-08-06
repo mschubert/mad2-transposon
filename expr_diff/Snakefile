@@ -44,6 +44,7 @@ rule de_ins:
         plot = "ins_{ins}.pdf"
     shell:
         "Rscript {input.rscript}"
+            " --ins {wildcards.ins}"
             " --diff_expr {input.diff_expr}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"

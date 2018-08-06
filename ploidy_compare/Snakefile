@@ -24,6 +24,8 @@ rule gene_copies:
         fractions = "wgs_merge.tsv"
     output:
         mat = "gene_copies.RData"
+    resources:
+        mem = 4096
     shell:
         "Rscript {input.rscript}"
             " --dna {input.dna}"

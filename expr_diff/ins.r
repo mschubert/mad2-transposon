@@ -3,7 +3,7 @@ library(ggplot2)
 library(dplyr)
 io = import('io')
 sys = import('sys')
-util = import('./aneup_de')
+util = import('./de')
 
 args = sys$cmd$parse(
     opt('d', 'diff_expr', 'gene expression RData', 'aneup_de.RData'),
