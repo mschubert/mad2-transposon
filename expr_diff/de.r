@@ -22,12 +22,16 @@ plot_pcs = function(idx, pca, x, y, hl=c()) {
         guides(fill = guide_legend(override.aes=list(shape=21)))
 }
 
-plot_volcano = function(res, coef, highlight=NULL) {
+extract_coef = function(res, coef) {
     DESeq2::lfcShrink(res, coef=coef, type="apeglm") %>%
         as.data.frame() %>%
         tibble::rownames_to_column("ensembl_gene_id") %>%
         tbl_df() %>%
-        arrange(pvalue) %>%
+        arrange(pvalue)
+}
+
+plot_volcano = function(res, coef, highlight=NULL) {
+    res %>%
         mutate(label = idmap$gene(ensembl_gene_id, to="external_gene_name",
                                   dset="mmusculus_gene_ensembl"),
                circle = label %in% highlight,
@@ -64,16 +68,19 @@ sys$run({
         DESeq2::estimateSizeFactors(normMatrix=gene_copies)
     vs = DESeq2::getVarianceStabilizedData(DESeq2::estimateDispersions(eset))
     design(eset) = ~ tissue + type + aneup
+
     res = DESeq2::DESeq(eset) #, test="LRT", full=~tissue+type, reduced=~tissue)
     DESeq2::resultsNames(res)
+    coefs = setdiff(DESeq2::resultsNames(res), "Intercept")
+    res = sapply(coefs, extract_coef, res=res, use.names=TRUE)
 
     pdf(args$plotfile)
     pca = prcomp(t(vs[apply(vs, 1, var) > 0,]), center=TRUE, scale=FALSE)
     print(plot_pcs(idx, pca, 1, 2))
     print(plot_pcs(idx, pca, 3, 4))
     print(plot_pcs(idx, pca, 5, 6))
-    for (name in setdiff(DESeq2::resultsNames(res), "Intercept"))
-        print(plot_volcano(res, name, cis_genes))
+    for (name in coefs)
+        print(plot_volcano(res[[name]], name, cis_genes))
     dev.off()
 
     save(eset, pca, cis, res, file=args$outfile)

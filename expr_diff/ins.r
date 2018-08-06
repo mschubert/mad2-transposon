@@ -19,24 +19,18 @@ eset = dset$eset
 idx = colData(eset) %>%
     as.data.frame() %>%
     left_join(cis) %>%
-    mutate(ins = ifelse(is.na(ins), 0, 1),
-           noins = (!ins) + 0,
-           aneup_ins = 2*(ins-0.5) * aneup)
+    mutate(ins = ifelse(is.na(ins), 0, 1))
 eset@colData = DataFrame(idx)
 
 design(eset) = ~ tissue + type + ins * aneup
-res1 = DESeq2::estimateDispersions(eset) %>%
+res = DESeq2::estimateDispersions(eset) %>%
     DESeq2::nbinomWaldTest(maxit=1000)
-
-design(eset) = ~ tissue + type + ins + aneup + aneup_ins
-res2 = DESeq2::estimateDispersions(eset) %>%
-    DESeq2::nbinomWaldTest(maxit=1000)
+res = sapply(c("ins", "ins.aneup"), util$extract_coef, res=res, use.names=TRUE)
 
 pdf(args$plotfile)
 print(util$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))
 for (name in c("ins", "ins.aneup"))
-    print(util$plot_volcano(res1, name))
-print(util$plot_volcano(res2, "aneup_ins"))
+    print(util$plot_volcano(res[[name]], name))
 dev.off()
 
-save(res1, res2, file=args$outfile)
+save(res, file=args$outfile)
