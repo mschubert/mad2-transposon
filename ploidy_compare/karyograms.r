@@ -22,6 +22,7 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
         axis.text.y = element_blank())
 
     expr = function(segs, coords, smp) {
+        smp = paste0("X", smp) # GRanges adds 'X' on integer start
         cur = segs %>% filter(sample == smp)
         coords = as.data.frame(coords) %>% filter(seqnames %in% chrs)
         coords$expr = coords[[smp]]
@@ -69,8 +70,7 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
     }
 
     hist = sub("[^0-9]+", "", smp)
-    rna_smp = sub("-(high|low)", "", smp)
-    rna_smp = paste0(sub("[^ST]+", "", rna_smp), hist)
+    rna_smp = tolower(sub("-(high|low)", "", smp))
     m = meta$meta[meta$meta$`Hist nr.` == hist,]
     if (nrow(m) == 1)
         tit = sprintf("%s » %s", smp, m$Diagnosis)
@@ -83,7 +83,7 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
             xlim=c(quantile(dna_smp$counts, 0.01), quantile(dna_smp$counts, 0.99))) +
         theme(axis.title.y = element_blank())
     p2 = expr(eT$segments, eT$genes, rna_smp) + ylab("eT ratio expr")
-    p2_dens = dens(eT$genes, rna_smp, xlim=c(0.5,6), trans="log2")
+    p2_dens = dens(eT$genes, paste0('X', rna_smp), xlim=c(0.5,6), trans="log2")
     if (class(try(ggplot_build(p2_dens))) == "try-error")
         p2_dens = plot_spacer()
     p = p1 + p1_dens + p2 + p2_dens + plot_layout(ncol=2, widths=c(10,1)) & mytheme
@@ -104,7 +104,7 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
         ggbeeswarm::geom_quasirandom() +
         guides(alpha=FALSE) +
         facet_wrap(~type) +
-        scale_alpha_manual(values=c(0.1, 1))
+        scale_alpha_manual(values=c(1, 0.1))
 #    if (sum(weights$sample != "other") == 0)
 #        pm1 = plot_spacer()
     pm2 = ggplot(mcr, aes(x=type, y=cloneCount, fill=as.factor(cloneId))) +
@@ -114,7 +114,7 @@ plot_sample = function(smp, chrs=c(1:19,'X')) {
     pm3 = ggplot(meta$expression, aes(x=gene, y=vst, alpha=sample)) +
         ggbeeswarm::geom_quasirandom() +
         facet_wrap(~type, scales="free") +
-        scale_alpha_manual(values=c(0.1, 1))
+        scale_alpha_manual(values=c(1, 0.1))
     if (class(try(ggplot_build(pm3))) == "try-error" || sum(meta$expression$sample != "other") == 0)
         pm3 = plot_spacer()
     pm = pm1 + pm2 + pm3 +
