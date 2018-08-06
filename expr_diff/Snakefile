@@ -1,0 +1,49 @@
+subworkflow rnaseq:
+    workdir: "../data/rnaseq"
+    snakefile: "../data/rnaseq/Snakefile"
+
+subworkflow ploidy:
+    workdir: "../ploidy_compare"
+    snakefile: "../ploidy_compare/Snakefile"
+
+subworkflow cis:
+    workdir: "../cis_analysis"
+    snakefile: "../cis_analysis/Snakefile"
+
+ins = ['Erg', 'Ets1', 'Arid2', 'Drg1', 'Crebbp', 'Xrcc6', 'Trp53',
+       'Ikzf1', 'Wrap53', 'Pten', 'Suz12', 'Notch1', 'Rapgef6', 'Nf1']
+
+rule all:
+    input:
+        "de.pdf",
+        expand("ins_{ins}.pdf", ins=ins)
+
+rule de:
+    input:
+        rscript = "de.r",
+        copies = ploidy("gene_copies.RData"),
+        aneup = ploidy("analysis_set.RData"),
+        cis = cis("poisson.RData")
+    output:
+        result = "de.RData",
+        plot = "de.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --copies {input.copies}"
+            " --aneup {input.aneup}"
+            " --cis {input.cis}"
+            " --outfile {output.result}"
+            " --plotfile {output.plot}"
+
+rule de_ins:
+    input:
+        rscript = "ins.r",
+        diff_expr = "de.RData"
+    output:
+        result = "ins_{ins}.RData",
+        plot = "ins_{ins}.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --diff_expr {input.diff_expr}"
+            " --outfile {output.result}"
+            " --plotfile {output.plot}"

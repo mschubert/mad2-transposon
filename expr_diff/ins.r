@@ -39,4 +39,4 @@ for (name in c("aneup", "ins", "ins.aneup"))
 print(util$plot_volcano(res2, "aneup_ins"))
 dev.off()
 
-save(res, file=args$outfile)
+save(res1, res2, file=args$outfile)
