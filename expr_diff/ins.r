@@ -25,7 +25,7 @@ eset@colData = DataFrame(idx)
 design(eset) = ~ tissue + type + ins * aneup
 res = DESeq2::estimateDispersions(eset) %>%
     DESeq2::nbinomWaldTest(maxit=1000)
-res = sapply(c("ins", "ins.aneup"), util$extract_coef, res=res, use.names=TRUE)
+res = sapply(c("ins", "ins.aneup"), util$extract_coef, res=res, simplify=FALSE)
 
 pdf(args$plotfile)
 print(util$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))

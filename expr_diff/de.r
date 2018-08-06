@@ -72,7 +72,7 @@ sys$run({
     res = DESeq2::DESeq(eset) #, test="LRT", full=~tissue+type, reduced=~tissue)
     DESeq2::resultsNames(res)
     coefs = setdiff(DESeq2::resultsNames(res), "Intercept")
-    res = sapply(coefs, extract_coef, res=res, use.names=TRUE)
+    res = sapply(coefs, extract_coef, res=res, simplify=FALSE)
 
     pdf(args$plotfile)
     pca = prcomp(t(vs[apply(vs, 1, var) > 0,]), center=TRUE, scale=FALSE)
