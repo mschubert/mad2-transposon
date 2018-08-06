@@ -27,6 +27,8 @@ rule de:
     output:
         result = "de.RData",
         plot = "de.pdf"
+    resources:
+        walltime = 120
     shell:
         "Rscript {input.rscript}"
             " --copies {input.copies}"

@@ -67,10 +67,10 @@ sys$run({
     eset = DESeq2::DESeqDataSetFromMatrix(counts, colData=idx, ~tissue+type) %>%
         DESeq2::estimateSizeFactors(normMatrix=gene_copies)
     vs = DESeq2::getVarianceStabilizedData(DESeq2::estimateDispersions(eset))
-    design(eset) = ~ tissue + type * aneup
 
-    res = DESeq2::DESeq(eset) #, test="LRT", full=~tissue+type, reduced=~tissue)
-    DESeq2::resultsNames(res)
+    design(eset) = ~ tissue + type * aneup
+    res = DESeq2::estimateDispersions(eset) %>%
+        DESeq2::nbinomWaldTest(maxit=1000)
     coefs = setdiff(DESeq2::resultsNames(res), "Intercept")
     res = sapply(coefs, extract_coef, res=res, simplify=FALSE)
 
