@@ -16,7 +16,7 @@ ins = ['Erg', 'Ets1', 'Arid2', 'Drg1', 'Crebbp', 'Xrcc6', 'Trp53',
 rule all:
     input:
         "de.pdf",
-        expand("ins_{ins}.pdf", ins=ins)
+        expand("ins/{ins}.pdf", ins=ins)
 
 rule de:
     input:
@@ -40,8 +40,8 @@ rule de_ins:
         rscript = "ins.r",
         diff_expr = "de.RData"
     output:
-        result = "ins_{ins}.RData",
-        plot = "ins_{ins}.pdf"
+        result = "ins/{ins}.RData",
+        plot = "ins/{ins}.pdf"
     shell:
         "Rscript {input.rscript}"
             " --ins {wildcards.ins}"
