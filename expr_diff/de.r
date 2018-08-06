@@ -68,7 +68,7 @@ sys$run({
         DESeq2::estimateSizeFactors(normMatrix=gene_copies)
     vs = DESeq2::getVarianceStabilizedData(DESeq2::estimateDispersions(eset))
 
-    design(eset) = ~ tissue + type * aneup
+    design(eset) = ~ tissue + type + type:aneup
     res = DESeq2::estimateDispersions(eset) %>%
         DESeq2::nbinomWaldTest(maxit=1000)
     coefs = setdiff(DESeq2::resultsNames(res), "Intercept")
