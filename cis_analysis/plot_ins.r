@@ -59,8 +59,8 @@ grtrack = GeneRegionTrack(txdb, name=args$gene)
 gtrack = GenomeAxisTrack(name="GRCm38.92")
 genes = seq$coords$gene(dset="mmusculus_gene_ensembl", granges=TRUE) # get this out of txdb obj?
 region = genes[genes$external_gene_name == args$gene] %>%
-    anchor_start() %>% stretch(as.integer(args$flank)) %>%
-    anchor_end() %>% stretch(as.integer(args$flank))
+    anchor_5p() %>% stretch(as.integer(args$flank)) %>%
+    anchor_3p() %>% stretch(as.integer(args$flank))
 aw = width(region) / 20
 
 dna_ins = io$load(args$dna_ins) %>%
