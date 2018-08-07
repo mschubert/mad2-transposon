@@ -68,11 +68,17 @@ sys$run({
         DESeq2::estimateSizeFactors(normMatrix=gene_copies)
     vs = DESeq2::getVarianceStabilizedData(DESeq2::estimateDispersions(eset))
 
-    design(eset) = ~ tissue + type + type:aneup
-    res = DESeq2::estimateDispersions(eset) %>%
+    design(eset) = ~ tissue + type + aneup
+    robj = DESeq2::estimateDispersions(eset) %>%
         DESeq2::nbinomWaldTest(maxit=1000)
-    coefs = setdiff(DESeq2::resultsNames(res), "Intercept")
-    res = sapply(coefs, extract_coef, res=res, simplify=FALSE)
+    coefs = setdiff(DESeq2::resultsNames(robj), "Intercept")
+    res = sapply(coefs, extract_coef, res=robj, simplify=FALSE)
+
+    design(eset) = ~ tissue + type + type:aneup
+    robj = DESeq2::estimateDispersions(eset) %>%
+        DESeq2::nbinomWaldTest(maxit=1000)
+    coefs = grep("type.*\\.aneup", DESeq2::resultsNames(robj), value=TRUE)
+    res = c(res, sapply(coefs, extract_coef, res=robj, simplify=FALSE))
 
     pdf(args$plotfile)
     pca = prcomp(t(vs[apply(vs, 1, var) > 0,]), center=TRUE, scale=FALSE)
