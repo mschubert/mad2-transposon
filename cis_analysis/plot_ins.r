@@ -89,7 +89,7 @@ ggplot(exon_ins, aes(color=ins_type, alpha=0.5)) +
     geom_text(aes(x=end+200, y=reads_per_kb, label=label), size=2,
                   alpha=1, na.rm=TRUE, check_overlap=TRUE) +
     xlab("distance_from_start") +
-    ggtitle("exon expression")
+    ggtitle(paste(args$gene, "exon expression"))
 
 for (sample_id in use_samples) {
     message(sample_id)
