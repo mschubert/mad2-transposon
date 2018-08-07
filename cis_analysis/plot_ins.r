@@ -42,7 +42,8 @@ exons = exons %>%
     group_by(sample) %>%
     mutate(reads_per_kb = reads / width * 1000,
            next_start = c(start[-1], NA),
-           next_reads = c(reads_per_kb[-1], NA)) %>%
+           next_reads = c(reads_per_kb[-1], NA),
+           label = ifelse(position == max(position), sample, NA)) %>%
     ungroup()
 
 sjs = list.files(args$dir, "SJ.out.tab", recursive=TRUE, full.names=TRUE)
@@ -84,7 +85,10 @@ ggplot(exon_ins, aes(color=ins_type, alpha=0.5)) +
     geom_segment(aes(x=start, xend=end, y=reads_per_kb, yend=reads_per_kb), size=1) +
     scale_color_manual(values=c("#b3b3b3", "#377eb8", "#e41a1c", "#4daf4a")) +
     scale_y_log10() +
-    xlab("distance_from_start")
+    geom_text(aes(x=end+200, y=reads_per_kb, label=label), size=2,
+                  alpha=1, na.rm=TRUE, check_overlap=TRUE) +
+    xlab("distance_from_start") +
+    ggtitle("exon expression")
 
 for (sample_id in use_samples) {
     message(sample_id)
