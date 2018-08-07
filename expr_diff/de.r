@@ -85,7 +85,7 @@ sys$run({
     print(plot_pcs(idx, pca, 1, 2))
     print(plot_pcs(idx, pca, 3, 4))
     print(plot_pcs(idx, pca, 5, 6))
-    for (name in coefs)
+    for (name in names(res))
         print(plot_volcano(res[[name]], name, cis_genes))
     dev.off()
 
