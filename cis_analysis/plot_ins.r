@@ -74,16 +74,17 @@ rna_smp = rna_ins %>% filter(gene_name == args$gene) %>% pull(sample)
 use_samples = intersect(names(bams), c(rna_smp, dna_ins$sample))
 
 exon_ins = exons %>%
-    mutate(ins_type = (sample %in% rna_smp) + (sample %in% dna_ins$sample) * 2,
-           ins_type = factor(ins_type))
-levels(exon_ins$ins_type) = c("none", "RNA", "DNA", "both")
+    mutate(ins_type = 2*(sample %in% rna_smp) + (sample %in% dna_ins$sample),
+           ins_type = factor(ins_type, levels=0:3))
+levels(exon_ins$ins_type) = c("none", "DNA", "RNA", "both")
 
 pdf(args$plotfile)
 ggplot(exon_ins, aes(color=ins_type, alpha=0.5)) +
     geom_segment(aes(x=end, xend=next_start, y=reads_per_kb, yend=next_reads),
                  size=0.3, linetype="dashed", na.rm=TRUE) +
     geom_segment(aes(x=start, xend=end, y=reads_per_kb, yend=reads_per_kb), size=1) +
-    scale_color_manual(values=c("#b3b3b3", "#377eb8", "#e41a1c", "#4daf4a")) +
+    scale_color_manual(values=c("#b3b3b3", "#e41a1c", "#377eb8", "#4daf4a"),
+                       labels=levels(exon_ins$ins_type)) +
     scale_y_log10() +
     geom_text(aes(x=end+200, y=reads_per_kb, label=label), size=2,
                   alpha=1, na.rm=TRUE, check_overlap=TRUE) +
