@@ -115,7 +115,7 @@ for (sample_id in use_samples) {
     tracks$rna = AlignmentsTrack(bams[sample_id], type=c("coverage","sashimi"), name="RNA-seq")
     sizes = c(sizes, 4)
 
-    ftype = ci_rna$feature_type[1] %or% "???"
+    ftype = ci_rna$feature_name[1] %or% "???"
     main = sprintf("%s: %s @ %s", sample_id, ftype, args$gene)
 
     plotTracks(tracks, from=start(region), to=end(region), chromosome=seqnames(region),

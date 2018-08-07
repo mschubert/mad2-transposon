@@ -15,7 +15,7 @@ ins = ['Erg', 'Ets1', 'Pten', 'Rapgef6', 'Notch1', 'Arid2', 'Sfi1', 'Eif4enif1',
        'Gm11400', 'Gm11399', 'Gm10800', 'Foxn3', 'Rreb1', 'Elf1', 'Gm11400',
        'Evi2', 'Evi2a', 'Pisd-ps2', 'Fau-ps2', 'Snrnp70', 'Eed', 'Inpp5d',
        'Nfia', 'Lyn', 'Dhx15', 'Sp3', 'Nxf1', 'Ppp1r12a', 'Usp25', 'AC158777.2',
-       'Arid1b', 'Mapk9', 'Naif1', 'Lrch3', 'Cd47']
+       'Arid1b', 'Mapk9', 'Naif1', 'Lrch3', 'Cd47', 'Bcl11a', 'Stat1', 'Stat4']
 
 rule all:
     input:
