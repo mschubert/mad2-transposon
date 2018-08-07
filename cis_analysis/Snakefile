@@ -6,11 +6,34 @@ subworkflow aneup:
     workdir: "../ploidy_compare"
     snakefile: "../ploidy_compare/Snakefile"
 
+subworkflow imfusion:
+    workdir: "../data/rnaseq_imfusion"
+    snakefile: "../data/rnaseq_imfusion/Snakefile"
+
+ins = ['Erg', 'Ets1', 'Pten', 'Nanos3', 'Rapgef6', 'Rps3', 'Notch1', 'Arid2', 'Gm26778']
+
 rule all:
     input:
         "poisson.RData",
-        "kernel_cimpl.RData",
-        expand("aneup_{test}.RData", test=['ks', 'poisson'])
+#        "kernel_cimpl.RData",
+        expand("aneup_assocs/{test}.RData", test=['ks', 'poisson']),
+        expand("ins/{ins}.pdf", ins=ins)
+
+rule plot_ins:
+    input:
+        rscript = "plot_ins.r",
+        ctgs = imfusion("merged_ctgs.txt"),
+        insertions = imfusion("insertions.txt")
+    output:
+        plot = "ins/{gene}.pdf"
+    resources:
+        mem = 10000
+    shell:
+        "Rscript {input.rscript}"
+            " --ctgs {input.ctgs}"
+            " --insertions {input.insertions}"
+            " --gene {wildcards.gene}"
+            " --plotfile {output.plot}"
 
 rule aneuploidy_assocs:
     input:
@@ -18,7 +41,7 @@ rule aneuploidy_assocs:
         poisson = "poisson.RData",
         aneup = aneup("analysis_set.RData")
     output:
-        result = "aneup_{test}.RData"
+        result = "aneup_assocs/{test}.RData"
     shell:
         "Rscript {input.rscript}"
             " --aneup {input.aneup}"
@@ -61,7 +84,7 @@ rule cimpl:
     shell:
         "Rscript {input.rscript} --infile {input.aset} --outfile {output.result}"
 
-rule anaylsis_set:
+rule analysis_set:
     input:
         rscript = "analysis_set.r",
         data = cis("cis_per_tumor.RData")
