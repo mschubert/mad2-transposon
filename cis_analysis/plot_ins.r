@@ -1,3 +1,4 @@
+library(cowplot)
 library(dplyr)
 library(plyranges)
 library(Gviz)
@@ -6,9 +7,11 @@ b = import('base')
 io = import('io')
 seq = import('seq')
 sys = import('sys')
+idmap = import('process/idmap')
 
 args = sys$cmd$parse(
     opt('i', 'dir', 'imfusion directory', '../data/rnaseq_imfusion'),
+    opt('e', 'exons', 'expression tsv', '../data/rnaseq_imfusion/exon_counts.txt'),
     opt('c', 'ctgs', 'imfusion merged CTGs', '../data/rnaseq_imfusion/merged_ctgs.txt'),
     opt('r', 'rna_ins', 'imfusion insertions', '../data/rnaseq_imfusion/insertions.txt'),
     opt('d', 'dna_ins', '', '../cis_analysis/analysis_set.RData'),
@@ -20,6 +23,27 @@ args = sys$cmd$parse(
 args$flank = as.integer(args$flank)
 de_ctgs = io$read_table(args$ctgs, header=TRUE)
 rna_ins = io$read_table(args$rna_ins, header=TRUE)
+exons = io$read_table(args$exons, header=TRUE)
+expr = DESeq2::DESeqDataSetFromMatrix(exons[,6:ncol(exons)],
+        data.frame(id=colnames(exons)[6:ncol(exons)]), ~1) %>%
+    DESeq2::estimateSizeFactors() %>%
+    DESeq2::counts(normalized=TRUE)
+exons[,6:ncol(exons)] = expr
+exons = exons %>%
+    filter(gene_id == idmap$gene(args$gene, from="external_gene_name",
+        to="ensembl_gene_id", dset="mmusculus_gene_ensembl")) %>%
+    mutate(position = 1:dplyr::n() - 1,
+           width = abs(start - end),
+           start = (cumsum(width) - width) + position * 100,
+           end = cumsum(width) + position * 100) %>%
+    select(-gene_id, -chr, -strand) %>%
+    tidyr::gather("sample", "reads", -position, -width, -start, -end) %>%
+    filter(reads != 0) %>%
+    group_by(sample) %>%
+    mutate(reads_per_kb = reads / width * 1000,
+           next_start = c(start[-1], NA),
+           next_reads = c(reads_per_kb[-1], NA)) %>%
+    ungroup()
 
 sjs = list.files(args$dir, "SJ.out.tab", recursive=TRUE, full.names=TRUE)
 sjs = sjs[!grepl("_STARpass1", sjs)]
@@ -48,7 +72,20 @@ dna_ins = io$load(args$dna_ins) %>%
 rna_smp = rna_ins %>% filter(gene_name == args$gene) %>% pull(sample)
 use_samples = intersect(names(bams), c(rna_smp, dna_ins$sample))
 
+exon_ins = exons %>%
+    mutate(ins_type = (sample %in% rna_smp) + (sample %in% dna_ins$sample) * 2,
+           ins_type = factor(ins_type))
+levels(exon_ins$ins_type) = c("none", "RNA", "DNA", "both")
+
 pdf(args$plotfile)
+ggplot(exon_ins, aes(color=ins_type, alpha=0.5)) +
+    geom_segment(aes(x=end, xend=next_start, y=reads_per_kb, yend=next_reads),
+                 size=0.3, linetype="dashed", na.rm=TRUE) +
+    geom_segment(aes(x=start, xend=end, y=reads_per_kb, yend=reads_per_kb), size=1) +
+    scale_color_manual(values=c("#b3b3b3", "#377eb8", "#e41a1c", "#4daf4a")) +
+    scale_y_log10() +
+    xlab("distance_from_start")
+
 for (sample_id in use_samples) {
     message(sample_id)
     tracks = list(gtrack, grtrack)

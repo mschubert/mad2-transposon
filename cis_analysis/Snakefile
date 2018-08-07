@@ -22,6 +22,7 @@ rule all:
 rule plot_ins:
     input:
         rscript = "plot_ins.r",
+        exons = imfusion("exon_counts.txt"),
         ctgs = imfusion("merged_ctgs.txt"),
         rna_ins = imfusion("insertions.txt"),
         dna_ins = "analysis_set.RData"
@@ -31,6 +32,7 @@ rule plot_ins:
         mem = 10000
     shell:
         "Rscript {input.rscript}"
+            " --exons {input.exons}"
             " --ctgs {input.ctgs}"
             " --rna_ins {input.rna_ins}"
             " --dna_ins {input.dna_ins}"
