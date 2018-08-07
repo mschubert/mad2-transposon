@@ -23,7 +23,8 @@ rule plot_ins:
     input:
         rscript = "plot_ins.r",
         ctgs = imfusion("merged_ctgs.txt"),
-        insertions = imfusion("insertions.txt")
+        rna_ins = imfusion("insertions.txt"),
+        dna_ins = "analysis_set.RData"
     output:
         plot = "ins/{gene}.pdf"
     resources:
@@ -31,7 +32,8 @@ rule plot_ins:
     shell:
         "Rscript {input.rscript}"
             " --ctgs {input.ctgs}"
-            " --insertions {input.insertions}"
+            " --rna_ins {input.rna_ins}"
+            " --dna_ins {input.dna_ins}"
             " --gene {wildcards.gene}"
             " --plotfile {output.plot}"
 
