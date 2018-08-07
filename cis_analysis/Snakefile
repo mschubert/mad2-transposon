@@ -14,7 +14,7 @@ rule all:
 
 rule aneuploidy_assocs:
     input:
-        rscript = "aneup_{test}.r",
+        rscript = "aneup_assocs.r",
         poisson = "poisson.RData",
         aneup = aneup("analysis_set.RData")
     output:
@@ -23,6 +23,7 @@ rule aneuploidy_assocs:
         "Rscript {input.rscript}"
             " --aneup {input.aneup}"
             " --poisson {input.poisson}"
+            " --test {wildcards.test}"
             " --outfile {output.result}"
 
 rule aneup_de:
