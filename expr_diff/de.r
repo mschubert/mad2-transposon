@@ -91,7 +91,7 @@ sys$run({
     coefs = setdiff(DESeq2::resultsNames(robj), "Intercept")
     res = sapply(coefs, extract_coef, res=robj, simplify=FALSE)
 
-    design(eset) = ~ tissue + type + type:aneup
+    design(eset) = ~ tissue + type * aneup
     robj = DESeq2::estimateDispersions(eset) %>%
         DESeq2::nbinomWaldTest(maxit=1000)
     coefs = grep("type.*\\.aneup", DESeq2::resultsNames(robj), value=TRUE)
