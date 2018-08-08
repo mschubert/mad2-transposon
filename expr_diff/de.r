@@ -31,31 +31,27 @@ extract_coef = function(res, coef) {
         arrange(pvalue)
 }
 
-plot_volcano = function(res, coef, highlight=NULL) {
+plot_volcano = function(res, highlight=NULL) {
     res %>%
         mutate(label = idmap$gene(ensembl_gene_id, to="external_gene_name",
                                   dset="mmusculus_gene_ensembl"),
                circle = label %in% highlight,
                size = log10(baseMean + 1)) %>%
         plt$p_effect("padj", "log2FoldChange", thresh=0.1) %>%
-        plt$volcano(p=0.1, base.size=5, label_top=30, repel=TRUE) + ggtitle(coef)
+        plt$volcano(p=0.1, base.size=5, label_top=30, repel=TRUE)
 }
 
-plot_gset = function(res, coef, highlight=NULL) {
-    cur = res %>% mutate(stat = log2FoldChange / lfcSE)
-    go = gset$go('mmusculus_gene_ensembl', 'ensembl_gene_id', as_list=TRUE) %>%
-        gset$filter(min=5, max=200, valid=cur$ensembl_gene_id)
-
+plot_gset = function(res, sets, highlight=NULL) {
     test_one = function(set_name) {
-        stats = cur$stat[cur$ensembl_gene_id %in% go[[set_name]]]
+        stats = cur$stat[cur$ensembl_gene_id %in% sets[[set_name]]]
         mod = lm(stats ~ 1)
         broom::tidy(mod) %>% select(-term) %>% mutate(size = nobs(mod))
     }
-    result = lapply(names(go), test_one) %>%
-        dplyr::bind_rows("label") %>%
+    cur = res %>% mutate(stat = log2FoldChange / lfcSE)
+    result = sapply(names(sets), test_one, simplify=FALSE) %>%
+        dplyr::bind_rows(.id="label") %>%
         mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
         arrange(adj.p, p.value)
-
     result %>%
         plt$p_effect(thresh=0.1) %>%
         plt$volcano(p=0.1, base.size=0.5, label_top=30, repel=TRUE, text.size=2)
@@ -101,15 +97,19 @@ sys$run({
     coefs = grep("type.*\\.aneup", DESeq2::resultsNames(robj), value=TRUE)
     res = c(res, sapply(coefs, extract_coef, res=robj, simplify=FALSE))
 
+    go = gset$go('mmusculus_gene_ensembl', 'ensembl_gene_id', as_list=TRUE) %>%
+        gset$filter(min=5, max=200, valid=rownames(counts))
+
     pdf(args$plotfile)
     pca = prcomp(t(vs[apply(vs, 1, var) > 0,]), center=TRUE, scale=FALSE)
     print(plot_pcs(idx, pca, 1, 2))
     print(plot_pcs(idx, pca, 3, 4))
     print(plot_pcs(idx, pca, 5, 6))
-    for (name in names(res))
-        print(plot_volcano(res[[name]], name, cis_genes))
-    for (name in names(res))
-        print(plot_gset(res[[name]], name))
+    for (name in names(res)) {
+        message(name)
+        print(plot_volcano(res[[name]], cis_genes) + ggtitle(name))
+        print(plot_gset(res[[name]], go) + ggtitle(name))
+    }
     dev.off()
 
     save(eset, pca, cis, res, file=args$outfile)
