@@ -11,28 +11,45 @@ fix_ids = function(x) {
     paste0(nums, letter)
 }
 
-#' KS statistic for aneuploidy associations
-ks_test = function(data) {
-    mod = ks.test(data$aneup[data$reads], data$aneup[!data$reads])
-    mod$model = select(data, sample, aneup, reads)
+#' KS statistic
+ks_test = function(data, field) {
+    mod = ks.test(data[[field]][data$reads], data[[field]][!data$reads])
+    mod$model = select(data, sample, !!rlang::sym(field), reads)
     mod %>%
         broom::tidy() %>%
-        mutate(estimate = mean(data$aneup[data$reads]) - mean(data$aneup),
+        mutate(estimate = mean(data[[field]][data$reads]) - mean(data[[field]]),
                statistic = sign(estimate) / p.value,
                size = sum(data$reads),
                mod = list(mod))
 }
 
-#' Poisson regression for aneuploidy associations
-poisson_reg = function(data) {
-    mod = glm(reads ~ aneup, family=poisson(), data=data)
-    mod$model = select(data, sample, aneup, reads)
+#' Poisson regression
+poisson_reg = function(data, field) {
+    fml = formula(paste("reads ~", field))
+    mod = glm(fml, family=poisson(), data=data)
+    mod$model = select(data, sample, !!rlang::sym(field), reads)
     mod %>%
         broom::tidy() %>%
-        filter(term == "aneup") %>%
+        filter(term == field) %>%
         select(-term) %>%
         mutate(size = sum(data$reads),
                mod = list(mod))
+}
+
+#' Run given test for a field
+do_test = function(dset, test, field) {
+    test_fun = switch(args$test, 'ks'=ks_test, 'poisson'=poisson_reg,
+                      stop("invalid 'test' argument"))
+
+    dset %>%
+        group_by(external_gene_name) %>%
+        tidyr::nest() %>%
+        mutate(fit = purrr::map(data, test_fun, field=field)) %>%
+        select(-data) %>%
+        tidyr::unnest() %>%
+        mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
+        select(external_gene_name, size, estimate, statistic, p.value, adj.p) %>%
+        arrange(adj.p, p.value)
 }
 
 sys$run({
@@ -49,35 +66,36 @@ sys$run({
         filter(adj.p < 1e-5) %>%
         pull(external_gene_name)
 
-    test_fun = switch(args$test,
-        'ks' = ks_test,
-        'poisson' = poisson_reg,
-        stop('invalid test')
-    )
-
-    result = dset$samples %>%
+    aset = dset$samples %>%
         select(-n_ins) %>%
         filter(external_gene_name %in% genes) %>%
         mutate(reads=TRUE) %>%
         tidyr::complete(sample, external_gene_name, fill=list(reads=FALSE)) %>%
         inner_join(aneup, by="sample") %>%
-        group_by(external_gene_name) %>%
-        tidyr::nest() %>%
-        mutate(fit = purrr::map(data, test_fun)) %>%
-        select(-data) %>%
-        tidyr::unnest() %>%
-        mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
-        select(external_gene_name, size, estimate, statistic, p.value, adj.p) %>%
-        arrange(adj.p, p.value)
+        mutate(type_Tcell = ifelse(type == "T-cell", 1, 0),
+               type_Myeloid = ifelse(type == "Myeloid", 1, 0),
+               type_Other = ifelse(type == "Other", 1, 0),
+               aneup_Tcell = ifelse(type == "T-cell", aneup, 0),
+               aneup_Myeloid = ifelse(type == "Myeloid", aneup, 0),
+               aneup_Other = ifelse(type == "Other", aneup, 0))
 
-    p = result %>%
+    plot_volcano = . %>%
         mutate(label = external_gene_name) %>%
         plt$p_effect(thresh=0.1) %>%
         plt$volcano(p=0.1, label_top=30, repel=TRUE)
 
+#    result = sapply()
+#    plots = lapply(result, plot_volcano)
+
     pdf(args$plotfile)
-    print(p)
+    print(plot_volcano(do_test(aset, args$test, "aneup")) + ggtitle("aneup"))
+    print(plot_volcano(do_test(aset, args$test, "type_Tcell")) + ggtitle("T-cell"))
+    print(plot_volcano(do_test(aset, args$test, "type_Myeloid")) + ggtitle("Myeloid"))
+    print(plot_volcano(do_test(aset, args$test, "type_Other")) + ggtitle("Other"))
+    print(plot_volcano(do_test(aset, args$test, "aneup_Tcell")) + ggtitle("aneup T-cell"))
+    print(plot_volcano(do_test(aset, args$test, "aneup_Myeloid")) + ggtitle("aneup Myeloid"))
+    print(plot_volcano(do_test(aset, args$test, "aneup_Other")) + ggtitle("aneup Other"))
     dev.off()
 
-    save(result, file=args$outfile)
+    save(genes, file=args$outfile) # rather save result
 })
