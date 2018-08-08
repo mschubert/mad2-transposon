@@ -29,8 +29,10 @@ res = sapply(c("ins", "ins.aneup"), util$extract_coef, res=res, simplify=FALSE)
 
 pdf(args$plotfile)
 print(util$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))
-for (name in c("ins", "ins.aneup"))
+for (name in c("ins", "ins.aneup")) {
     print(util$plot_volcano(res[[name]], name))
+    print(util$plot_gset(res[[name]], name))
+}
 dev.off()
 
 save(res, file=args$outfile)
