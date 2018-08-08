@@ -71,11 +71,15 @@ sys$run({
     gene_copies = io$load(args$copies)
     exprset = io$load(args$expr)
     idx = exprset$idx %>%
-        mutate(sample = paste0(hist_nr, tissue),
-               type = sub("(^[^ ]+).*", "\\1", type)) %>%
-        left_join(io$load(args$aneup)) %>%
+        mutate(sample = paste0(hist_nr, tissue)) %>%
+        select(-type) %>%
+        left_join(io$load(args$aneup) %>% select(-tissue)) %>%
         mutate(type = ifelse(is.na(type), "NA", type), #TODO: add annotations
-               tissue = factor(tissue), type=factor(type))
+               tissue = factor(tissue),
+               type = factor(type),
+               aneup_Tcell = ifelse(type == "T-cell", aneup, 0),
+               aneup_Myeloid = ifelse(type == "Myeloid", aneup, 0),
+               aneup_Other = ifelse(type == "Other", aneup, 0))
     counts = exprset$counts
     narray::intersect(gene_copies, counts, along=1)
     narray::intersect(gene_copies, counts, idx$sample, along=2)
@@ -85,17 +89,22 @@ sys$run({
         DESeq2::estimateSizeFactors(normMatrix=gene_copies)
     vs = DESeq2::getVarianceStabilizedData(DESeq2::estimateDispersions(eset))
 
+    # fit tissue of origin, cancer type, and pan-aneuploidy
     design(eset) = ~ tissue + type + aneup
     robj = DESeq2::estimateDispersions(eset) %>%
         DESeq2::nbinomWaldTest(maxit=1000)
     coefs = setdiff(DESeq2::resultsNames(robj), "Intercept")
     res = sapply(coefs, extract_coef, res=robj, simplify=FALSE)
 
-    design(eset) = ~ tissue + type * aneup
-    robj = DESeq2::estimateDispersions(eset) %>%
-        DESeq2::nbinomWaldTest(maxit=1000)
-    coefs = grep("type.*\\.aneup", DESeq2::resultsNames(robj), value=TRUE)
-    res = c(res, sapply(coefs, extract_coef, res=robj, simplify=FALSE))
+    # fit cancer type specific aneuploidy
+    aneup_tissue = function(term) {
+        design(eset) = formula(paste("~ tissue + type + aneup +", term))
+        DESeq2::estimateDispersions(eset) %>%
+            DESeq2::nbinomWaldTest(maxit=1000) %>%
+            extract_coef(term)
+    }
+    ats = c("aneup_Tcell", "aneup_Myeloid", "aneup_Other")
+    res = c(res, sapply(ats, aneup_tissue, simplify=FALSE))
 
     go = gset$go('mmusculus_gene_ensembl', 'ensembl_gene_id', as_list=TRUE) %>%
         gset$filter(min=5, max=200, valid=rownames(counts))
