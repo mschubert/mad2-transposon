@@ -50,13 +50,15 @@ rule aneuploidy_assocs:
         poisson = "poisson.RData",
         aneup = aneup("analysis_set.RData")
     output:
-        result = "aneup_assocs/{test}.RData"
+        result = "aneup_assocs/{test}.RData",
+        plot = "aneup_assocs/{test}.pdf"
     shell:
         "Rscript {input.rscript}"
             " --aneup {input.aneup}"
             " --poisson {input.poisson}"
             " --test {wildcards.test}"
             " --outfile {output.result}"
+            " --plotfile {output.plot}"
 
 rule aneup_de:
     input:

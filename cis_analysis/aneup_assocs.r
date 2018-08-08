@@ -2,6 +2,7 @@ library(dplyr)
 b = import('base')
 io = import('io')
 sys = import('sys')
+plt = import('plot')
 
 #' source sample IDs are both 123S and T567
 fix_ids = function(x) {
@@ -34,12 +35,13 @@ poisson_reg = function(data) {
                mod = list(mod))
 }
 
-if (is.null(module_name())) {
+sys$run({
     args = sys$cmd$parse(
         opt('a', 'aneup', 'aneuploidy .tsv', '../ploidy_compare/analysis_set.RData'),
         opt('p', 'poisson', 'cis assocs RData', 'poisson.RData'),
         opt('t', 'test', 'ks/poisson', 'ks'),
-        opt('o', 'outfile', 'aneuploidy assocs', 'aneuploidy_assocs.RData'))
+        opt('o', 'outfile', 'aneuploidy assocs', 'aneup_assocs/ks.RData'),
+        opt('p', 'plotfile', 'pdf', 'aneup_assocs/ks.pdf'))
 
     aneup = io$load(args$aneup)
     dset = io$load(args$poisson)
@@ -68,5 +70,14 @@ if (is.null(module_name())) {
         select(external_gene_name, size, estimate, statistic, p.value, adj.p) %>%
         arrange(adj.p, p.value)
 
+    p = result %>%
+        mutate(label = external_gene_name) %>%
+        plt$p_effect(thresh=0.1) %>%
+        plt$volcano(p=0.1, label_top=30, repel=TRUE)
+
+    pdf(args$plotfile)
+    print(p)
+    dev.off()
+
     save(result, file=args$outfile)
-}
+})
