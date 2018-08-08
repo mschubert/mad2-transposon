@@ -19,9 +19,8 @@ ins = ['Erg', 'Ets1', 'Pten', 'Rapgef6', 'Notch1', 'Arid2', 'Sfi1', 'Eif4enif1',
 
 rule all:
     input:
-        "poisson.RData",
-#        "kernel_cimpl.RData",
-        expand("aneup_assocs/{test}.RData", test=['ks', 'poisson']),
+        "plot_tiles.pdf",
+        expand("aneup_assocs/{test}.pdf", test=['ks', 'poisson']),
         expand("ins/{ins}.pdf", ins=ins)
 
 rule plot_ins:
@@ -75,6 +74,27 @@ rule aneup_de:
             " --expr {input.expr}"
             " --aneup {input.aneup}"
             " --outfile {output.data}"
+            " --plotfile {output.plot}"
+
+rule plot_tiles:
+    input:
+        rscript = "plot_tiles.r",
+        aneup = "../ploidy_compare/analysis_set.RData",
+        ins_dna = "poisson.RData",
+        ins_rna = imfusion("insertions.txt"),
+        assocs_dna = "aneup_assocs/poisson.RData",
+        assocs_rna = imfusion("merged_ctgs.txt"),
+        exons = imfusion("exon_counts.txt")
+    output:
+        plot = "plot_tiles.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --aneup {input.aneup}"
+            " --ins_dna {input.ins_dna}"
+            " --ins_rna {input.ins_rna}"
+            " --assocs_dna {input.assocs_dna}"
+            " --assocs_rna {input.assocs_rna}"
+            " --exons {input.exons}"
             " --plotfile {output.plot}"
 
 rule poisson: # keep separate for now, bc gene set analysis
