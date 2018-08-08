@@ -12,7 +12,16 @@ fix_ids = function(x) {
 
 args = sys$cmd$parse(
     opt('i', 'infile', 'aneuploidy .tsv', 'compare_ploidy.tsv'),
+    opt('m', 'meta', 'sample types', '../data/meta/meta.RData'),
     opt('o', 'outfile', 'aneuploidy assocs', 'analysis_set.RData'))
+
+meta = io$load(args$meta)$meta %>%
+    transmute(sample = `Hist nr.`,
+              tissue = rep(list(c("spleen", "thymus")), nrow(.)),
+              type = ifelse(is.na(Diagnosis), "NA", Diagnosis),
+              type = sub("(^[^ ]+).*", "\\1", type)) %>%
+    tidyr::unnest() %>%
+    mutate(sample = paste0(sample, substr(tissue, 1, 1)))
 
 #TODO: track which data source we use to determine aneuploidy
 aneup = io$read_table(args$infile, header=TRUE) %>%
@@ -23,6 +32,7 @@ aneup = io$read_table(args$infile, header=TRUE) %>%
     tidyr::spread("type", "aneuploidy") %>%
     group_by(sample) %>%
     summarize(aneup = `WGS (merged)` %or% `WGS (30-cell)` %or% `RNA-seq (eT)`) %>%
-    arrange(-aneup)
+    arrange(-aneup) %>%
+    left_join(meta)
 
 save(aneup, file=args$outfile)

@@ -35,11 +35,15 @@ rule gene_copies:
 rule analysis_set:
     input:
         rscript = "analysis_set.r",
-        ploidy = "compare_ploidy.tsv"
+        ploidy = "compare_ploidy.tsv",
+        meta = meta("meta.RData")
     output:
         table = "analysis_set.RData"
     shell:
-        "Rscript {input.rscript} --infile {input.ploidy} --outfile {output.table}"
+        "Rscript {input.rscript}"
+            " --infile {input.ploidy}"
+            " --meta {input.meta}"
+            " --outfile {output.table}"
 
 rule compare_ploidy:
     input:
