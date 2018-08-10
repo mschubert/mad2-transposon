@@ -16,10 +16,10 @@ ins = io$load(args$infile) %>%
         start.field="position", end.field="position")
 
 genome = seq$genome("GRCm38", chrs=c(1:19, 'X'))
-ins_sites_total = seq$count_pattern("TTAA", genome, rc=TRUE)
+ins_sites_genome = seq$count_pattern("TTAA", genome, rc=TRUE)
 n_smp = length(unique(ins$sample))
 ins_per_sample = length(ins) / n_smp
-ins_rate = ins_per_sample / ins_sites_total
+ins_rate_genome = ins_per_sample / ins_sites_genome
 
 genes = seq$coords$gene(dset="mmusculus_gene_ensembl", granges=TRUE) %>%
     filter(seqnames(.) %in% seqnames(ins)) %>%
@@ -40,8 +40,8 @@ result = as.data.frame(GenomicRanges::mcols(genes)) %>%
     inner_join(samples %>% select(sample, external_gene_name)) %>%
     group_by(external_gene_name, TTAAs) %>%
     summarize(n_smp = n_distinct(sample)) %>%
-    mutate(p.value = purrr::map2_dbl(n_smp, TTAAs, ptest, rate=ins_rate),
+    mutate(p.value = purrr::map2_dbl(n_smp, TTAAs, ptest, rate=ins_rate_genome),
            adj.p = p.adjust(p.value, method="fdr")) %>%
     arrange(adj.p, p.value)
 
-save(samples, genes, result, file=args$outfile)
+save(samples, genes, result, n_smp, ins_rate_genome, file=args$outfile)
