@@ -19,7 +19,7 @@ ins = ['Erg', 'Ets1', 'Pten', 'Rapgef6', 'Notch1', 'Arid2', 'Sfi1', 'Eif4enif1',
 
 rule all:
     input:
-        "plot_tiles.pdf",
+        "plot_tiles.pdf", "poisson.pdf", "poisson_set.pdf",
         expand("aneup_assocs/{test}.pdf", test=['ks', 'poisson']),
         expand("ins/{ins}.pdf", ins=ins)
 
@@ -97,14 +97,31 @@ rule plot_tiles:
             " --exons {input.exons}"
             " --plotfile {output.plot}"
 
-rule poisson: # keep separate for now, bc gene set analysis
+rule poisson:
     input:
         rscript = "poisson.r",
         aset = "analysis_set.RData"
     output:
-        result = "poisson.RData"
+        result = "poisson.RData",
+        plot = "poisson.pdf"
     shell:
-        "Rscript {input.rscript} --infile {input.aset} --outfile {output.result}"
+        "Rscript {input.rscript}"
+            " --infile {input.aset}"
+            " --outfile {output.result}"
+            " --plotfile {output.plot}"
+
+rule poisson_set: # keep separate for now, bc gene set analysis
+    input:
+        rscript = "poisson_set.r",
+        gene = "poisson.RData"
+    output:
+        result = "poisson_set.RData",
+        plot = "poisson_set.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --infile {input.gene}"
+            " --outfile {output.result}"
+            " --plotfile {output.plot}"
 
 rule cimpl:
     input:

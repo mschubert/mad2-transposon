@@ -3,12 +3,14 @@ library(plyranges)
 io = import('io')
 seq = import('seq')
 sys = import('sys')
+plt = import('plot')
 
 args = sys$cmd$parse(
     opt('i', 'infile', 'transposon insert RData', 'analysis_set.RData'),
     opt('u', 'upstream', 'bp to include before gene', '10000'),
     opt('d', 'downstream', 'bp to include after gene', '0'),
-    opt('o', 'outfile', 'insertion statistics RData', 'poisson.RData'))
+    opt('o', 'outfile', 'insertion statistics RData', 'poisson.RData'),
+    opt('p', 'plotfile', 'volcano pdf', 'poisson.pdf'))
 
 ins = io$load(args$infile) %>%
     filter(chr %in% c(1:19, 'X')) %>%
@@ -46,5 +48,15 @@ result = as.data.frame(GenomicRanges::mcols(genes)) %>%
     mutate(estimate = (estimate - ins_rate_genome) / ins_rate_genome,
            adj.p = p.adjust(p.value, method="fdr")) %>%
     arrange(adj.p, p.value)
+
+p = result %>%
+    mutate(size = n_smp,
+           label = external_gene_name) %>%
+    plt$p_effect() %>%
+    plt$volcano(label_top=30, repel=TRUE)
+
+pdf(args$plotfile)
+print(p)
+dev.off()
 
 save(samples, genes, result, n_smp, ins_rate_genome, file=args$outfile)
