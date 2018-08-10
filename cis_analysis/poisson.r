@@ -35,12 +35,15 @@ samples = seq$intersect(ins, genes) %>%
               reads = sum(reads)) %>%
     ungroup()
 
-ptest = function(n_ins, len, rate) poisson.test(n_ins, len * n_smp, rate)$p.value
+ptest = function(n_ins, len, rate) broom::tidy(poisson.test(n_ins, len*n_smp, rate))
 result = as.data.frame(GenomicRanges::mcols(genes)) %>%
     inner_join(samples %>% select(sample, external_gene_name)) %>%
     group_by(external_gene_name, TTAAs) %>%
     summarize(n_smp = n_distinct(sample)) %>%
-    mutate(p.value = purrr::map2_dbl(n_smp, TTAAs, ptest, rate=ins_rate_genome),
+    mutate(result = purrr::map2(n_smp, TTAAs, ptest, rate=ins_rate_genome)) %>%
+    tidyr::unnest() %>%
+    select(-(parameter:alternative)) %>%
+    mutate(estimate = (estimate - ins_rate_genome) / ins_rate_genome,
            adj.p = p.adjust(p.value, method="fdr")) %>%
     arrange(adj.p, p.value)
 
