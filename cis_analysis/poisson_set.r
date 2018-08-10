@@ -8,7 +8,7 @@ test_set = function(set_name) {
     subs = stats$external_gene_name %in% sets[[set_name]]
     len = sum(stats$TTAAs[subs])
     ins = sum(stats$n_smp[subs])
-    smps = names(unlist(stats$sample[subs]))
+    smps = unlist(stats$sample[subs])
     broom::tidy(poisson.test(ins, len*assocs$n_smp, assocs$ins_rate_genome)) %>%
         mutate(size = sum(subs),
                n_smps = length(unique(smps)),
@@ -41,7 +41,8 @@ result = sapply(names(sets), test_set, simplify=FALSE) %>%
     dplyr::bind_rows(.id="set") %>%
     select(-(parameter:alternative)) %>%
     select(set, size, n_smps, everything()) %>%
-    mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
+    mutate(estimate = (estimate - assocs$ins_rate_genome) / assocs$ins_rate_genome,
+           adj.p = p.adjust(p.value, method="fdr")) %>%
     arrange(adj.p, p.value)
 
 samples = result %>%
@@ -54,5 +55,15 @@ samples = result %>%
 
 result = result %>%
     select(-samples)
+
+p = result %>%
+    mutate(label = ifelse((40/6)*estimate-40 > log10(adj.p) | estimate < -0.5 ,
+                          set, NA)) %>%
+    plt$p_effect() %>%
+    plt$volcano(text.size=2, label_top=Inf, repel=TRUE)
+
+pdf(args$plotfile, 15, 6)
+print(p)
+dev.off()
 
 save(result, samples, file=args$outfile)
