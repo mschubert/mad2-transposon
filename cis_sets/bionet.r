@@ -1,5 +1,6 @@
 library(BioNet)
 library(DLBCL)
+library(ggraph)
 data(interactome)
 io = import('io')
 sys = import('sys')
@@ -12,20 +13,23 @@ args = sys$cmd$parse(
 
 dset = io$load(args$gene)
 samples = dset$samples
-genes = dset$genes
-
-stats = io$load(args$diff_expr) %>%
-    mutate(score = -log10(p.value))
+stats = dset$result
 
 nodes = nodes(interactome) %>% sub("\\([0-9]+\\)", "", .)
-scores = stats$score[match(nodes, toupper(stats$expr))]
+scores = stats$p.value[match(nodes, toupper(stats$external_gene_name))]
+scores = -log10(scores)
 scores[is.na(scores)] = 0
+scores = pmax(scores - 2, 0) # only keep p<1e-x
 names(scores) = nodes(interactome)
 
-diff_expr = stats$statistic[match(nodes, toupper(stats$expr))]
-diff_expr[is.na(diff_expr)] = 0
-names(diff_expr) = nodes(interactome)
+#bum = fitBumModel(scores, plot=TRUE)
+#scores = scoreNodes(network=interactome, fb=bum, fdr=1e-10)
+module = runFastHeinz(interactome, scores) %>%
+    igraph::igraph.from.graphNEL()
 
-module = runFastHeinz(interactome, scores)
-plotModule(module, scores=scores, diff.expr=diff_expr)
+ggraph(module) +
+    geom_edge_link(alpha=0.2) +
+    geom_node_point(alpha=0.2) +
+    geom_node_text(aes(label = sub("^([A-Z0-9]+).*", "\\1", name)), size=2, repel=TRUE)
+
 dev.off()
