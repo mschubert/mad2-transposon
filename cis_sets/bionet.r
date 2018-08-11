@@ -9,6 +9,7 @@ sys = import('sys')
 #' Return BioNet Steiner Tree subnetwork
 bionet = function(g, fdr) {
     scores = setNames(pull(g, adj.p), pull(g, name))
+    scores[is.na(scores)] = 1
     scores = pmax(-log10(scores) + log10(fdr), 0)
     runFastHeinz(g, scores) 
 }
@@ -29,11 +30,8 @@ net = interactome %>%
     select(name = geneSymbol) %>%
     # no join, tidygraph?
     mutate(n_smp = assocs$n_smp[match(name, assocs$name)],
-           n_smp = ifelse(is.na(n_smp), 0, n_smp),
            p.value = assocs$p.value[match(name, assocs$name)],
-           p.value = ifelse(is.na(p.value), 1, p.value),
-           adj.p = assocs$adj.p[match(name, assocs$name)],
-           adj.p = ifelse(is.na(adj.p), 1, adj.p))
+           adj.p = assocs$adj.p[match(name, assocs$name)])
 
 subnet = bionet(net, fdr=0.01)
 ggraph(subnet) +
