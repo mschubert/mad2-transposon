@@ -1,9 +1,17 @@
 library(BioNet)
 library(DLBCL)
 library(ggraph)
+library(tidygraph)
 data(interactome)
 io = import('io')
 sys = import('sys')
+
+#' Return BioNet Steiner Tree subnetwork
+bionet = function(g, fdr) {
+    scores = setNames(pull(g, adj.p), pull(g, name))
+    scores = pmax(-log10(scores) + log10(fdr), 0)
+    runFastHeinz(g, scores) 
+}
 
 args = sys$cmd$parse(
     opt('g', 'gene', 'gene-level poisson', '../cis_analysis/poisson.RData'),
@@ -11,25 +19,27 @@ args = sys$cmd$parse(
     opt('o', 'outfile', 'save results .RData', 'poisson_{set}.RData'),
     opt('p', 'plotfile', 'pdf', 'bionet.pdf'))
 
-dset = io$load(args$gene)
-samples = dset$samples
-stats = dset$result
+assocs = io$load(args$gene)$result %>%
+    mutate(name = toupper(external_gene_name))
 
-nodes = nodes(interactome) %>% sub("\\([0-9]+\\)", "", .)
-scores = stats$p.value[match(nodes, toupper(stats$external_gene_name))]
-scores = -log10(scores)
-scores[is.na(scores)] = 0
-scores = pmax(scores - 2, 0) # only keep p<1e-x
-names(scores) = nodes(interactome)
+net = interactome %>%
+    igraph::igraph.from.graphNEL() %>%
+    as_tbl_graph() %>%
+    activate(nodes) %>%
+    select(name = geneSymbol) %>%
+    # no join, tidygraph?
+    mutate(n_smp = assocs$n_smp[match(name, assocs$name)],
+           n_smp = ifelse(is.na(n_smp), 0, n_smp),
+           p.value = assocs$p.value[match(name, assocs$name)],
+           p.value = ifelse(is.na(p.value), 1, p.value),
+           adj.p = assocs$adj.p[match(name, assocs$name)],
+           adj.p = ifelse(is.na(adj.p), 1, adj.p))
 
-#bum = fitBumModel(scores, plot=TRUE)
-#scores = scoreNodes(network=interactome, fb=bum, fdr=1e-10)
-module = runFastHeinz(interactome, scores) %>%
-    igraph::igraph.from.graphNEL()
-
-ggraph(module) +
+subnet = bionet(net, fdr=0.01)
+ggraph(subnet) +
     geom_edge_link(alpha=0.2) +
-    geom_node_point(alpha=0.2) +
-    geom_node_text(aes(label = sub("^([A-Z0-9]+).*", "\\1", name)), size=2, repel=TRUE)
+    geom_node_point(aes(size=n_smp), alpha=0.2) +
+    geom_node_text(aes(label = name), size=2, repel=TRUE) +
+    theme_void()
 
 dev.off()
