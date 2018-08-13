@@ -31,12 +31,13 @@ plot_cov = function(bins, segs, counts="counts", bin_y="copy.number", seg_y="mea
 
 sys$run({
     args = sys$cmd$parse(
-        opt('i', 'infile', 'aneufinder model file', '../data/wgs/30cellseq.RData'),
-        opt('o', 'outfile', 'models with copy number segments', '/dev/null'),
-        opt('p', 'plotfile', 'compare karyograms to aneufinder', '/dev/null'))
+        opt('o', 'outfile', 'models with copy number segments', '30cellseq.RData'),
+        opt('p', 'plotfile', 'compare karyograms to aneufinder', '30cellseq.pdf'),
+        arg('infiles', 'aneufinder models', sprintf('30cellseq_batch%i.RData', 1:2), arity='*'))
 
     # load the models we constructed
-    models = io$load(args$infile)
+    models = do.call(c, unname(io$load(args$infiles)))
+    stopifnot(sum(duplicated(names(models))) == 0)
     models = models[order(names(models))]
     bins = lapply(models, function(m) as.data.frame(m$bins)) %>%
         dplyr::bind_rows(.id="Sample") %>%
