@@ -1,0 +1,142 @@
+subworkflow cis:
+    workdir: "../data/cis"
+    snakefile: "../data/cis/Snakefile"
+
+subworkflow aneup:
+    workdir: "../ploidy_compare"
+    snakefile: "../ploidy_compare/Snakefile"
+
+subworkflow imfusion:
+    workdir: "../data/rnaseq_imfusion"
+    snakefile: "../data/rnaseq_imfusion/Snakefile"
+
+ins = ['Erg', 'Ets1', 'Pten', 'Rapgef6', 'Notch1', 'Arid2', 'Sfi1', 'Eif4enif1',
+       'Ikfz', 'Xrcc6', 'Drg1', 'Nf1', 'Suz12', 'Crebbp', 'Trp53', 'Runx1',
+       'Gm11400', 'Gm11399', 'Gm10800', 'Foxn3', 'Rreb1', 'Elf1', 'Gm11400',
+       'Evi2', 'Evi2a', 'Pisd-ps2', 'Fau-ps2', 'Snrnp70', 'Eed', 'Inpp5d',
+       'Nfia', 'Lyn', 'Dhx15', 'Sp3', 'Nxf1', 'Ppp1r12a', 'Usp25', 'AC158777.2',
+       'Arid1b', 'Mapk9', 'Naif1', 'Lrch3', 'Cd47', 'Bcl11a', 'Stat1', 'Stat4']
+
+rule all:
+    input:
+        "plot_tiles.pdf", "poisson.pdf", "poisson_set.pdf",
+        expand("aneup_assocs/{test}.pdf", test=['ks', 'poisson']),
+        expand("ins/{ins}.pdf", ins=ins)
+
+rule plot_ins:
+    input:
+        rscript = "plot_ins.r",
+        exons = imfusion("exon_counts.txt"),
+        ctgs = imfusion("merged_ctgs.txt"),
+        rna_ins = imfusion("insertions.txt"),
+        dna_ins = "analysis_set.RData"
+    output:
+        plot = "ins/{gene}.pdf"
+    resources:
+        mem = 10000
+    shell:
+        "Rscript {input.rscript}"
+            " --exons {input.exons}"
+            " --ctgs {input.ctgs}"
+            " --rna_ins {input.rna_ins}"
+            " --dna_ins {input.dna_ins}"
+            " --gene {wildcards.gene}"
+            " --plotfile {output.plot}"
+
+rule aneuploidy_assocs:
+    input:
+        rscript = "aneup_assocs.r",
+        poisson = "poisson.RData",
+        aneup = aneup("analysis_set.RData")
+    output:
+        result = "aneup_assocs/{test}.RData",
+        plot = "aneup_assocs/{test}.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --aneup {input.aneup}"
+            " --poisson {input.poisson}"
+            " --test {wildcards.test}"
+            " --outfile {output.result}"
+            " --plotfile {output.plot}"
+
+rule aneup_de:
+    input:
+        rscript = "aneup_de.r",
+        poisson = "poisson.RData",
+        expr = "../data/rnaseq/assemble.RData",
+        aneup = aneup("analysis_set.RData")
+    output:
+        data = "aneup_de.RData",
+        plot = "aneup_de.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --cis {input.poisson}"
+            " --expr {input.expr}"
+            " --aneup {input.aneup}"
+            " --outfile {output.data}"
+            " --plotfile {output.plot}"
+
+rule plot_tiles:
+    input:
+        rscript = "plot_tiles.r",
+        aneup = "../ploidy_compare/analysis_set.RData",
+        ins_dna = "poisson.RData",
+        ins_rna = imfusion("insertions.txt"),
+        assocs_dna = "aneup_assocs/poisson.RData",
+        assocs_rna = imfusion("merged_ctgs.txt"),
+        exons = imfusion("exon_counts.txt")
+    output:
+        plot = "plot_tiles.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --aneup {input.aneup}"
+            " --ins_dna {input.ins_dna}"
+            " --ins_rna {input.ins_rna}"
+            " --assocs_dna {input.assocs_dna}"
+            " --assocs_rna {input.assocs_rna}"
+            " --exons {input.exons}"
+            " --plotfile {output.plot}"
+
+rule poisson:
+    input:
+        rscript = "poisson.r",
+        aset = "analysis_set.RData"
+    output:
+        result = "poisson.RData",
+        plot = "poisson.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --infile {input.aset}"
+            " --outfile {output.result}"
+            " --plotfile {output.plot}"
+
+rule poisson_set: # keep separate for now, bc gene set analysis
+    input:
+        rscript = "poisson_set.r",
+        gene = "poisson.RData"
+    output:
+        result = "poisson_set.RData",
+        plot = "poisson_set.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --infile {input.gene}"
+            " --outfile {output.result}"
+            " --plotfile {output.plot}"
+
+rule cimpl:
+    input:
+        rscript = "kernel_cimpl.r",
+        aset = "analysis_set.RData"
+    output:
+        result = "kernel_cimpl.RData"
+    shell:
+        "Rscript {input.rscript} --infile {input.aset} --outfile {output.result}"
+
+rule analysis_set:
+    input:
+        rscript = "analysis_set.r",
+        data = cis("cis_per_tumor.RData")
+    output:
+        aset = "analysis_set.RData"
+    shell:
+        "Rscript {input.rscript} --infile {input.data} --outfile {output.aset}"

@@ -1,35 +1,24 @@
 library(dplyr)
 io = import('io')
-idmap = import('process/idmap')
+sys = import('sys')
 
-#TODO: RNA-derived tumor purity?
-#TODO: what about B-cell genes?
+args = sys$cmd$parse(
+    opt('i', 'infile', 'xls read', 'Final table mice.xlsx'),
+    opt('o', 'outfile', 'tsv', 'meta.tsv'))
 
-rna = io$load("../rnaseq/assemble.RData")
+tab = readxl::read_excel(args$infile, na="n.a.") %>%
+    filter(!is.na(Mouse)) %>%
+    transmute(mouse = Mouse,
+              genotype = Genotype,
+              sex = Gender,
+              months_injection = `Time after poly (I:C) (m)`,
+              months_death = `Age at death (m)`,
+              tissue = tolower(`Primary affected organ`),
+              hist_nr = `Hist nr.`,
+              sample = paste0(hist_nr, substr(tissue, 0, 1)),
+              wbc_per_nl = as.numeric(ifelse(`WBC (·109/L)` == ">100", 100, `WBC (·109/L)`)),
+              spleen_g = `Spleen (mg)` / 1000,
+              thymus_g = `Thymus (mg)` / 1000,
+              type = factor(sub("^([^ ]+).*", "\\1", Pathology), levels=c("Myeloid", "T-cell", "Other")))
 
-meta = readr::read_tsv("meta.tsv")
-
-genes = rna$counts %>%
-    idmap$gene(to="external_gene_name", dset="mmusculus_gene_ensembl", summarize=sum)
-
-tcr = genes[grepl("Trbv", rownames(genes)),] %>%
-    as.data.frame() %>%
-    tibble::rownames_to_column("gene") %>%
-    tidyr::gather("id", "counts", -gene)
-bcr = genes[grepl("Brbv", rownames(genes)),] %>%
-    as.data.frame() %>%
-    tibble::rownames_to_column("gene") %>%
-    tidyr::gather("id", "counts", -gene)
-icr = bind_rows(list(TCR=tcr, BCR=bcr), .id="type")
-
-expression = genes[rownames(genes) %in% c("Mad2l1", "Trp53", "Msh2", "Pten"),] %>%
-    edgeR::cpm(log=TRUE) %>%
-    as.data.frame() %>%
-    tibble::rownames_to_column("gene") %>%
-    tidyr::gather("id", "vst", -gene)
-
-weights = rna$idx %>%
-    transmute(id=id, spleen=spleen_weight/1000, thymus=thymus_weight/1000) %>%
-    tidyr::gather("tissue", "grams", -id)
-
-save(meta, weights, icr, expression, file="meta.RData")
+io$write_table(tab, file=args$outfile)

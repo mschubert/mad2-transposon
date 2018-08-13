@@ -1,3 +1,7 @@
+subworkflow meta:
+    workdir: "../meta"
+    snakefile: "../meta/Snakefile"
+
 import yaml
 import os.path
 
@@ -11,32 +15,40 @@ ssets = ['Mad2+PB_batch1', 'Mad2+PB_batch2', 'Mad2+PB_batch3',
          'Mad2+p53_batch1', 'Mad2+p53_batch2']
 samples = { sset:load_yaml(sset+".yaml") for sset in ssets }
 
+wildcard_constraints:
+    sset = ".*batch.*"
+
 rule all:
     input:
-#        "assemble.RData",
-        expand("{sset}.RData", sset=ssets[0:3]),
+        "assemble.RData",
+        expand("{sset}.RData", sset=ssets),
         expand("mixcr_{sset}.tsv", sset=ssets)
 
 rule assemble_rnaseq:
     input:
         rscript = "assemble.r",
-        expr = expand("{sset}.RData", sset=ssets[0:3]) #TODO: meta for qc
+        expr = expand("{sset}.RData", sset=ssets)
     output:
-        merged = "assemble.RData"
+        merged = "assemble.RData",
+        plot = "assemble.pdf"
     shell:
         "Rscript {input.rscript}"
+            " --outfile {output.merged}"
+            " --plotfile {output.plot}"
 
 rule qc_rnaseq:
     input:
         rscript = "qc_rnaseq.r",
         counts = "{sset}.tsv",
-        stats = "{sset}.tsv.summary"
+        stats = "{sset}.tsv.summary",
+        meta = meta("meta.tsv")
     output:
         expr = "{sset}.RData",
         plot = "{sset}.pdf"
     shell:
         "Rscript {input.rscript}"
             " --infile {input.counts}"
+            " --meta {input.meta}"
             " --stats {input.stats}"
             " --outfile {output.expr}"
             " --plotfile {output.plot}"
@@ -48,9 +60,10 @@ rule star_genome:
     output:
         genome = "STAR_GRCm38_ens92"
     resources:
-        mem = 50000,
-        walltime = 300
+        mem = 100000,
+        walltime = 240
     shell:
+        "mkdir {output.genome};"
         "STAR --runMode genomeGenerate"
             " --genomeFastaFiles {input.fasta}"
             " --sjdbGTFfile {input.gtf}"
@@ -70,6 +83,7 @@ rule align:
         "STAR --runMode alignReads"
             " --genomeLoad LoadAndKeep"
             " --readFilesCommand zcat"
+            " --limitOutSJcollapsed 2000000"
             " --genomeDir {input.genome}"
             " --readFilesIn {input.fastq}"
             " --outSAMtype BAM Unsorted"
@@ -80,11 +94,11 @@ rule align:
 rule count:
     input:
         gtf = "../genome/Mus_musculus.GRCm38.92.gtf",
-        samples = "{set}.yaml",
+        samples = "{sset}.yaml",
         bams = lambda wc: expand("aligned/{sset}/{samples}.bam",
-                sset=wc.set, samples=samples[wc.set]['samples'].keys())
+                sset=wc.sset, samples=samples[wc.sset]['samples'].keys())
     output:
-        counts = "{set}.tsv"
+        counts = "{sset}.tsv"
     resources:
         mem = 2000,
         walltime = 120

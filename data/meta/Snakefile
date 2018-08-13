@@ -9,9 +9,8 @@ rule all:
 rule meta:
     input:
         rscript = "meta.r",
-        meta = "meta.tsv",
-        rna = rnaseq("assemble.RData")
+        xlsx = "Final table mice.xlsx",
     output:
-        "meta.RData"
+        tsv = "meta.tsv"
     shell:
-        "Rscript {input.rscript}"
+        "Rscript {input.rscript} --infile '{input.xlsx}' --outfile {output.tsv}"

@@ -1,3 +1,7 @@
+subworkflow meta:
+    workdir: "../meta"
+    snakefile: "../meta/Snakefile"
+
 import os
 from glob import glob
 files = glob("**/*.yaml", recursive=True)
@@ -5,8 +9,22 @@ fstem = [os.path.splitext(p)[0] for p in files]
 
 rule all:
     input:
+        "30cellseq.RData",
         expand("{sample}.RData", sample=fstem),
         expand("{sample}.pdf", sample=fstem)
+
+rule assemble:
+    input:
+        rscript = "30cellseq.r",
+        data = expand("30cellseq_batch{batch}.RData", batch=[1,2])
+    output:
+        merged = "30cellseq.RData",
+        plot = "30cellseq.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --outfile {output.merged}"
+            " --plotfile {output.plot}"
+            " {input.data}"
 
 rule samples:
     input:

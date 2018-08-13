@@ -13,7 +13,37 @@ subworkflow meta:
 rule all:
     input:
         "compare_ploidy.pdf",
-        "karyograms.pdf"
+        "karyograms.pdf",
+        "analysis_set.RData",
+        "gene_copies.RData"
+
+rule gene_copies:
+    input:
+        rscript = "gene_copies.r",
+        dna = ploidy_wgs("copy_segments.RData"),
+        fractions = "wgs_merge.tsv"
+    output:
+        mat = "gene_copies.RData"
+    resources:
+        mem = 4096
+    shell:
+        "Rscript {input.rscript}"
+            " --dna {input.dna}"
+            " --fractions {input.fractions}"
+            " --outfile {output.mat}"
+
+rule analysis_set:
+    input:
+        rscript = "analysis_set.r",
+        ploidy = "compare_ploidy.tsv",
+        meta = meta("meta.RData")
+    output:
+        table = "analysis_set.RData"
+    shell:
+        "Rscript {input.rscript}"
+            " --infile {input.ploidy}"
+            " --meta {input.meta}"
+            " --outfile {output.table}"
 
 rule compare_ploidy:
     input:

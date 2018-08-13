@@ -12,10 +12,10 @@ plot_exon_expr = function() {
 
 sys$run({
     args = sys$cmd$parse(
-        opt('a', 'aneuploidy', 'sample-level aneup scores', '../tis2_assoc-tryout/dset.RData'),
-        opt('i', 'ins_dna', 'all DNA insertions table', 'cis_sanger.tsv'),
+        opt('a', 'aneuploidy', 'sample-level aneup scores', '../ploidy_compare/analysis_set.RData'),
+        opt('i', 'ins_dna', 'all DNA insertions table', '../cis_analysis/poisson.RData'),
         opt('j', 'ins_rna', 'all RNA insertions table', '../data/rnaseq_imfusion/insertions.txt'),
-        opt('d', 'assocs_dna', 'CIS in DNA', 'cis_sanger_results.tsv'),
+        opt('d', 'assocs_dna', 'CIS in DNA', '../cis_analysis/aneuploidy_assocs.RData'),
         opt('r', 'assocs_rna', 'CTG in RNA', '../data/rnaseq_imfusion/merged_ctgs.txt'),
         opt('e', 'exons', 'exon expression table', '../data/rnaseq_imfusion/exon_counts.txt'),
         opt('p', 'plotfile', 'pdf to plot to', 'cis_tiles.pdf'))
@@ -23,24 +23,18 @@ sys$run({
     expr = io$read_table(args$exons, header=TRUE)
 
     aneup = io$load(args$aneuploidy) %>%
-        select(sample, aneup) %>%
-        distinct() %>%
-        na.omit() %>%
         arrange(aneup) %>%
         mutate(sample = factor(sample, levels=sample))
 
-#    ins_dna = io$read_table(args$ins_dna, header=TRUE)
-    ins_dna = io$load(args$aneuploidy) %>%
-        filter(reads >= 20) %>% select(-aneup) # has the right sample identifiers (fix?)
-    cis = io$read_table(args$assocs_dna, header=TRUE)
-    ks = io$load("../tis2_assoc-tryout/ks.RData")$hits %>%
-        filter(ensembl_gene_id %in% cis$gene_id) %>%
-        mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
+    cis = io$load(args$ins_dna)
+    ins_dna = cis$samples
+    cis = cis$result
+    ks = io$load(args$assocs_dna) %>%
         arrange(statistic)
     dna_tiles = ins_dna %>%
-        filter(gene_name %in% ks$gene_name) %>%
+        filter(external_gene_name %in% ks$external_gene_name) %>%
         transmute(sample = factor(sample, levels=levels(aneup$sample)),
-                  gene_name = factor(gene_name, levels=ks$gene_name),
+                  gene_name = factor(external_gene_name, levels=ks$external_gene_name),
                   ins = 1) %>%
         na.omit() %>%
         tidyr::complete(sample, gene_name, fill=list(ins=0))
@@ -85,8 +79,7 @@ sys$run({
               axis.text.y = element_blank(),
               axis.title.y = element_blank())
 
-    pdf(args$plotfile, 12, 11)
-    print(left + mid + right + plot_layout(nrow=1, widths=c(3,2.5,2.5)))
+    pdf(args$plotfile, 15, 15)
+    print(left + mid + right + plot_layout(nrow=1, widths=c(2,1,1)))
     dev.off()
-
 })
