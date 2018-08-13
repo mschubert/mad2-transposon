@@ -1,6 +1,6 @@
 subworkflow ploidy_wgs:
-    workdir: "../ploidy_from_wgs"
-    snakefile: "../ploidy_from_wgs/Snakefile"
+    workdir: "../data/wgs"
+    snakefile: "../data/wgs/Snakefile"
 
 subworkflow ploidy_rnaseq:
     workdir: "../ploidy_from_rnaseq"
@@ -12,16 +12,15 @@ subworkflow meta:
 
 rule all:
     input:
-        "compare_ploidy.pdf",
-        "karyograms.pdf",
         "analysis_set.RData",
+        "karyograms.pdf",
         "gene_copies.RData"
 
 rule gene_copies:
     input:
         rscript = "gene_copies.r",
-        dna = ploidy_wgs("copy_segments.RData"),
-        fractions = "wgs_merge.tsv"
+        dna = ploidy_wgs("30cellseq.RData"),
+        fractions = "analysis_set_merge.tsv"
     output:
         mat = "gene_copies.RData"
     resources:
@@ -35,34 +34,28 @@ rule gene_copies:
 rule analysis_set:
     input:
         rscript = "analysis_set.r",
-        ploidy = "compare_ploidy.tsv",
-        meta = meta("meta.RData")
+        meta = meta("meta.tsv"),
+        dna_seq = ploidy_wgs("30cellseq.RData"),
+        rna_seq = ploidy_rnaseq("eT_ploidy.RData"),
+        merge = "analysis_set_merge.tsv"
     output:
-        table = "analysis_set.RData"
+        table = "analysis_set.RData",
+        plot = "analysis_set.pdf"
     shell:
         "Rscript {input.rscript}"
-            " --infile {input.ploidy}"
             " --meta {input.meta}"
+            " --dna_seq {input.dna_seq}"
+            " --rna_seq {input.rna_seq}"
+            " --merge {input.merge}"
             " --outfile {output.table}"
-
-rule compare_ploidy:
-    input:
-        rscript = "compare_ploidy.r",
-        wgs = ploidy_wgs("copy_segments.RData"),
-        eT = ploidy_rnaseq("eT_ploidy.RData"),
-        merge = "wgs_merge.tsv"
-    output:
-        plot = "compare_ploidy.pdf",
-        aneups = "compare_ploidy.tsv"
-    shell:
-        "Rscript {input.rscript}"
+            " --plotfile {output.plot}"
 
 rule karyograms:
     input:
         rscript = "karyograms.r",
-        wgs = ploidy_wgs("copy_segments.RData"),
+        wgs = ploidy_wgs("30cellseq.RData"),
         euploid = ploidy_rnaseq("eT_ploidy.RData"),
-        meta = meta("meta.RData"),
+        meta = meta("meta.tsv"),
         mixcr = "../data/rnaseq/mixcr_Mad2+PB.tsv" #ploidy_rnaseq("mixcr_Mad2+PB.tsv")
     output:
         plot = "karyograms.pdf"
