@@ -1,4 +1,3 @@
-library(ggbio)
 library(dplyr)
 library(magrittr)
 library(cowplot)
@@ -6,6 +5,7 @@ library(patchwork)
 io = import('io')
 seq = import('seq')
 sys = import('sys')
+plt = import('plot')
 
 #' Fit segments with assumption that modal value is diploid
 #'
@@ -21,53 +21,24 @@ fit_segments = function(m) {
 #' Plot comparison for Aneufinder-ploidy and model-diploid ploidy
 #'
 #' @param m  AneuFinder model object
-#' @return  ggbio object
+#' @return  ggplot2 object
 plot_model_tracks = function(m) {
     rpp_aneufinder = as.data.frame(m$bins) %>%
         filter(copy.number != 0) %$%
         median(counts / copy.number)
     m$segments$integer_ploidy_reads = m$segments$copy.number * rpp_aneufinder
-    p1 = plot_cov(m, seg_y="integer_ploidy_reads", reads_per_ploidy=rpp_aneufinder)
+    p1 = ggplot() +
+        plt$genome$pts(m$bins, aes(y=counts)) +
+        plt$genome$segs(m$segments, aes(y=integer_ploidy_reads), ~./rpp_aneufinder) +
+        labs(title=m$ID, subtitle="AneuFinder")
 
     rpp_mode = m$segments$mean.counts[1] / m$segments$ploidy[1]
-    p2 = plot_cov(m, reads_per_ploidy=rpp_mode)
+    p2 = ggplot() +
+        plt$genome$pts(m$bins, aes(y=counts)) +
+        plt$genome$segs(m$segments, aes(y=mean.counts), ~./rpp_mode) +
+        labs(subtitle="Mode diploid")
 
-    m$segments$Sample = "constant"
-    aneup = seq$aneuploidy(m$segments)$aneuploidy
-    tracks(title = sprintf("%s - aneuploidy: %.2f", m$ID, aneup),
-           Aneufinder = p1,
-           `Mode diploid` = p2)
-}
-
-#' Plot the read coverage per bin
-#'
-#' @param m  AneuFinder model object
-#' @param bin_y  variable name for bin counts
-#' @param seg_y  variable name for for segment height
-#' @param reads_per_ploidy  numeric of how to translate read counts to ploidy
-#' @return  ggplot2 object
-plot_cov = function(m, bin_y="copy.number", seg_y="mean.counts", reads_per_ploidy) {
-    bins = m$bins
-    segs = m$segments
-    bin_ys = rlang::sym(bin_y)
-    seg_ys = rlang::sym(seg_y)
-
-    ploidy_breaks = sort(setdiff(unique(c(1,2,as.data.frame(bins)[[bin_y]])), 0))
-
-    ggplot(bins) +
-        geom_point(aes(x=midpoint, y=counts), shape=1) +
-        geom_hline(yintercept=ploidy_breaks*reads_per_ploidy, color="grey", linetype="dashed") +
-        geom_segment(data=as.data.frame(segs), size=2,
-                     aes(x=start, xend=end, y=!!seg_ys, yend=!!seg_ys), color="green") +
-        facet_grid(. ~ seqnames) +
-        scale_y_continuous(sec.axis=sec_axis(~./reads_per_ploidy, breaks=ploidy_breaks, name="ploidy"),
-                           limits=c(quantile(bins$counts, 0.01), quantile(bins$counts, 0.99))) +
-        theme(panel.grid.major = element_blank(),
-              panel.grid.minor = element_blank(),
-              panel.background = element_blank(),
-              axis.text.x = element_blank(),
-              axis.ticks.x = element_blank(),
-              panel.spacing = unit(0, "lines"))
+    p1 + p2 + plot_layout(ncol=1)
 }
 
 #' Plot comparison of aneuploidy scores across samples
