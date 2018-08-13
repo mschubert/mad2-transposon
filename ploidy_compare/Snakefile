@@ -37,6 +37,7 @@ rule analysis_set:
         meta = meta("meta.tsv"),
         dna_seq = ploidy_wgs("30cellseq.RData"),
         rna_seq = ploidy_rnaseq("eT_ploidy.RData"),
+        sc_seq = ploidy_wgs("sc_merge.RData"),
         merge = "analysis_set_merge.tsv"
     output:
         table = "analysis_set.RData",
@@ -46,6 +47,7 @@ rule analysis_set:
             " --meta {input.meta}"
             " --dna_seq {input.dna_seq}"
             " --rna_seq {input.rna_seq}"
+            " --sc_seq {input.sc_seq}"
             " --merge {input.merge}"
             " --outfile {output.table}"
             " --plotfile {output.plot}"

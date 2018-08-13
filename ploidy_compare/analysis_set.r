@@ -5,7 +5,6 @@ b = import('base')
 io = import('io')
 seq = import('seq')
 sys = import('sys')
-aneuf = import('tools/aneufinder')
 
 #' source sample IDs are both 123S and T567
 fix_ids = function(x) {
@@ -46,6 +45,7 @@ sys$run({
         opt('d', 'dna_seq', 'wgs ploidy', '../data/wgs/30cellseq.RData'),
         opt('r', 'rna_seq', 'eT ploidy', '../ploidy_from_rnaseq/eT_ploidy.RData'),
         opt('g', 'merge', 'fractions of high/low', 'analysis_set_merge.tsv'),
+        opt('s', 'sc_seq', 'merged RData', '../data/wgs/sc_merge.RData'),
         opt('o', 'outfile', '.RData results', 'analysis_set.RData'),
         opt('p', 'plotfile', 'pdf', 'analysis_set.pdf'))
 
@@ -56,6 +56,8 @@ sys$run({
     rna = io$load(args$rna_seq)$segments %>%
         seq$aneuploidy(sample="sample", ploidy="expr", assembly="GRCm38") %>%
         mutate(sample = toupper(gsub("[^0-9stST]+", "", sample)))
+    sc_wgs = io$load(args$sc_seq) %>%
+        seq$aneuploidy(sample="sample", width="length", assembly="GRCm38")
 
     dna_merge = readr::read_tsv(args$merge) %>%
         left_join(dna %>% select(subset=sample, aneuploidy)) %>%
@@ -65,15 +67,7 @@ sys$run({
         mutate(sample = sub("(-high)|(-low)", "", sample),
                sample = paste0(sub("[^ST]+", "", sample), sub("[^0-9]+", "", sample)))
 
-    sc = c("T401", "S413", "T419")
-    sc_wgs = file.path("../data/wgs", paste0(sc, ".RData")) %>%
-        io$load() %>%
-        lapply(aneuf$consensus_ploidy) %>%
-        dplyr::bind_rows(.id="sample") %>%
-        seq$aneuploidy(sample="sample", width="length", assembly="GRCm38")
-
     tissues = setNames(c("spleen", "thymus"), c("S","T"))
-
     aneups = list(`WGS (merged)` = dna_merge,
                   `WGS (30-cell)` = dna_label,
                   `WGS (single-cell)` = sc_wgs,
@@ -83,6 +77,7 @@ sys$run({
         mutate(sample = forcats::fct_reorder(sample, aneuploidy),
                tissue = tissues[sub("Healthy|[0-9]+", "", sample)])
 
+    #TODO: save aneup_src
     merged = aneups %>%
         select(-coverage, -tissue) %>%
         filter(!duplicated(data.frame(type, sample)),
@@ -100,4 +95,4 @@ sys$run({
     dev.off()
 
     save(merged, file=args$outfile)
-}
+})

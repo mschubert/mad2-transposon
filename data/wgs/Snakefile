@@ -10,10 +10,20 @@ fstem = [os.path.splitext(p)[0] for p in files]
 rule all:
     input:
         "30cellseq.RData",
+        "sc_merge.RData",
         expand("{sample}.RData", sample=fstem),
         expand("{sample}.pdf", sample=fstem)
 
-rule assemble:
+rule assemble_single:
+    input:
+        rscript = "sc_merge.r",
+        data = expand("{sample}.RData", sample=['T401', 'T419', 'S413'])
+    output:
+        merged = "sc_merge.RData"
+    shell:
+        "Rscript {input.rscript} --outfile {output.merged} {input.data}"
+
+rule assemble_thirty:
     input:
         rscript = "30cellseq.r",
         data = expand("30cellseq_batch{batch}.RData", batch=[1,2])
