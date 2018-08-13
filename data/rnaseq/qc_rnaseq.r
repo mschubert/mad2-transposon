@@ -73,9 +73,8 @@ sys$run({
     colnames(counts) = tools::file_path_sans_ext(basename(colnames(counts)))
     rownames(counts) = edf$Geneid
 
-    if (grepl("PB", args$infile))
-        idx = io$read_table(args$meta, header=TRUE)
-    else
+    idx = io$read_table(args$meta, header=TRUE)
+    if (!(grepl("PB", args$infile)))
         idx = data.frame(sample = colnames(counts),
             tissue = tolower(gsub("[^stST]", "", colnames(counts))))
 

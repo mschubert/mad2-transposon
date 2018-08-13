@@ -13,4 +13,4 @@ rule meta:
     output:
         tsv = "meta.tsv"
     shell:
-        "Rscript {input.rscript} --infile {input.xlsx} --outfile {output.tsv}"
+        "Rscript {input.rscript} --infile '{input.xlsx}' --outfile {output.tsv}"

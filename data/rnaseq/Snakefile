@@ -1,3 +1,7 @@
+subworkflow meta:
+    workdir: "../meta"
+    snakefile: "../meta/Snakefile"
+
 import yaml
 import os.path
 
@@ -36,13 +40,15 @@ rule qc_rnaseq:
     input:
         rscript = "qc_rnaseq.r",
         counts = "{sset}.tsv",
-        stats = "{sset}.tsv.summary"
+        stats = "{sset}.tsv.summary",
+        meta = meta("meta.tsv")
     output:
         expr = "{sset}.RData",
         plot = "{sset}.pdf"
     shell:
         "Rscript {input.rscript}"
             " --infile {input.counts}"
+            " --meta {input.meta}"
             " --stats {input.stats}"
             " --outfile {output.expr}"
             " --plotfile {output.plot}"
