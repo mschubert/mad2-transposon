@@ -62,9 +62,9 @@ sys$run({
     args = sys$cmd$parse(
         opt('i', 'infile', 'read count tsv', 'Mad2+PB_batch3.tsv'),
         opt('s', 'stats', 'STAR summary file', 'Mad2+PB_batch3.tsv.summary'),
-        opt('m', 'meta', 'sample metadata', '../meta/180620 Overview table mice transposon screen.tsv'),
-        opt('o', 'outfile', 'save results to .RData', 'merge_rnaseq.RData'),
-        opt('p', 'plotfile', 'qc plot pdf', 'merge_rnaseq.pdf'))
+        opt('m', 'meta', 'sample metadata', '../meta/meta.tsv'),
+        opt('o', 'outfile', 'save results to .RData', 'Mad2+PB_batch3.RData'),
+        opt('p', 'plotfile', 'qc plot pdf', 'Mad2+PB_batch3.pdf'))
 
     stats = io$read_table(args$stats, header=TRUE)
 
@@ -73,17 +73,9 @@ sys$run({
     colnames(counts) = tools::file_path_sans_ext(basename(colnames(counts)))
     rownames(counts) = edf$Geneid
 
-    if (grepl("PB", args$infile)) {
-        idx = io$read_table(args$meta, header=TRUE) %>%
-            transmute(hist_nr = `Hist nr.`,
-                      type = `Diagnosis (Based on pathology & FACS) (t=thymus, s=spleen, l=liver, ln=lymph node, k=kidney, i=intestine)`,
-                      tissue = `RNA sequencing`) %>%
-            mutate(tissue = tolower(gsub("[^ST]", "", tissue)),
-                   tissue = sapply(tissue, strsplit, split=NULL)) %>%
-            tidyr::unnest() %>%
-            mutate(type = sapply(type, function(t) b$grep("^([[^ ^/]]+ [[^ ^/]]+)", t)),
-                   sample = paste0(hist_nr, tissue))
-    } else
+    if (grepl("PB", args$infile))
+        idx = io$read_table(args$meta, header=TRUE)
+    else
         idx = data.frame(sample = colnames(counts),
             tissue = tolower(gsub("[^stST]", "", colnames(counts))))
 

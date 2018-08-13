@@ -1,20 +1,24 @@
 library(dplyr)
 io = import('io')
-idmap = import('process/idmap')
+sys = import('sys')
 
-#TODO: RNA-derived tumor purity?
+args = sys$cmd$parse(
+    opt('i', 'infile', 'xls read', 'Final table mice.xlsx'),
+    opt('o', 'outfile', 'tsv', 'meta.tsv'))
 
-rna = io$load("../rnaseq/assemble.RData")
+tab = readxl::read_excel(args$infile, na="n.a.") %>%
+    filter(!is.na(Mouse)) %>%
+    transmute(mouse = Mouse,
+              genotype = Genotype,
+              sex = Gender,
+              months_injection = `Time after poly (I:C) (m)`,
+              months_death = `Age at death (m)`,
+              tissue = tolower(`Primary affected organ`),
+              hist_nr = `Hist nr.`,
+              sample = paste0(hist_nr, substr(tissue, 0, 1)),
+              wbc_per_nl = as.numeric(ifelse(`WBC (·109/L)` == ">100", 100, `WBC (·109/L)`)),
+              spleen_g = `Spleen (mg)` / 1000,
+              thymus_g = `Thymus (mg)` / 1000,
+              type = factor(sub("^([^ ]+).*", "\\1", Pathology), levels=c("Myeloid", "T-cell", "Other")))
 
-meta = readr::read_tsv("meta.tsv")
-
-genes = idmap$gene(c("Mad2l1", "Trp53", "Msh2", "Pten"), from="external_gene_name",
-                   to="ensembl_gene_id", dset="mmusculus_gene_ensembl")
-
-eset = rna$expr[genes,]
-rownames(eset) = names(genes)
-expression = as.data.frame(eset) %>%
-    tibble::rownames_to_column("gene") %>%
-    tidyr::gather("id", "vst", -gene)
-
-save(meta, expression, file="meta.RData")
+io$write_table(tab, file=args$outfile)
