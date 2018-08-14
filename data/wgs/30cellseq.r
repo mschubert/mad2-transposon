@@ -46,7 +46,7 @@ plot_model_tracks = function(m) {
 #' @param aneup  data.frame from seq$aneuploidy
 #' @return  ggplot2 object
 plot_aneup_compare = function(aneup) {
-    aneup$Sample = forcats::fct_reorder(aneup$Sample, aneup$aneuploidy)
+    aneup$sample = forcats::fct_reorder(aneup$sample, aneup$aneuploidy)
 
     dens = ggplot(aneup, aes(x=aneuploidy)) +
         geom_density(alpha=0.5, fill="red") +
@@ -56,8 +56,8 @@ plot_aneup_compare = function(aneup) {
               axis.ticks=element_blank()) +
         coord_flip()
 
-    samples = ggplot(aneup, aes(x=Sample, y=aneuploidy)) +
-#        geom_segment(aes(y=Sample, yend=Sample, xend=aneuploidy), x=0, color="lightgrey") +
+    samples = ggplot(aneup, aes(x=sample, y=aneuploidy)) +
+#        geom_segment(aes(y=sample, yend=sample, xend=aneuploidy), x=0, color="lightgrey") +
         geom_point() +
         theme(axis.text.x = element_text(size=6, angle=90, hjust=1))
 
@@ -75,9 +75,10 @@ sys$run({
     stopifnot(sum(duplicated(names(models))) == 0)
     models = lapply(models[order(names(models))], fit_segments)
 
-    mod2segdf = function(m) as.data.frame(m$segments)
-    segments = dplyr::bind_rows(lapply(models, mod2segdf), .id="Sample")
-    aneup = seq$aneuploidy(segments, sample="Sample", assembly="GRCm38")
+    mod2 = function(m, f) as.data.frame(m[[f]])
+    segments = dplyr::bind_rows(lapply(models, mod2, f="segments"), .id="sample")
+    bins = dplyr::bind_rows(lapply(models, mod2, f="bins"), .id="sample")
+    aneup = seq$aneuploidy(segments, sample="sample", assembly="GRCm38")
 
     pdf(args$plotfile, 10, 6)
     print(plot_aneup_compare(aneup))
@@ -87,5 +88,5 @@ sys$run({
     }
     dev.off()
 
-    save(segments, file=args$outfile)
+    save(segments, bins, file=args$outfile)
 })
