@@ -53,6 +53,7 @@ segments = as.data.frame(genes) %>%
     tidyr::unnest() %>%
     GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns=TRUE) %>%
     as.data.frame() %>%
+    mutate(sample = sub("^X", "", sample)) %>%
     tbl_df()
 
 plot_sample = function(smp) {
