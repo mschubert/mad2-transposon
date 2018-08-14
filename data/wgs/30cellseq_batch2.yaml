@@ -5,28 +5,28 @@ bin_width_ref: GRCm38_diploid_ref.bam
 blacklist: GRCm38_diploid_ref.bam
 
 files:
-    615S: LJ180524_I_001.bam
-    622S: LJ180524_I_002.bam
-    624S: LJ180524_I_003.bam
-    627S: LJ180524_I_004.bam
-    628S: LJ180524_I_005.bam
-    1431T: LJ180524_I_006.bam
-    629S: LJ180524_I_007.bam
-    630S: LJ180524_I_008.bam
-    631S: LJ180524_I_009.bam
-    632S: LJ180524_I_010.bam
-    409S: LJ180524_I_011.bam
-    936T: LJ180524_I_012.bam
-    145S: LJ180524_I_013.bam
-    155S: LJ180524_I_014.bam
-    421S: LJ180524_I_015.bam
-    458T: LJ180524_I_016.bam
-    474S: LJ180524_I_017.bam
-    481S: LJ180524_I_018.bam
-    170T: LJ180524_I_019.bam
-    223T: LJ180524_I_020.bam
-    413S: LJ180524_I_021.bam
-    1432T: LJ180524_I_022.bam
+    615s: LJ180524_I_001.bam
+    622s: LJ180524_I_002.bam
+    624s: LJ180524_I_003.bam
+    627s: LJ180524_I_004.bam
+    628s: LJ180524_I_005.bam
+    1431t: LJ180524_I_006.bam
+    629s: LJ180524_I_007.bam
+    630s: LJ180524_I_008.bam
+    631s: LJ180524_I_009.bam
+    632s: LJ180524_I_010.bam
+    409s: LJ180524_I_011.bam
+    936t: LJ180524_I_012.bam
+    145s: LJ180524_I_013.bam
+    155s: LJ180524_I_014.bam
+    421s: LJ180524_I_015.bam
+    458t: LJ180524_I_016.bam
+    474s: LJ180524_I_017.bam
+    481s: LJ180524_I_018.bam
+    170t: LJ180524_I_019.bam
+    223t: LJ180524_I_020.bam
+    413s: LJ180524_I_021.bam
+    1432t: LJ180524_I_022.bam
     empty1: LJ180524_I_023.bam
     empty2: LJ180524_I_024.bam
 

@@ -17,7 +17,7 @@ rule all:
 rule assemble_single:
     input:
         rscript = "sc_merge.r",
-        data = expand("{sample}.RData", sample=['T401', 'T419', 'S413'])
+        data = expand("{sample}.RData", sample=['401t', '419t', '413s'])
     output:
         merged = "sc_merge.RData"
     shell:
