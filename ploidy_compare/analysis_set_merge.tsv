@@ -1,15 +1,15 @@
 sample	subset	weight	comment
-S417	417S-high	3	
-S417	417S-low	1	
-S446	446S-high	NA	S-phase instead of population sorted
-S446	446S-low	NA	low population ok
-S449	449S-high	2.5	
-S449	449S-low	1	
-S462	462S-high	1	
-S462	462S-low	1	
-T477	477T-high	2	RNA-seq looks clonal, sure we did T there and not S?
-T477	477T-low	1	20x difference between day of low+high sort, why?
-S489	489S-high	0	population not sorted
-S489	489S-low	1	RNA-seq is clonal IGKV and close to euploid
-T613	613T-high	1	only one population present, same ploidy
-T613	613T-low	1	only one population present, same ploidy
+417s	417s-high	3	
+417s	417s-low	1	
+446s	446s-high	NA	S-phase instead of population sorted
+446s	446s-low	NA	low population ok
+449s	449s-high	2.5	
+449s	449s-low	1	
+462s	462s-high	1	
+462s	462s-low	1	
+477t	477t-high	2	RNA-seq looks clonal, sure we did T there and not S?
+477t	477t-low	1	20x difference between day of low+high sort, why?
+489s	489s-high	0	population not sorted
+489s	489s-low	1	RNA-seq is clonal IGKV and close to euploid
+613t	613t-high	1	only one population present, same ploidy
+613t	613t-low	1	only one population present, same ploidy

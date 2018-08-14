@@ -1,31 +1,28 @@
 library(dplyr)
 library(cowplot)
 library(patchwork)
-b = import('base')
 io = import('io')
 seq = import('seq')
 sys = import('sys')
 
-#' source sample IDs are both 123S and T567
-fix_ids = function(x) {
-    letter = tolower(sub("[0-9]+", "", x))
-    nums = sub("[ST]", "", x)
-    paste0(nums, letter)
-}
+plot_comparison = function(aneups, meta) {
+    dset = aneups %>%
+        inner_join(meta %>% select(sample, tissue, chosen=aneup_src)) %>%
+        mutate(sample = forcats::fct_reorder(sample, aneuploidy),
+               chosen = chosen == aneup_src)
 
-plot_comparison = function(aneups) {
-    dens = ggplot(aneups, aes(x=aneuploidy)) +
-        geom_density(aes(fill=type), alpha=0.5) +
+    dens = ggplot(dset, aes(x=aneuploidy)) +
+        geom_density(aes(fill=aneup_src), alpha=0.5) +
         theme(axis.title.x=element_blank(),
               axis.text=element_blank(),
               axis.line=element_blank(),
               axis.ticks=element_blank()) +
         guides(fill=FALSE)
 
-    samples = ggplot(aneups, aes(x=aneuploidy, y=sample)) +
-        geom_segment(aes(xend=aneuploidy, yend=sample), x=0,
-                     color="lightgrey") +
-        geom_point(aes(color=type, shape=tissue)) +
+    samples = ggplot(dset, aes(x=aneuploidy, y=sample)) +
+        geom_segment(aes(xend=aneuploidy, yend=sample), x=0, color="lightgrey") +
+        geom_point(aes(color=aneup_src, shape=tissue, alpha=chosen), size=4) +
+        scale_alpha_manual(values=c(0.4, 1)) +
         theme(axis.text.y = element_text(size=8))
 
     dens + samples + plot_layout(ncol=1, heights=c(1,12))
@@ -33,9 +30,10 @@ plot_comparison = function(aneups) {
 
 plot_paircor = function(aneups) {
     paircor = aneups %>%
-        group_by(sample, type, tissue) %>%
+        mutate(tissue = sub("[0-9]+", "", sample)) %>%
+        group_by(sample, aneup_src, tissue) %>%
         summarize(aneuploidy = mean(aneuploidy)) %>%
-        tidyr::spread("type", "aneuploidy") %>%
+        tidyr::spread("aneup_src", "aneuploidy") %>%
         GGally::ggpairs(columns=3:ncol(.), aes(shape=tissue))
 }
 
@@ -49,50 +47,37 @@ sys$run({
         opt('o', 'outfile', '.RData results', 'analysis_set.RData'),
         opt('p', 'plotfile', 'pdf', 'analysis_set.pdf'))
 
-    meta = io$read_table(args$meta, header=TRUE)
-    dna = io$load(args$dna_seq) %>%
-        seq$aneuploidy(sample="Sample", assembly="GRCm38") %>%
-        dplyr::rename(sample = Sample)
+    meta_old = io$read_table(args$meta, header=TRUE)
+    dna = io$load(args$dna_seq)$segments %>%
+        seq$aneuploidy(sample="sample", assembly="GRCm38")
     rna = io$load(args$rna_seq)$segments %>%
-        seq$aneuploidy(sample="sample", ploidy="expr", assembly="GRCm38") %>%
-        mutate(sample = toupper(gsub("[^0-9stST]+", "", sample)))
+        seq$aneuploidy(sample="sample", ploidy="expr", assembly="GRCm38")
     sc_wgs = io$load(args$sc_seq) %>%
         seq$aneuploidy(sample="sample", width="length", assembly="GRCm38")
-
     dna_merge = readr::read_tsv(args$merge) %>%
         left_join(dna %>% select(subset=sample, aneuploidy)) %>%
         group_by(sample) %>%
         summarize(aneuploidy = weighted.mean(aneuploidy, weight))
-    dna_label = dna %>%
-        mutate(sample = sub("(-high)|(-low)", "", sample),
-               sample = paste0(sub("[^ST]+", "", sample), sub("[^0-9]+", "", sample)))
 
-    tissues = setNames(c("spleen", "thymus"), c("S","T"))
     aneups = list(`WGS (merged)` = dna_merge,
-                  `WGS (30-cell)` = dna_label,
+                  `WGS (30-cell)` = mutate(dna, sample=sub("-.*", "", sample)),
                   `WGS (single-cell)` = sc_wgs,
                   `RNA-seq (eT)` = rna) %>%
-        dplyr::bind_rows(.id="type") %>%
-        filter(!is.na(aneuploidy)) %>%
-        mutate(sample = forcats::fct_reorder(sample, aneuploidy),
-               tissue = tissues[sub("Healthy|[0-9]+", "", sample)])
+        dplyr::bind_rows(.id="aneup_src") %>%
+        filter(!is.na(aneuploidy))
 
-    #TODO: save aneup_src
-    merged = aneups %>%
-        select(-coverage, -tissue) %>%
-        filter(!duplicated(data.frame(type, sample)),
-               !sample %in% c("S", "T")) %>%
-        mutate(sample = fix_ids(sample)) %>%
-        tidyr::spread("type", "aneuploidy") %>%
-        group_by(sample) %>%
-        summarize(aneup = `WGS (merged)` %or% `WGS (30-cell)` %or% `RNA-seq (eT)`) %>%
-        arrange(-aneup) %>%
-        inner_join(meta)
+    # add HealthyS/T to meta?
+    priority = c("WGS (merged)", "WGS (30-cell)", "RNA-seq (eT)") # no sc_wgs
+    meta = aneups %>%
+        mutate(ord = factor(aneup_src, levels=rev(priority), ordered=TRUE)) %>%
+        group_by(sample) %>% top_n(1, ord) %>% ungroup() %>%
+        select(-ord, -coverage) %>%
+        inner_join(meta_old)
 
-    pdf(9, 16, file=args$plotfile)
-    print(plot_comparison(aneups))
+    pdf(8, 10, file=args$plotfile)
+    print(plot_comparison(aneups, meta))
     print(plot_paircor(aneups))
     dev.off()
 
-    save(merged, file=args$outfile)
+    save(meta, file=args$outfile)
 })
