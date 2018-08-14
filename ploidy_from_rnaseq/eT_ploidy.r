@@ -56,20 +56,4 @@ segments = as.data.frame(genes) %>%
     mutate(sample = sub("^X", "", sample)) %>%
     tbl_df()
 
-plot_sample = function(smp) {
-    cur = segments %>% filter(sample == smp)
-    autoplot(genes, aes_string(y=smp), geom="point", shape=1, alpha=0.3) +
-        geom_segment(data=cur, aes(x=start, xend=end, y=expr, yend=expr), size=3, color="green") +
-        scale_y_continuous(trans="log2", breaks=c(1:6)) +
-#        geom_hline(aes(yintercept=median(genes[[smp]])), linetype="dashed", color="grey", size=2) +
-        coord_cartesian(ylim=c(0.5,6)) +
-        theme(axis.text.x = element_blank()) +
-        ggtitle(smp)
-}
-
-pdf("eT_ploidy.pdf", 10, 4)
-for (smp in unique(segments$sample))
-    print(plot_sample(smp))
-dev.off()
-
 save(segments, genes, file="eT_ploidy.RData")
