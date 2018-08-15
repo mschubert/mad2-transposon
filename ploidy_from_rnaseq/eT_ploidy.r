@@ -4,6 +4,9 @@ seq = import('seq')
 sys = import('sys')
 
 #' Return normalized read counts for a count matrix
+#'
+#' @param mat  gene expression matrix [genes x samples]
+#' @return  normalized read counts
 normalize_reads = function(mat) {
     idx = data.frame(id=colnames(mat))
     DESeq2::DESeqDataSetFromMatrix(mat, colData=idx, ~1) %>%
@@ -14,15 +17,16 @@ normalize_reads = function(mat) {
 extract_segment = function(smp, chr, ratio, genes) {
     `%>%` = magrittr::`%>%`
     message(smp, "", chr)
-    use_genes = genes$seqnames == chr
-    mat = ratio[use_genes, smp, drop=FALSE]
-    ediv = ecp::e.divisive(mat)
+    chr_genes = genes[genes$seqnames == chr,]
+    mat = ratio[chr_genes$ensembl_gene_id, smp]
+    ediv = ecp::e.divisive(as.matrix(mat))
 
-    res = cbind(genes[use_genes,], mat=mat, cluster=ediv$cluster) %>%
+    res = cbind(chr_genes, cmat=mat, cluster=ediv$cluster) %>%
         dplyr::group_by(cluster) %>%
         dplyr::summarize(start = min(start),
                          end = max(end),
-                         ratio = median(mat)) %>%
+                         width = abs(end - start),
+                         ploidy = median(cmat)) %>%
         dplyr::select(-cluster)
 
 #    density_modal = function(x, bw=1) {
@@ -66,11 +70,14 @@ sys$run({
     narray::intersect(ref, panel, keep, genes$ensembl_gene_id, along=1)
     ratio = panel / rowMeans(ref)
 
-    segments = expand.grid(sample=colnames(ratio), seqnames=c(1:19,'X'),
-                           stringsAsFactors=FALSE) %>%
-        mutate(result = clustermq::Q(extract_segment, smp=sample, chr=seqnames,
+    segments = expand.grid(sample=colnames(ratio), seqnames=c(1:19,'X')) %>%
+        mutate(sample = as.character(sample),
+               result = clustermq::Q(extract_segment, smp=sample, chr=seqnames,
             const=list(genes=genes, ratio=ratio), n_jobs=15, memory=1024)) %>%
         tidyr::unnest()
 
-    save(segments, genes, file="eT_ploidy.RData")
+    ratio = cbind(genes, ratio) %>%
+        tidyr::gather("sample", "ratio", -(seqnames:ensembl_gene_id))
+
+    save(segments, ratio, file="eT_ploidy.RData")
 })

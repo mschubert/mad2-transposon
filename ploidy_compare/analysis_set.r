@@ -51,7 +51,7 @@ sys$run({
     dna = io$load(args$dna_seq)$segments %>%
         seq$aneuploidy(sample="sample", assembly="GRCm38")
     rna = io$load(args$rna_seq)$segments %>%
-        seq$aneuploidy(sample="sample", ploidy="expr", assembly="GRCm38")
+        seq$aneuploidy(sample="sample", ploidy="ploidy", assembly="GRCm38")
     sc_wgs = io$load(args$sc_seq) %>%
         seq$aneuploidy(sample="sample", width="length", assembly="GRCm38")
     dna_merge = readr::read_tsv(args$merge) %>%

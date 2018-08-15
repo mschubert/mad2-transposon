@@ -53,7 +53,7 @@ dens = function(bins, field, trans="identity", fill="blue", ...) {
     ggplot(as.data.frame(bins), aes_string(field)) +
         geom_vline(xintercept=2, linetype="dashed", alpha=0.3) +
         geom_density(fill=fill, alpha=0.5) +
-        scale_x_continuous(trans=trans) +
+        scale_y_continuous(trans=trans) +
         coord_flip(...) +
         theme(axis.title.y = element_blank())
 }
@@ -64,25 +64,24 @@ plot_sample = function(smp) {
     tit = sprintf("%s » %s", smp, paste(m$type, collapse=" & "))
 
     # DNA from 30-cell sequencing
-    bins = dna$bins %>% filter(sample == smp)
-    segs = dna$segments %>% filter(sample == smp)
-    rpp_mode = segs$mean.counts[1] / segs$ploidy[1]
+    dbins = dna$bins %>% filter(sample == smp)
+    dsegs = dna$segments %>% filter(sample == smp)
+    rpp_mode = dsegs$mean.counts[1] / dsegs$ploidy[1]
     p1 = ggplot() +
-        plt$genome$pts(bins, aes(y=counts)) +
-        plt$genome$segs(segs, aes(y=mean.counts), ~./rpp_mode) +
+        plt$genome$pts(dbins, aes(y=counts)) +
+        plt$genome$segs(dsegs, aes(y=mean.counts), ~./rpp_mode) +
         ylab("WGS read counts") + ggtitle(tit)
-    p1_dens = dens(bins %>% mutate(p = counts/rpp_mode), "p", fill="red")
+    p1_dens = dens(dbins %>% mutate(p = counts/rpp_mode), "p", fill="red")
 
     # RNA from eT ratio
-    bins = rna$genes %>% filter(sample == rna_smp)
-    segs = rna$segments %>% filter(sample == rna_smp)
+    rbins = rna$ratio %>% filter(sample == rna_smp)
+    rsegs = rna$segments %>% filter(sample == rna_smp)
     p2 = ggplot() +
-        plt$genome$pts(bins, aes(y=expr)) +
-        plt$genome$segs(segs, aes(y=expr), ~./1, breaks=1:6) +
-        coord_trans(y="log2") +
-        coord_cartesian(ylim=c(0.5,6)) +
+        plt$genome$pts(rbins, aes(y=ratio)) +
+        plt$genome$segs(rsegs, aes(y=ploidy), ~./0.5, breaks=1:6) +
+        coord_cartesian(ylim=c(0.25,3)) +
         ylab("eT ratio expr")
-    p2_dens = dens(bins, "expr", xlim=c(0.5,6), trans="log2")
+    p2_dens = dens(rbins %>% mutate(p = ratio*2), "p", xlim=c(0.25,3)*2)
 
     # Tumor weights
     pm1 = meta %>%
@@ -118,7 +117,8 @@ plot_sample = function(smp) {
         plot_layout(ncol=2, widths=c(10,1)) & plt$theme$no_gx()
     pm = pm1 + pm2 + pm3 +
         plot_layout(nrow=1, widths=c(2,4,length(unique(expr$gene)))) &
-        theme(axis.text.x = element_text(angle=30, hjust=0.8))
+        theme(axis.text.x = element_text(angle=30, hjust=0.8),
+              axis.title.x = element_blank())
     p / pm + plot_layout(heights=c(2,1))
 }
 
