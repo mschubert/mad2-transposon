@@ -42,10 +42,14 @@ extract_segment = function(data) {
                   expr = density_modal(expr)) %>%
         select(-clust)
 }
-segments = as.data.frame(genes) %>%
+genes = as.data.frame(genes) %>%
     filter(seqnames %in% c(1:19,'X')) %>%
     arrange(seqnames, start) %>%
     tidyr::gather("sample", "expr", -(seqnames:ensembl_gene_id)) %>%
+    mutate(sample = sub("^X", "", sample)) %>%
+    tbl_df()
+
+segments = genes %>%
     group_by(seqnames, sample) %>%
     tidyr::nest() %>%
     mutate(result = purrr::map(data, extract_segment)) %>%
