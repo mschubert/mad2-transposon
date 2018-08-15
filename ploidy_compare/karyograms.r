@@ -54,7 +54,8 @@ dens = function(bins, field, trans="identity", fill="blue", ...) {
         geom_vline(xintercept=2, linetype="dashed", alpha=0.3) +
         geom_density(fill=fill, alpha=0.5) +
         scale_x_continuous(trans=trans) +
-        coord_flip(...)
+        coord_flip(...) +
+        theme(axis.title.y = element_blank())
 }
 
 plot_sample = function(smp) {
@@ -70,15 +71,16 @@ plot_sample = function(smp) {
         plt$genome$pts(bins, aes(y=counts)) +
         plt$genome$segs(segs, aes(y=mean.counts), ~./rpp_mode) +
         ylab("WGS read counts") + ggtitle(tit)
-    p1_dens = dens(bins, "counts", fill="red") +
-        theme(axis.title.y = element_blank())
+    p1_dens = dens(bins %>% mutate(p = counts/rpp_mode), "p", fill="red")
 
     # RNA from eT ratio
     bins = rna$genes %>% filter(sample == rna_smp)
     segs = rna$segments %>% filter(sample == rna_smp)
     p2 = ggplot() +
         plt$genome$pts(bins, aes(y=expr)) +
-        plt$genome$segs(segs, aes(y=expr), ~./1) +
+        plt$genome$segs(segs, aes(y=expr), ~./1, breaks=1:6) +
+        coord_trans(y="log2") +
+        coord_cartesian(ylim=c(0.5,6)) +
         ylab("eT ratio expr")
     p2_dens = dens(bins, "expr", xlim=c(0.5,6), trans="log2")
 
