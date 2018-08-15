@@ -12,15 +12,18 @@ normalize_reads = function(mat) {
 }
 
 extract_segment = function(smp, chr, ratio, genes) {
-    mat = ratio[genes$seqnames == chr, smp, drop=FALSE]
+    `%>%` = magrittr::`%>%`
+    message(smp, "", chr)
+    use_genes = genes$seqnames == chr
+    mat = ratio[use_genes, smp, drop=FALSE]
     ediv = ecp::e.divisive(mat)
 
-    res = cbind(genes[genes$seqnames == chr,], mat=mat, cluster=ediv$cluster) %>%
-        group_by(cluster) %>%
-        summarize(start = min(start),
-                  end = max(end),
-                  expr = median(mat)) %>%
-        select(-cluster)
+    res = cbind(genes[use_genes,], mat=mat, cluster=ediv$cluster) %>%
+        dplyr::group_by(cluster) %>%
+        dplyr::summarize(start = min(start),
+                         end = max(end),
+                         ratio = median(mat)) %>%
+        dplyr::select(-cluster)
 
 #    density_modal = function(x, bw=1) {
 #        x = log2(x[x>0.5])
@@ -65,9 +68,8 @@ sys$run({
 
     segments = expand.grid(sample=colnames(ratio), seqnames=c(1:19,'X'),
                            stringsAsFactors=FALSE) %>%
-        mutate(result = purrr::map2(sample, seqnames, extract_segment,
-                                    genes=genes, ratio=ratio)) %>%
-        select(-data) %>%
+        mutate(result = clustermq::Q(extract_segment, smp=sample, chr=seqnames,
+            const=list(genes=genes, ratio=ratio), n_jobs=15, memory=1024)) %>%
         tidyr::unnest()
 
     save(segments, genes, file="eT_ploidy.RData")
