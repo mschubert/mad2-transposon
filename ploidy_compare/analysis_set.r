@@ -67,7 +67,7 @@ sys$run({
         filter(!is.na(aneuploidy))
 
     # add HealthyS/T to meta?
-    priority = c("WGS (merged)", "WGS (30-cell)", "RNA-seq (eT)") # no sc_wgs
+    priority = c("WGS (merged)", "WGS (30-cell)", "WGS (single-cell)", "RNA-seq (eT)")
     meta = aneups %>%
         mutate(ord = factor(aneup_src, levels=rev(priority), ordered=TRUE)) %>%
         group_by(sample) %>% top_n(1, ord) %>% ungroup() %>%

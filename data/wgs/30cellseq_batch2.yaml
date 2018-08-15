@@ -33,3 +33,4 @@ files:
 exclude:
     empty1: 0 cell control
     empty2: 0 cell control
+    413s: exactly like sample swap
