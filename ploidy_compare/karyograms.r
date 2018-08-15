@@ -8,47 +8,6 @@ seq = import('seq')
 sys = import('sys')
 plt = import('plot')
 
-expr = function(segs, coords, smp, chrs=c(1:19,'X')) {
-    smp = paste0("X", smp) # GRanges adds 'X' on integer start
-    cur = segs %>% filter(sample == smp)
-    coords = as.data.frame(coords) %>% filter(seqnames %in% chrs)
-    coords$expr = coords[[smp]]
-
-    if (nrow(cur) == 0)
-        return(plot_spacer())
-
-    ggplot(coords, aes(x=start, y=expr)) +
-        geom_point(shape=1, alpha=0.3) +
-        geom_hline(yintercept=1:6, color="grey", linetype="dashed") +
-        geom_segment(data=cur, aes(x=start, xend=end, y=expr, yend=expr), size=3, color="green") +
-        facet_grid(. ~ seqnames, scales="free_x") +
-        scale_y_continuous(trans="log2", breaks=c(1:6)) +
-        coord_cartesian(ylim=c(0.5,6))
-}
-
-wgs = function(segs, bins, smp, bin_y="copy.number", seg_y="mean.counts") {
-    bin_ys = rlang::sym(bin_y)
-    seg_ys = rlang::sym(seg_y)
-    segs = segs %>% filter(Sample == smp)
-    bins = bins %>% filter(Sample == smp)
-
-    den = density(bins$counts, kernel="gaussian", bw=5)
-    rpp_mode = den$x[den$y==max(den$y)] / 2
-
-    ploidy_breaks = c(1:6) #sort(setdiff(unique(c(1,2,as.data.frame(bins)[[bin_y]])), 0))
-    if (nrow(segs) == 0)
-        return(plot_spacer())
-
-    ggplot(bins) +
-        geom_point(aes(x=start, y=counts), shape=1) + # x=minpoint;; start+width/2
-        geom_hline(yintercept=ploidy_breaks*rpp_mode, color="grey", linetype="dashed") +
-        geom_segment(data=as.data.frame(segs), size=2,
-                     aes(x=start, xend=end, y=!!seg_ys, yend=!!seg_ys), color="green") +
-        facet_grid(. ~ seqnames, scales="free_x") +
-        scale_y_continuous(sec.axis=sec_axis(~./rpp_mode, breaks=ploidy_breaks),
-                           limits=c(quantile(bins$counts, 0.01), quantile(bins$counts, 0.99)))
-}
-
 dens = function(bins, field, trans="identity", fill="blue", ...) {
     ggplot(as.data.frame(bins), aes_string(field)) +
         geom_vline(xintercept=2, linetype="dashed", alpha=0.3) +
@@ -105,11 +64,12 @@ plot_sample = function(smp) {
     # Gene expression
     pm3 = expr %>%
         mutate(sample = ifelse(sample == rna_smp, rna_smp, "other"),
+               sample = relevel(factor(sample), "other"),
                category = "Gene expression") %>%
         ggplot(aes(x=gene, y=vst, alpha=sample)) +
         ggbeeswarm::geom_quasirandom() +
         facet_wrap(~category, scales="free") +
-        scale_alpha_manual(values=c(1, 0.1))
+        scale_alpha_manual(values=c(0.1, 1))
 
     # Assemble
     plt$build_or_spacer(p1, p1_dens, p2, p2_dens, pm2, pm3)
