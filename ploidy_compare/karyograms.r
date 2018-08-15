@@ -75,10 +75,10 @@ plot_sample = function(smp) {
 
     # RNA from eT ratio
     rbins = rna$ratio %>% filter(sample == rna_smp)
-    rsegs = rna$segments %>% filter(sample == rna_smp)
+    rsegs = rna$segments %>% filter(sample == rna_smp) %>% mutate(rp = ploidy/2)
     p2 = ggplot() +
         plt$genome$pts(rbins, aes(y=ratio)) +
-        plt$genome$segs(rsegs, aes(y=ploidy), ~./0.5, breaks=1:6) +
+        plt$genome$segs(rsegs, aes(y=rp), ~./0.5, breaks=1:6) +
         coord_cartesian(ylim=c(0.25,3)) +
         ylab("eT ratio expr")
     p2_dens = dens(rbins %>% mutate(p = ratio*2), "p", xlim=c(0.25,3)*2)

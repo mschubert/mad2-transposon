@@ -14,7 +14,31 @@ normalize_reads = function(mat) {
         DESeq2::counts(normalized=TRUE)
 }
 
+#' Center a vector by its density maximum
+#'
+#' @param x  numeric vector
+#' @param bw  bin width for the density estimator
+#' @return  vector centered by its density maximum
+center_by_density = function(x, bw=bw.nrd0(x)) {
+    den = density(x, kernel="gaussian", bw=bw)
+    x - den$x[den$y==max(den$y)]
+}
+
+#' Calculate continuous copy segments along chromosome
+#'
+#' @param smp  character string for sample identifier
+#' @param chr  character string for chromosome
+#' @param ratio  numeric matrix [genes x samples]
+#' @param genes  gene info for rows in ratio
+#' @return  data.frame with estimated ploidy segments
 extract_segment = function(smp, chr, ratio, genes) {
+    center_of_density = function(x, bw=bw.nrd0(x)) {
+#        x = log2(x[x>0.5])
+        den = density(x, kernel="gaussian", bw=bw)
+        den$x[den$y==max(den$y)]
+#        2^den$x[den$y==max(den$y)]
+    }
+
     `%>%` = magrittr::`%>%`
     message(smp, "", chr)
     chr_genes = genes[genes$seqnames == chr,]
@@ -26,22 +50,8 @@ extract_segment = function(smp, chr, ratio, genes) {
         dplyr::summarize(start = min(start),
                          end = max(end),
                          width = abs(end - start),
-                         ploidy = median(cmat)) %>%
+                         ploidy = 2 * center_of_density(cmat)) %>%
         dplyr::select(-cluster)
-
-#    density_modal = function(x, bw=1) {
-#        x = log2(x[x>0.5])
-#        den = density(x, kernel="gaussian", bw=bw)
-#        2^den$x[den$y==max(den$y)]
-#    }
-#    ediv = ecp::e.divisive(as.matrix(data$expr))
-#    data$clust = ediv$cluster
-#    data %>%
-#        group_by(clust) %>%
-#        summarize(end = max(start),
-#                  start = min(start),
-#                  expr = density_modal(expr)) %>%
-#        select(-clust)
 }
 
 sys$run({
@@ -68,12 +78,15 @@ sys$run({
     keep = keep_ref[keep_ref & keep_panel]
 
     narray::intersect(ref, panel, keep, genes$ensembl_gene_id, along=1)
-    ratio = panel / rowMeans(ref)
+    ratio = (panel / rowMeans(ref)) %>%
+        narray::map(along=1, center_by_density) + 1
 
     segments = expand.grid(sample=colnames(ratio), seqnames=c(1:19,'X')) %>%
         mutate(sample = as.character(sample),
                result = clustermq::Q(extract_segment, smp=sample, chr=seqnames,
-            const=list(genes=genes, ratio=ratio), n_jobs=15, memory=1024)) %>%
+                   const=list(genes=genes, ratio=ratio),
+                   export=list(center_by_density=center_by_density),
+                   n_jobs=15, memory=1024)) %>%
         tidyr::unnest()
 
     ratio = cbind(genes, ratio) %>%
