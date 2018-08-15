@@ -1,8 +1,8 @@
 sample	subset	weight	comment
 417s	417s-high	3	
 417s	417s-low	1	
-446s	446s-high	NA	S-phase instead of population sorted
-446s	446s-low	NA	low population ok
+446s	446s-high	1	S-phase sorted? but fit well with RNA
+446s	446s-low	0	low population ok
 449s	449s-high	2.5	
 449s	449s-low	1	
 462s	462s-high	1	
