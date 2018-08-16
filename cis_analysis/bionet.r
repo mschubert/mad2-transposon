@@ -7,6 +7,10 @@ io = import('io')
 sys = import('sys')
 
 #' Return BioNet Steiner Tree subnetwork
+#'
+#' @param g  tidygraph-compatible network
+#' @param fdr  fdr cutoff
+#' @return  tidygraph object
 bionet = function(g, fdr) {
     scores = setNames(pull(g, adj.p), pull(g, name))
     scores[is.na(scores)] = 1
@@ -14,49 +18,43 @@ bionet = function(g, fdr) {
     as_tbl_graph(runFastHeinz(g, scores))
 }
 
-args = sys$cmd$parse(
-    opt('c', 'cis', 'gene-level poisson', '../cis_analysis/poisson.RData'),
-    opt('a', 'aneup', 'aneup RData', '../ploidy_compare/analysis_set.RData'),
-    opt('p', 'plotfile', 'pdf', 'bionet.pdf'))
+#' Plot a network
+#'
+#' @param net  ggraph-compatible network object
+#' @param node_aes  aesthetics mapping for geom_node_point
+#' @return  ggplot2 object
+plot_net = function(net, node_aes) {
+    ggraph(net) +
+        geom_edge_link(alpha=0.2) +
+        geom_node_point(node_aes, alpha=0.7) +
+        geom_node_text(aes(label = name), size=2, repel=TRUE) +
+        viridis::scale_color_viridis(option="magma", direction=-1) +
+        theme_void()
+}
 
-dset = io$load(args$cis)
+sys$run({
+    args = sys$cmd$parse(
+        opt('c', 'cis', 'gene-level poisson', '../cis_analysis/poisson.RData'),
+        opt('a', 'aneup', 'aneup assocs', 'aneup_assocs.RData'),
+        opt('p', 'plotfile', 'pdf', 'bionet.pdf'))
 
-assocs = dset$result %>%
-    mutate(name = toupper(external_gene_name))
+    aneup = io$load(args$aneup)
+    cis = io$load(args$cis)$result %>%
+        mutate(name = toupper(external_gene_name))
 
-##TODO: better to plot condition-specific assoc stats on top?
-#aneup = io$load(args$aneup) %>%
-#    mutate(type = factor(type, levels=c("Myeloid", "T-cell", "Other"))) %>%
-#    inner_join(dset$samples) %>%
-#    group_by(external_gene_name) %>%
-#    summarize(Myeloid = sum(type == "Myeloid" & !is.na(type)), # fraction of samples of 1 type?
-#              Tcell = sum(type == "T-cell" & !is.na(type)),
-#              Other = sum(type == "Other" & !is.na(type))) %>%
-#    na.omit()
+    net = interactome %>%
+        igraph::igraph.from.graphNEL() %>%
+        as_tbl_graph() %>%
+        activate(nodes) %>%
+        select(name = geneSymbol) %>%
+        # no join, tidygraph?
+        mutate(n_smp = cis$n_smp[match(name, cis$name)],
+               p.value = cis$p.value[match(name, cis$name)],
+               adj.p = cis$adj.p[match(name, cis$name)])
 
-net = interactome %>%
-    igraph::igraph.from.graphNEL() %>%
-    as_tbl_graph() %>%
-    activate(nodes) %>%
-    select(name = geneSymbol) %>%
-    # no join, tidygraph?
-    mutate(n_smp = assocs$n_smp[match(name, assocs$name)],
-           p.value = assocs$p.value[match(name, assocs$name)],
-           adj.p = assocs$adj.p[match(name, assocs$name)])
+    subnet = bionet(net, fdr=0.01)
 
-subnet = bionet(net, fdr=0.01) #%>%
-#    activate(nodes) %>%
-#    mutate(Myeloid = aneup$Myeloid[match(name, toupper(aneup$external_gene_name))],
-#           Tcell = aneup$Myeloid[match(name, toupper(aneup$external_gene_name))],
-#           Other = aneup$Myeloid[match(name, toupper(aneup$external_gene_name))])
-
-p = ggraph(subnet) +
-    geom_edge_link(alpha=0.2) +
-    geom_node_point(aes(size=n_smp), alpha=0.7) +
-    geom_node_text(aes(label = name), size=2, repel=TRUE) +
-    viridis::scale_color_viridis(option="magma", direction=-1) +
-    theme_void()
-
-pdf(args$plotfile)
-print(p)
-dev.off()
+    pdf(args$plotfile)
+    print(plot_net(subnet, aes(size=n_smp)))
+    dev.off()
+})
