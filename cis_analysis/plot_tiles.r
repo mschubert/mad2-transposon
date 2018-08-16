@@ -18,7 +18,7 @@ args = sys$cmd$parse(
 expr = io$read_table(args$exons, header=TRUE)
 
 aneup = io$load(args$aneup) %>%
-    arrange(aneup) %>%
+    arrange(aneuploidy) %>%
     mutate(sample = factor(sample, levels=sample))
 
 cis = io$load(args$ins_dna)
@@ -66,8 +66,8 @@ mid = ggplot(rna_tiles, aes(x=gene_name, y=sample)) +
     guides(fill=FALSE) +
     ggtitle("CTGs min 2 samples")
 
-right = ggplot(aneup, aes(x=aneup, y=sample)) +
-    geom_segment(aes(xend=aneup, yend=sample), x=0, color="lightgrey") +
+right = ggplot(aneup, aes(x=aneuploidy, y=sample)) +
+    geom_segment(aes(xend=aneuploidy, yend=sample), x=0, color="lightgrey") +
     geom_point() +
     theme(axis.text.x = element_text(size=10),
           axis.title.x = element_text(size=12),

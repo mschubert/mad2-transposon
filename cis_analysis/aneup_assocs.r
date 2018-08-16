@@ -4,13 +4,6 @@ io = import('io')
 sys = import('sys')
 plt = import('plot')
 
-#' source sample IDs are both 123S and T567
-fix_ids = function(x) {
-    letter = tolower(sub("[0-9]+", "", x))
-    nums = sub("[ST]", "", x)
-    paste0(nums, letter)
-}
-
 #' KS statistic
 ks_test = function(data, field) {
     mod = ks.test(data[[field]][data$reads], data[[field]][!data$reads])
@@ -52,6 +45,14 @@ do_test = function(dset, test, field) {
         arrange(adj.p, p.value)
 }
 
+plot_volcano = function(aset, field) {
+    res = do_test(aset, args$test, field)
+    res %>%
+        mutate(label = external_gene_name) %>%
+        plt$p_effect(thresh=0.1) %>%
+        plt$volcano(p=0.1, label_top=30, repel=TRUE) + ggtitle(field)
+}
+
 sys$run({
     args = sys$cmd$parse(
         opt('a', 'aneup', 'aneuploidy .tsv', '../ploidy_compare/analysis_set.RData'),
@@ -75,26 +76,19 @@ sys$run({
         mutate(type_Tcell = ifelse(type == "T-cell", 1, 0),
                type_Myeloid = ifelse(type == "Myeloid", 1, 0),
                type_Other = ifelse(type == "Other", 1, 0),
-               aneup_Tcell = ifelse(type == "T-cell", aneup, 0),
-               aneup_Myeloid = ifelse(type == "Myeloid", aneup, 0),
-               aneup_Other = ifelse(type == "Other", aneup, 0))
+               aneup_Tcell = ifelse(type == "T-cell", aneuploidy, 0),
+               aneup_Myeloid = ifelse(type == "Myeloid", aneuploidy, 0),
+               aneup_Other = ifelse(type == "Other", aneuploidy, 0))
 
-    plot_volcano = . %>%
-        mutate(label = external_gene_name) %>%
-        plt$p_effect(thresh=0.1) %>%
-        plt$volcano(p=0.1, label_top=30, repel=TRUE)
+    fields = c("aneuploidy", "type_Tcell", "type_Myeloid", "type_Other",
+               "aneup_Tcell", "aneup_Myeloid", "aneup_Other")
+    plots = lapply(fields, plot_volcano, aset=aset)
 
-#    result = sapply()
-#    plots = lapply(result, plot_volcano)
+    #TODO: use formulas in poisson regression, allow covars (and use type for aneup:type)
 
     pdf(args$plotfile)
-    print(plot_volcano(do_test(aset, args$test, "aneup")) + ggtitle("aneup"))
-    print(plot_volcano(do_test(aset, args$test, "type_Tcell")) + ggtitle("T-cell"))
-    print(plot_volcano(do_test(aset, args$test, "type_Myeloid")) + ggtitle("Myeloid"))
-    print(plot_volcano(do_test(aset, args$test, "type_Other")) + ggtitle("Other"))
-    print(plot_volcano(do_test(aset, args$test, "aneup_Tcell")) + ggtitle("aneup T-cell"))
-    print(plot_volcano(do_test(aset, args$test, "aneup_Myeloid")) + ggtitle("aneup Myeloid"))
-    print(plot_volcano(do_test(aset, args$test, "aneup_Other")) + ggtitle("aneup Other"))
+    for (p in plots)
+        print(p)
     dev.off()
 
     save(genes, file=args$outfile) # rather save result
