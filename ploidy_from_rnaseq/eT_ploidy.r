@@ -19,8 +19,8 @@ normalize_reads = function(mat) {
 #' @param x  numeric vector
 #' @param bw  bin width for the density estimator
 #' @return  vector centered by its density maximum
-center_by_density = function(x, bw=0.25) {
-    den = density(x, kernel="gaussian", bw=bw)
+center_segment_density = function(x, w=NULL, bw=bw.nrd0(x)) {
+    den = density(x, kernel="gaussian", bw=bw, weights=w)
     x - den$x[den$y==max(den$y)]
 }
 
@@ -32,7 +32,7 @@ center_by_density = function(x, bw=0.25) {
 #' @param genes  gene info for rows in ratio
 #' @return  data.frame with estimated ploidy segments
 extract_segment = function(smp, chr, ratio, genes) {
-    center_of_density = function(x, bw=0.25) {
+    center_of_density = function(x, bw=bw.nrd0(x)) {
 #        x = log2(x[x>0.5])
         den = density(x, kernel="gaussian", bw=bw)
         den$x[den$y==max(den$y)]
@@ -78,16 +78,17 @@ sys$run({
     keep = keep_ref[keep_ref & keep_panel]
 
     narray::intersect(ref, panel, keep, genes$ensembl_gene_id, along=1)
-    ratio = (panel / rowMeans(ref)) %>%
-        narray::map(along=1, center_by_density) + 1
+    ratio = panel / rowMeans(ref)
 
     segments = expand.grid(sample=colnames(ratio), seqnames=c(1:19,'X')) %>%
         mutate(sample = as.character(sample),
                result = clustermq::Q(extract_segment, smp=sample, chr=seqnames,
                    const=list(genes=genes, ratio=ratio),
-                   export=list(center_by_density=center_by_density),
                    n_jobs=15, memory=1024)) %>%
-        tidyr::unnest()
+        tidyr::unnest() %>%
+        group_by(sample) %>%
+        mutate(ploidy = 2 + center_segment_density(ploidy, w=width, bw=0.25)) %>%
+        ungroup()
 
     ratio = cbind(genes, ratio) %>%
         tidyr::gather("sample", "ratio", -(seqnames:ensembl_gene_id))
