@@ -1,0 +1,20 @@
+subworkflow cis:
+    workdir: "../cis_analysis"
+    snakefile: "../cis_analysis/Snakefile"
+
+rule all:
+    input:
+        "poisson_set.pdf"
+
+rule poisson_set:
+    input:
+        rscript = "poisson_set.r",
+        gene = cis("poisson.RData")
+    output:
+        result = "poisson_set.RData",
+        plot = "poisson_set.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --infile {input.gene}"
+            " --outfile {output.result}"
+            " --plotfile {output.plot}"
