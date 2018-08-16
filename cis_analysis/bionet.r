@@ -24,12 +24,27 @@ bionet = function(g, fdr) {
 #' @param node_aes  aesthetics mapping for geom_node_point
 #' @return  ggplot2 object
 plot_net = function(net, node_aes) {
+    set.seed(121979) # same layout if same nodes
     ggraph(net) +
         geom_edge_link(alpha=0.2) +
         geom_node_point(node_aes, alpha=0.7) +
         geom_node_text(aes(label = name), size=2, repel=TRUE) +
         viridis::scale_color_viridis(option="magma", direction=-1) +
         theme_void()
+}
+
+#' Plot a network overlayed with external associations
+#'
+#' @param net  ggraph-compatible network object
+#' @param ov  data.frame with fields: external_gene_name, statistic
+#' @return  ggplot2 object
+plot_net_overlay = function(net, ov) {
+    net %>%
+        as_tbl_graph() %>%
+        activate(nodes) %>%
+        mutate(statistic = ov$statistic[match(name, toupper(ov$external_gene_name))]) %>%
+        plot_net(aes(size=n_smp, color=statistic)) +
+            scale_color_gradient2(low="red", mid="white", high="blue", midpoint=0)
 }
 
 sys$run({
@@ -56,5 +71,7 @@ sys$run({
 
     pdf(args$plotfile)
     print(plot_net(subnet, aes(size=n_smp)))
+    for(ov in names(aneup))
+        print(plot_net_overlay(subnet, aneup[[ov]]) + ggtitle(ov))
     dev.off()
 })
