@@ -13,7 +13,7 @@ plot_pcs = function(idx, pca, x, y, hl=c()) {
     pcs = names(imp)
     df = cbind(idx, pca$x) %>% mutate(ins=sample %in% hl)
     ggplot(df, aes_string(x=pcs[1], y=pcs[2])) +
-        geom_point(aes(size=aneup, shape=tissue, fill=type, color=ins), stroke=1) +
+        geom_point(aes(size=aneuploidy, shape=tissue, fill=type, color=ins), stroke=1) +
         scale_shape_manual(values=c(22:30)) +
         scale_color_manual(values=c("#ffffff00", "black")) +
         geom_text_repel(aes(label=sample), color="black") +
@@ -89,7 +89,7 @@ sys$run({
     vs = DESeq2::getVarianceStabilizedData(DESeq2::estimateDispersions(eset))
 
     # fit tissue of origin, cancer type, and pan-aneuploidy
-    design(eset) = ~ tissue + type + aneup
+    design(eset) = ~ tissue + type + aneuploidy
     robj = DESeq2::estimateDispersions(eset) %>%
         DESeq2::nbinomWaldTest(maxit=1000)
     coefs = setdiff(DESeq2::resultsNames(robj), "Intercept")

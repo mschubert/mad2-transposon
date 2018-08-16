@@ -22,14 +22,14 @@ idx = colData(eset) %>%
     mutate(ins = ifelse(is.na(ins), 0, 1))
 eset@colData = DataFrame(idx)
 
-design(eset) = ~ tissue + type + ins * aneup
+design(eset) = ~ tissue + type + ins * aneuploidy
 res = DESeq2::estimateDispersions(eset) %>%
     DESeq2::nbinomWaldTest(maxit=1000)
-res = sapply(c("ins", "ins.aneup"), util$extract_coef, res=res, simplify=FALSE)
+res = sapply(c("ins", "ins.aneuploidy"), util$extract_coef, res=res, simplify=FALSE)
 
 pdf(args$plotfile)
 print(util$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))
-for (name in c("ins", "ins.aneup")) {
+for (name in c("ins", "ins.aneuploidy")) {
     print(util$plot_volcano(res[[name]], name))
     print(util$plot_gset(res[[name]], name))
 }
