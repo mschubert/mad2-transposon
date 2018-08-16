@@ -10,7 +10,7 @@ args = sys$cmd$parse(
     opt('a', 'aneup', 'sample-level aneup scores', '../ploidy_compare/analysis_set.RData'),
     opt('i', 'ins_dna', 'all DNA insertions table', 'poisson.RData'),
     opt('j', 'ins_rna', 'all RNA insertions table', '../data/rnaseq_imfusion/insertions.txt'),
-    opt('d', 'assocs_dna', 'CIS in DNA', 'aneup_assocs/poisson.RData'),
+    opt('d', 'assocs_dna', 'CIS in DNA', 'aneup_assocs.RData'),
     opt('r', 'assocs_rna', 'CTG in RNA', '../data/rnaseq_imfusion/merged_ctgs.txt'),
     opt('e', 'exons', 'exon expression table', '../data/rnaseq_imfusion/exon_counts.txt'),
     opt('p', 'plotfile', 'pdf to plot to', 'plot_tiles.pdf'))
@@ -24,12 +24,12 @@ aneup = io$load(args$aneup) %>%
 cis = io$load(args$ins_dna)
 ins_dna = cis$samples
 cis = cis$result
-ks = io$load(args$assocs_dna) %>%
+dna = io$load(args$assocs_dna)$aneuploidy %>%
     arrange(statistic)
 dna_tiles = ins_dna %>%
-    filter(external_gene_name %in% ks$external_gene_name) %>%
+    filter(external_gene_name %in% dna$external_gene_name) %>%
     transmute(sample = factor(sample, levels=levels(aneup$sample)),
-              gene_name = factor(external_gene_name, levels=ks$external_gene_name),
+              gene_name = factor(external_gene_name, levels=dna$external_gene_name),
               ins = 1) %>%
     na.omit() %>%
     tidyr::complete(sample, gene_name, fill=list(ins=0))

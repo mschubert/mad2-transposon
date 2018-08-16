@@ -20,8 +20,7 @@ ins = ['Erg', 'Ets1', 'Pten', 'Rapgef6', 'Notch1', 'Arid2', 'Sfi1', 'Eif4enif1',
 
 rule all:
     input:
-        "plot_tiles.pdf", "poisson.pdf", "poisson_set.pdf",
-        expand("aneup_assocs/{set}.pdf", set=['gene']),
+        "plot_tiles.pdf", "poisson.pdf", "aneup_assocs.pdf",
         expand("ins/{ins}.pdf", ins=ins)
 
 rule plot_ins:
@@ -44,14 +43,14 @@ rule plot_ins:
             " --gene {wildcards.gene}"
             " --plotfile {output.plot}"
 
-rule aneuploidy_assocs:
+rule aneup_assocs:
     input:
         rscript = "aneup_assocs.r",
         poisson = "poisson.RData",
         aneup = aneup("analysis_set.RData")
     output:
-        result = "aneup_assocs/gene.RData",
-        plot = "aneup_assocs/gene.pdf"
+        result = "aneup_assocs.RData",
+        plot = "aneup_assocs.pdf"
     shell:
         "Rscript {input.rscript}"
             " --aneup {input.aneup}"
@@ -82,7 +81,7 @@ rule plot_tiles:
         aneup = "../ploidy_compare/analysis_set.RData",
         ins_dna = "poisson.RData",
         ins_rna = imfusion("insertions.txt"),
-        assocs_dna = "aneup_assocs/poisson.RData",
+        assocs_dna = "aneup_assocs.RData",
         assocs_rna = imfusion("merged_ctgs.txt"),
         exons = imfusion("exon_counts.txt")
     output:
@@ -107,19 +106,6 @@ rule poisson_gene:
     shell:
         "Rscript {input.rscript}"
             " --infile {input.aset}"
-            " --outfile {output.result}"
-            " --plotfile {output.plot}"
-
-rule poisson_set: # keep separate for now, bc gene set analysis
-    input:
-        rscript = "poisson_set.r",
-        gene = "poisson.RData"
-    output:
-        result = "poisson_set.RData",
-        plot = "poisson_set.pdf"
-    shell:
-        "Rscript {input.rscript}"
-            " --infile {input.gene}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"
 
