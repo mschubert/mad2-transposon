@@ -10,17 +10,18 @@ subworkflow imfusion:
     workdir: "../data/rnaseq_imfusion"
     snakefile: "../data/rnaseq_imfusion/Snakefile"
 
+# not working: 'AC158777.2', 'Ikfz'
 ins = ['Erg', 'Ets1', 'Pten', 'Rapgef6', 'Notch1', 'Arid2', 'Sfi1', 'Eif4enif1',
-       'Ikfz', 'Xrcc6', 'Drg1', 'Nf1', 'Suz12', 'Crebbp', 'Trp53', 'Runx1',
+       'Xrcc6', 'Drg1', 'Nf1', 'Suz12', 'Crebbp', 'Trp53', 'Runx1',
        'Gm11400', 'Gm11399', 'Gm10800', 'Foxn3', 'Rreb1', 'Elf1', 'Gm11400',
        'Evi2', 'Evi2a', 'Pisd-ps2', 'Fau-ps2', 'Snrnp70', 'Eed', 'Inpp5d',
-       'Nfia', 'Lyn', 'Dhx15', 'Sp3', 'Nxf1', 'Ppp1r12a', 'Usp25', 'AC158777.2',
+       'Nfia', 'Lyn', 'Dhx15', 'Sp3', 'Nxf1', 'Ppp1r12a', 'Usp25',
        'Arid1b', 'Mapk9', 'Naif1', 'Lrch3', 'Cd47', 'Bcl11a', 'Stat1', 'Stat4']
 
 rule all:
     input:
         "plot_tiles.pdf", "poisson.pdf", "poisson_set.pdf",
-        expand("aneup_assocs/{test}.pdf", test=['ks', 'poisson']),
+        expand("aneup_assocs/{set}.pdf", set=['gene']),
         expand("ins/{ins}.pdf", ins=ins)
 
 rule plot_ins:
@@ -49,13 +50,12 @@ rule aneuploidy_assocs:
         poisson = "poisson.RData",
         aneup = aneup("analysis_set.RData")
     output:
-        result = "aneup_assocs/{test}.RData",
-        plot = "aneup_assocs/{test}.pdf"
+        result = "aneup_assocs/gene.RData",
+        plot = "aneup_assocs/gene.pdf"
     shell:
         "Rscript {input.rscript}"
             " --aneup {input.aneup}"
             " --poisson {input.poisson}"
-            " --test {wildcards.test}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"
 
@@ -97,7 +97,7 @@ rule plot_tiles:
             " --exons {input.exons}"
             " --plotfile {output.plot}"
 
-rule poisson:
+rule poisson_gene:
     input:
         rscript = "poisson.r",
         aset = "analysis_set.RData"
