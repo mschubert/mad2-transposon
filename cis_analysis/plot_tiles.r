@@ -74,6 +74,6 @@ right = ggplot(aneup, aes(x=aneuploidy, y=sample)) +
           axis.text.y = element_blank(),
           axis.title.y = element_blank())
 
-pdf(args$plotfile, 15, 15)
-print(left + mid + right + plot_layout(nrow=1, widths=c(2,1,1)))
+pdf(args$plotfile, 18, 15)
+print(left + mid + right + plot_layout(nrow=1, widths=c(3,1,1)))
 dev.off()
