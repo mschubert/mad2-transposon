@@ -19,7 +19,7 @@ normalize_reads = function(mat) {
 #' @param x  numeric vector
 #' @param bw  bin width for the density estimator
 #' @return  vector centered by its density maximum
-center_by_density = function(x, bw=bw.nrd0(x)) {
+center_by_density = function(x, bw=0.25) {
     den = density(x, kernel="gaussian", bw=bw)
     x - den$x[den$y==max(den$y)]
 }
@@ -32,7 +32,7 @@ center_by_density = function(x, bw=bw.nrd0(x)) {
 #' @param genes  gene info for rows in ratio
 #' @return  data.frame with estimated ploidy segments
 extract_segment = function(smp, chr, ratio, genes) {
-    center_of_density = function(x, bw=bw.nrd0(x)) {
+    center_of_density = function(x, bw=0.25) {
 #        x = log2(x[x>0.5])
         den = density(x, kernel="gaussian", bw=bw)
         den$x[den$y==max(den$y)]
