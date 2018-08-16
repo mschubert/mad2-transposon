@@ -42,8 +42,7 @@ colnames(expr) = sub("[0-9]_", "", colnames(expr))
 keep = !duplicated(colnames(counts))
 counts = counts[,keep]
 expr = expr[,keep]
-idx = idx[keep,] %>%
-    mutate(sample = paste0(hist_nr, tissue))
+idx = idx[keep,]
 
 genes = idmap$gene(rownames(expr),
     to="external_gene_name", dset="mmusculus_gene_ensembl")
