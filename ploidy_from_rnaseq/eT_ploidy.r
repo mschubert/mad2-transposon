@@ -43,7 +43,7 @@ extract_segment = function(smp, chr, ratio, genes) {
     message(smp, "", chr)
     chr_genes = genes[genes$seqnames == chr,]
     mat = ratio[chr_genes$ensembl_gene_id, smp]
-    ediv = ecp::e.divisive(as.matrix(mat))
+    ediv = ecp::e.divisive(as.matrix(mat), min.size=50)
 
     res = cbind(chr_genes, cmat=mat, cluster=ediv$cluster) %>%
         dplyr::group_by(cluster) %>%
