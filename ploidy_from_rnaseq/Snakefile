@@ -22,8 +22,6 @@ rule panel:
         rnaseq = rnaseq("assemble.RData")
     output:
         result = "panel_ploidy.RData"
-    resources:
-        walltime = 7200
     shell:
         "Rscript {input.rscript}"
 
@@ -34,7 +32,5 @@ rule eT:
         eT = rnaseq("Mad2+p53_batch2.RData")
     output:
         result = "eT_ploidy.RData"
-    resources:
-        walltime = 7200
     shell:
         "Rscript {input.rscript}"
