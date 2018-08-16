@@ -70,16 +70,15 @@ sys$run({
     cis_genes = cis$result %>% filter(adj.p < 1e-3) %>% pull(external_gene_name)
     gene_copies = io$load(args$copies)
     exprset = io$load(args$expr)
-    idx = exprset$idx %>%
-        mutate(sample = paste0(hist_nr, tissue)) %>%
-        select(-type) %>%
-        left_join(io$load(args$aneup) %>% select(-tissue)) %>%
-        mutate(type = ifelse(is.na(type), "NA", type), #TODO: add annotations
+    idx = io$load(args$aneup) %>%
+#    idx = exprset$idx %>%
+#        left_join(io$load(args$aneup) %>% select(-tissue)) %>%
+        mutate(type = ifelse(is.na(type), "unknown", type), #TODO: add annotations
                tissue = factor(tissue),
-               type = factor(type),
-               aneup_Tcell = ifelse(type == "T-cell", aneup, 0),
-               aneup_Myeloid = ifelse(type == "Myeloid", aneup, 0),
-               aneup_Other = ifelse(type == "Other", aneup, 0))
+               type = relevel(factor(type), "unknown"),
+               aneup_Tcell = ifelse(type == "T-cell", aneuploidy, 0),
+               aneup_Myeloid = ifelse(type == "Myeloid", aneuploidy, 0),
+               aneup_Other = ifelse(type == "Other", aneuploidy, 0))
     counts = exprset$counts
     narray::intersect(gene_copies, counts, along=1)
     narray::intersect(gene_copies, counts, idx$sample, along=2)
@@ -98,7 +97,7 @@ sys$run({
 
     # fit cancer type specific aneuploidy
     aneup_tissue = function(term) {
-        design(eset) = formula(paste("~ tissue + type + aneup +", term))
+        design(eset) = formula(paste("~ tissue + type + aneuploidy +", term))
         DESeq2::estimateDispersions(eset) %>%
             DESeq2::nbinomWaldTest(maxit=1000) %>%
             extract_coef(term)
