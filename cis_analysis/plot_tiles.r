@@ -13,6 +13,8 @@ args = sys$cmd$parse(
     opt('d', 'assocs_dna', 'CIS in DNA', 'aneup_assocs.RData'),
     opt('r', 'assocs_rna', 'CTG in RNA', '../data/rnaseq_imfusion/merged_ctgs.txt'),
     opt('e', 'exons', 'exon expression table', '../data/rnaseq_imfusion/exon_counts.txt'),
+    opt('n', 'n_dna', 'min number samples with ins', '5'),
+    opt('m', 'n_rna', 'min number samples with ins', '2'),
     opt('p', 'plotfile', 'pdf to plot to', 'plot_tiles.pdf'))
 
 expr = io$read_table(args$exons, header=TRUE)
@@ -22,14 +24,17 @@ aneup = io$load(args$aneup) %>%
     mutate(sample = factor(sample, levels=sample))
 
 cis = io$load(args$ins_dna)
-ins_dna = cis$samples
-cis = cis$result
+genes = cis$result %>%
+    filter(adj.p < 1e-5,
+           n_smp >= as.integer(args$n_dna)) %>%
+    pull(external_gene_name) %>%
+    unique()
 dna = io$load(args$assocs_dna)$aneuploidy %>%
     arrange(statistic)
-dna_tiles = ins_dna %>%
+dna_tiles = cis$samples %>%
     filter(external_gene_name %in% dna$external_gene_name) %>%
     transmute(sample = factor(sample, levels=levels(aneup$sample)),
-              gene_name = factor(external_gene_name, levels=dna$external_gene_name),
+              gene_name = factor(external_gene_name, levels=genes),
               ins = 1) %>%
     na.omit() %>%
     tidyr::complete(sample, gene_name, fill=list(ins=0))
@@ -41,11 +46,11 @@ left = ggplot(dna_tiles, aes(x=gene_name, y=sample)) +
           axis.text.y = element_text(size=10),
           axis.title.x = element_text(size=12),
           legend.position = "left") +
-    ggtitle("CIS min 5 samples, 20 reads")
+    ggtitle(paste("CIS min", args$n_dna, "samples, 20 reads"))
 
 ins_rna = io$read_table(args$ins_rna, header=TRUE)
 ctg = io$read_table(args$assocs_rna, header=TRUE) %>%
-    filter(n_samples > 1)
+    filter(n_samples > as.integer(args$n_rna))
 rna_tiles = ins_rna %>%
     transmute(sample = factor(sample, levels=grep("^[0-9]+[st]$", colnames(expr), value=TRUE)), # all RNA
               gene_name = gene_name,
@@ -64,7 +69,7 @@ mid = ggplot(rna_tiles, aes(x=gene_name, y=sample)) +
           axis.title.y = element_blank(),
           axis.title.x = element_text(size=12)) +
     guides(fill=FALSE) +
-    ggtitle("CTGs min 2 samples")
+    ggtitle(paste("CTGs min", args$n_rna, "samples"))
 
 right = ggplot(aneup, aes(x=aneuploidy, y=sample)) +
     geom_segment(aes(xend=aneuploidy, yend=sample), x=0, color="lightgrey") +
