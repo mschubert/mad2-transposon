@@ -20,7 +20,7 @@ ins = ['Erg', 'Ets1', 'Pten', 'Rapgef6', 'Notch1', 'Arid2', 'Sfi1', 'Eif4enif1',
 
 rule all:
     input:
-        "plot_tiles.pdf", "poisson.pdf", "aneup_assocs.pdf",
+        "plot_tiles.pdf", "poisson.pdf", "aneup_assocs.pdf", "bionet.pdf",
         expand("ins/{ins}.pdf", ins=ins)
 
 rule plot_ins:
@@ -43,38 +43,6 @@ rule plot_ins:
             " --gene {wildcards.gene}"
             " --plotfile {output.plot}"
 
-rule aneup_assocs:
-    input:
-        rscript = "aneup_assocs.r",
-        poisson = "poisson.RData",
-        aneup = aneup("analysis_set.RData")
-    output:
-        result = "aneup_assocs.RData",
-        plot = "aneup_assocs.pdf"
-    shell:
-        "Rscript {input.rscript}"
-            " --aneup {input.aneup}"
-            " --poisson {input.poisson}"
-            " --outfile {output.result}"
-            " --plotfile {output.plot}"
-
-rule aneup_de:
-    input:
-        rscript = "aneup_de.r",
-        poisson = "poisson.RData",
-        expr = "../data/rnaseq/assemble.RData",
-        aneup = aneup("analysis_set.RData")
-    output:
-        data = "aneup_de.RData",
-        plot = "aneup_de.pdf"
-    shell:
-        "Rscript {input.rscript}"
-            " --cis {input.poisson}"
-            " --expr {input.expr}"
-            " --aneup {input.aneup}"
-            " --outfile {output.data}"
-            " --plotfile {output.plot}"
-
 rule plot_tiles:
     input:
         rscript = "plot_tiles.r",
@@ -94,6 +62,34 @@ rule plot_tiles:
             " --assocs_dna {input.assocs_dna}"
             " --assocs_rna {input.assocs_rna}"
             " --exons {input.exons}"
+            " --plotfile {output.plot}"
+
+rule bionet:
+    input:
+        rscript = "bionet.r",
+        cis = "poisson.RData",
+        aneup = "aneup_assocs.RData"
+    output:
+        plot = "bionet.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --cis {input.cis}"
+            " --aneup {input.aneup}"
+            " --plotfile {output.plot}"
+
+rule aneup_assocs:
+    input:
+        rscript = "aneup_assocs.r",
+        poisson = "poisson.RData",
+        aneup = aneup("analysis_set.RData")
+    output:
+        result = "aneup_assocs.RData",
+        plot = "aneup_assocs.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --aneup {input.aneup}"
+            " --poisson {input.poisson}"
+            " --outfile {output.result}"
             " --plotfile {output.plot}"
 
 rule poisson_gene:
