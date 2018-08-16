@@ -1,15 +1,7 @@
-subworkflow rnaseq:
-    workdir: "../rnaseq"
-    snakefile: "../rnaseq/Snakefile"
-
-rule all:
-    input:
-        "meta.RData"
-
 rule meta:
     input:
         rscript = "meta.r",
-        xlsx = "Final table mice.xlsx",
+        xlsx = "Final table mice (1).xlsx",
     output:
         tsv = "meta.tsv"
     shell:
