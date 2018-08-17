@@ -11,7 +11,7 @@ plt = import('plot')
 dens = function(bins, field, trans="identity", fill="blue", ...) {
     ggplot(as.data.frame(bins), aes_string(field)) +
         geom_vline(xintercept=2, linetype="dashed", alpha=0.3) +
-        geom_density(fill=fill, alpha=0.5, bw=0.5) +
+        geom_density(fill=fill, alpha=0.5) +
         scale_y_continuous(trans=trans) +
         coord_flip(...) +
         theme(axis.title.y = element_blank())
