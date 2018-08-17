@@ -41,7 +41,7 @@ result = sapply(names(sets), test_set, simplify=FALSE) %>%
     dplyr::bind_rows(.id="set") %>%
     select(-(parameter:alternative)) %>%
     select(set, size, n_smps, everything()) %>%
-    mutate(estimate = (estimate - assocs$ins_rate_genome) / assocs$ins_rate_genome,
+    mutate(estimate = log2(estimate / assocs$ins_rate_genome),
            adj.p = p.adjust(p.value, method="fdr")) %>%
     arrange(adj.p, p.value)
 
@@ -56,13 +56,13 @@ samples = result %>%
 result = result %>%
     select(-samples)
 
-p = result %>%
-    mutate(label = ifelse((40/6)*estimate-40 > log10(adj.p) | estimate < -0.5 ,
-                          set, NA)) %>%
+p = result %>% # y = y0 - y0/x0 * x, all *(-1)
+    mutate(label = ifelse((60/3.3)*estimate-60 > log10(adj.p) | estimate < -1, set, NA)) %>%
     plt$p_effect() %>%
-    plt$volcano(text.size=2, label_top=Inf, repel=TRUE)
+    plt$volcano(text.size=2, label_top=Inf, repel=TRUE) +
+        xlab("log2 fold change poisson rate")
 
-pdf(args$plotfile, 15, 6)
+pdf(args$plotfile, 8, 6)
 print(p)
 dev.off()
 
