@@ -72,7 +72,12 @@ sys$run({
         mutate(ord = factor(aneup_src, levels=rev(priority), ordered=TRUE)) %>%
         group_by(sample) %>% top_n(1, ord) %>% ungroup() %>%
         select(-ord, -coverage) %>%
-        inner_join(meta_old)
+        inner_join(meta_old) %>%
+        mutate(`T-cell` = (type == "T-cell" & !is.na(type)) + 0,
+               Myeloid = (type == "Myeloid" & !is.na(type)) + 0,
+               Other = (type == "Other" & !is.na(type)) + 0)
+
+    #TODO: should have assocs fields: type as logical, aneup_dna, aneup_rna?
 
     pdf(8, 10, file=args$plotfile)
     print(plot_comparison(aneups, meta))
