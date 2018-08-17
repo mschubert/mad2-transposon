@@ -6,10 +6,10 @@ sys = import('sys')
 util = import('./de')
 
 args = sys$cmd$parse(
-    opt('d', 'diff_expr', 'gene expression RData', 'aneup_de.RData'),
+    opt('d', 'diff_expr', 'gene expression RData', 'de.RData'),
     opt('i', 'ins', 'gene name of insert', 'Erg'),
-    opt('o', 'outfile', 'results RData', 'aneup_de_Erg.RData'),
-    opt('p', 'plotfile', 'pdf', 'aneup_de_Erg.pdf'))
+    opt('o', 'outfile', 'results RData', 'ins/Erg.RData'),
+    opt('p', 'plotfile', 'pdf', 'ins/Erg.pdf'))
 
 dset = io$load(args$diff_expr)
 cis = dset$cis$samples %>%
@@ -27,11 +27,14 @@ res = DESeq2::estimateDispersions(eset) %>%
     DESeq2::nbinomWaldTest(maxit=1000)
 res = sapply(c("ins", "ins.aneuploidy"), util$extract_coef, res=res, simplify=FALSE)
 
+go = util$gset$go('mmusculus_gene_ensembl', 'ensembl_gene_id', as_list=TRUE) %>%
+    util$gset$filter(min=5, max=200, valid=rownames(eset))
+
 pdf(args$plotfile)
 print(util$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))
 for (name in c("ins", "ins.aneuploidy")) {
-    print(util$plot_volcano(res[[name]], name))
-    print(util$plot_gset(res[[name]], name))
+    print(util$plot_volcano(res[[name]]) + ggtitle(name))
+    print(util$plot_gset(res[[name]], go) + ggtitle(name))
 }
 dev.off()
 

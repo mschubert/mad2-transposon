@@ -28,6 +28,7 @@ rule de:
         result = "de.RData",
         plot = "de.pdf"
     resources:
+        mem = 8000,
         walltime = 120
     shell:
         "Rscript {input.rscript}"
@@ -45,6 +46,7 @@ rule de_ins:
         result = "ins/{ins}.RData",
         plot = "ins/{ins}.pdf"
     resources:
+        mem = 5000,
         walltime = 60
     shell:
         "Rscript {input.rscript}"
