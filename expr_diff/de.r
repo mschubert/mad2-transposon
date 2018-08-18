@@ -61,7 +61,7 @@ sys$run({
     args = sys$cmd$parse(
         opt('e', 'expr', 'gene expression RData', '../data/rnaseq/assemble.RData'),
         opt('c', 'copies', 'gene copy matrix', '../ploidy_compare/gene_copies.RData'),
-        opt('a', 'aneup', 'aneuploidy score', '../ploidy_compare/analysis_set.RData'),
+        opt('m', 'meta', 'aneuploidy score', '../ploidy_compare/analysis_set.RData'),
         opt('i', 'cis', 'cis site RData', '../cis_analysis/poisson.RData'),
         opt('o', 'outfile', 'results RData', 'aneup_de.RData'),
         opt('p', 'plotfile', 'pdf', 'aneup_de.pdf'))
@@ -70,7 +70,7 @@ sys$run({
     cis_genes = cis$result %>% filter(adj.p < 1e-3) %>% pull(external_gene_name)
     gene_copies = io$load(args$copies)
     exprset = io$load(args$expr)
-    idx = io$load(args$aneup) %>%
+    idx = io$load(args$meta) %>%
 #    idx = exprset$idx %>%
 #        left_join(io$load(args$aneup) %>% select(-tissue)) %>%
         mutate(type = ifelse(is.na(type), "unknown", type), #TODO: add annotations

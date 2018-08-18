@@ -22,7 +22,7 @@ rule de:
     input:
         rscript = "de.r",
         copies = ploidy("gene_copies.RData"),
-        aneup = ploidy("analysis_set.RData"),
+        meta = ploidy("analysis_set.RData"),
         cis = cis("poisson.RData")
     output:
         result = "de.RData",
@@ -33,7 +33,7 @@ rule de:
     shell:
         "Rscript {input.rscript}"
             " --copies {input.copies}"
-            " --aneup {input.aneup}"
+            " --meta {input.meta}"
             " --cis {input.cis}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"
