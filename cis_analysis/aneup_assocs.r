@@ -68,7 +68,8 @@ sys$run({
         mutate(res = clustermq::Q(test_gene, const=list(dset=aset),
             gene=external_gene_name, ext_var=ext, is_type=type,
             job_size=5, n_jobs=200, memory=5120)) %>%
-        tidyr::unnest()
+        tidyr::unnest() %>%
+        mutate(cohens_d = statistic / sqrt(size))
 
     results = result %>%
         mutate(subset = ifelse(is.na(type), ext, paste0(type, ":", ext))) %>%
