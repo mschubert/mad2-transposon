@@ -23,13 +23,13 @@ bionet = function(g, fdr) {
 #' @param net  ggraph-compatible network object
 #' @param node_aes  aesthetics mapping for geom_node_point
 #' @return  ggplot2 object
-plot_net = function(net, node_aes) {
+plot_net = function(net, node_aes, ...) {
     set.seed(121979) # same layout if same nodes
     ggraph(net) +
         geom_edge_link(alpha=0.2) +
-        geom_node_point(node_aes, alpha=0.7) +
+        geom_node_point(node_aes, alpha=0.7, ...) +
         geom_node_text(aes(label = name), size=2, repel=TRUE) +
-        viridis::scale_color_viridis(option="magma", direction=-1) +
+        viridis::scale_fill_viridis(option="magma", direction=-1) +
         theme_void()
 }
 
@@ -45,8 +45,11 @@ plot_net_overlay = function(net, ov) {
         mutate(p.value = ov$p.value[match(name, toupper(ov$external_gene_name))],
                statistic = ov$statistic[match(name, toupper(ov$external_gene_name))],
                adj.p = p.adjust(p.value, method="fdr")) %>%
-        plot_net(aes(size=n_smp, color=statistic, stroke=adj.p<0.2)) +
-            scale_color_gradient2(low="red", mid="white", high="blue", midpoint=0)
+        plot_net(aes(size=n_smp, fill=statistic, stroke=p.value<0.05,
+                     color=p.value<0.05), shape=21) +
+            scale_fill_gradient2(low="red", mid="white", high="blue", midpoint=0) +
+            scale_color_manual(name="signif", labels=c("n.s.", "p<0.05"),
+                               values=c("white", "black"))
 }
 
 sys$run({
