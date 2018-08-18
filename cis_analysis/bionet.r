@@ -42,8 +42,10 @@ plot_net_overlay = function(net, ov) {
     net %>%
         as_tbl_graph() %>%
         activate(nodes) %>%
-        mutate(statistic = ov$statistic[match(name, toupper(ov$external_gene_name))]) %>%
-        plot_net(aes(size=n_smp, color=statistic)) +
+        mutate(p.value = ov$p.value[match(name, toupper(ov$external_gene_name))],
+               statistic = ov$statistic[match(name, toupper(ov$external_gene_name))],
+               adj.p = p.adjust(p.value, method="fdr")) %>%
+        plot_net(aes(size=n_smp, color=statistic, stroke=adj.p<0.2)) +
             scale_color_gradient2(low="red", mid="white", high="blue", midpoint=0)
 }
 
