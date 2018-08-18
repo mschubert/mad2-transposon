@@ -44,8 +44,9 @@ plot_volcano = function(res, highlight=NULL) {
 plot_gset = function(res, sets, highlight=NULL) {
     test_one = function(set_name) {
         stats = cur$stat[cur$ensembl_gene_id %in% sets[[set_name]]]
-        mod = lm(stats ~ 1)
-        broom::tidy(mod) %>% select(-term) %>% mutate(size = nobs(mod))
+        mod = try(lm(stats ~ 1))
+        if (class(mod) != "try-error")
+            broom::tidy(mod) %>% select(-term) %>% mutate(size = nobs(mod))
     }
     cur = res %>% mutate(stat = log2FoldChange / lfcSE)
     result = sapply(names(sets), test_one, simplify=FALSE) %>%
@@ -63,22 +64,16 @@ sys$run({
         opt('c', 'copies', 'gene copy matrix', '../ploidy_compare/gene_copies.RData'),
         opt('m', 'meta', 'aneuploidy score', '../ploidy_compare/analysis_set.RData'),
         opt('i', 'cis', 'cis site RData', '../cis_analysis/poisson.RData'),
-        opt('o', 'outfile', 'results RData', 'aneup_de.RData'),
-        opt('p', 'plotfile', 'pdf', 'aneup_de.pdf'))
+        opt('o', 'outfile', 'results RData', 'de.RData'),
+        opt('p', 'plotfile', 'pdf', 'de.pdf'))
 
     cis = io$load(args$cis)
     cis_genes = cis$result %>% filter(adj.p < 1e-3) %>% pull(external_gene_name)
     gene_copies = io$load(args$copies)
     exprset = io$load(args$expr)
     idx = io$load(args$meta) %>%
-#    idx = exprset$idx %>%
-#        left_join(io$load(args$aneup) %>% select(-tissue)) %>%
-        mutate(type = ifelse(is.na(type), "unknown", type), #TODO: add annotations
-               tissue = factor(tissue),
-               type = relevel(factor(type), "unknown"),
-               aneup_Tcell = ifelse(type == "T-cell", aneuploidy, 0),
-               aneup_Myeloid = ifelse(type == "Myeloid", aneuploidy, 0),
-               aneup_Other = ifelse(type == "Other", aneuploidy, 0))
+        mutate(type = ifelse(is.na(type), "unknown", type))
+    colnames(idx) = make.names(colnames(idx)) # fix "T-cell" in meta?
     counts = exprset$counts
     narray::intersect(gene_copies, counts, along=1)
     narray::intersect(gene_copies, counts, idx$sample, along=2)
@@ -88,23 +83,37 @@ sys$run({
         DESeq2::estimateSizeFactors(normMatrix=gene_copies)
     vs = DESeq2::getVarianceStabilizedData(DESeq2::estimateDispersions(eset))
 
-    # fit tissue of origin, cancer type, and pan-aneuploidy
+    # fit tissue of origin and pan-aneuploidy
     design(eset) = ~ tissue + type + aneuploidy
     robj = DESeq2::estimateDispersions(eset) %>%
         DESeq2::nbinomWaldTest(maxit=1000)
-    coefs = setdiff(DESeq2::resultsNames(robj), "Intercept")
+    coefs = grep("tissue|aneuploidy", DESeq2::resultsNames(robj), value=TRUE)
     res = sapply(coefs, extract_coef, res=robj, simplify=FALSE)
 
-    # fit cancer type specific aneuploidy
-    aneup_tissue = function(term) {
-        design(eset) = formula(paste("~ tissue + type + aneuploidy +", term))
+    # fit cancer type vs mean
+    cancer_type = function(term) {
+        design(eset) = formula(paste("~ tissue + ", term))
         DESeq2::estimateDispersions(eset) %>%
             DESeq2::nbinomWaldTest(maxit=1000) %>%
             extract_coef(term)
     }
-    ats = c("aneup_Tcell", "aneup_Myeloid", "aneup_Other")
-    res = c(res, sapply(ats, aneup_tissue, simplify=FALSE))
+    ats = c("T.cell", "Myeloid", "Other") # fix "T-cell" in meta?
+    res = c(res, sapply(ats, cancer_type, simplify=FALSE))
 
+    # fit aneuploidy within cancer types
+    aneup_tissue = function(type) {
+        eset = eset[,eset[[type]] == 1]
+        if (length(unique(eset$tissue)) == 1)
+            design(eset) = formula(paste("~ aneuploidy"))
+        else
+            design(eset) = formula(paste("~ aneuploidy + tissue"))
+        DESeq2::estimateDispersions(eset) %>%
+            DESeq2::nbinomWaldTest(maxit=1000) %>%
+            extract_coef("aneuploidy")
+    }
+    res = c(res, setNames(lapply(ats, aneup_tissue), paste0(ats, ":aneuploidy")))
+
+    names(res) = sub("T\\.cell", "T-cell", names(res)) # fix "T-cell" in meta?
     go = gset$go('mmusculus_gene_ensembl', 'ensembl_gene_id', as_list=TRUE) %>%
         gset$filter(min=5, max=200, valid=rownames(counts))
 
