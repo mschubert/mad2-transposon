@@ -2,9 +2,28 @@ subworkflow cis:
     workdir: "../cis_analysis"
     snakefile: "../cis_analysis/Snakefile"
 
+subworkflow ploidy_compare:
+    workdir: "../ploidy_compare"
+    snakefile: "../ploidy_compare/Snakefile"
+
 rule all:
     input:
-        "poisson_set.pdf"
+        "poisson_set.pdf", "aneup_assocs.pdf"
+
+rule aneup_assocs:
+    input:
+        rscript = "aneup_assocs.r",
+        poisson = cis("poisson.RData"),
+        meta = ploidy_compare("analysis_set.RData")
+    output:
+        result = "aneup_assocs.RData",
+        plot = "aneup_assocs.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --meta {input.meta}"
+            " --poisson {input.poisson}"
+            " --outfile {output.result}"
+            " --plotfile {output.plot}"
 
 rule poisson_set:
     input:
