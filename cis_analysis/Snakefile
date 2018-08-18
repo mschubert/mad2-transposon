@@ -81,13 +81,13 @@ rule aneup_assocs:
     input:
         rscript = "aneup_assocs.r",
         poisson = "poisson.RData",
-        aneup = aneup("analysis_set.RData")
+        meta = aneup("analysis_set.RData")
     output:
         result = "aneup_assocs.RData",
         plot = "aneup_assocs.pdf"
     shell:
         "Rscript {input.rscript}"
-            " --aneup {input.aneup}"
+            " --meta {input.meta}"
             " --poisson {input.poisson}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"
