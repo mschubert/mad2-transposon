@@ -45,7 +45,7 @@ result = as.data.frame(GenomicRanges::mcols(genes)) %>%
     mutate(result = purrr::map2(n_smp, TTAAs, ptest, rate=ins_rate_genome)) %>%
     tidyr::unnest() %>%
     select(-(parameter:alternative)) %>%
-    mutate(estimate = (estimate - ins_rate_genome) / ins_rate_genome,
+    mutate(estimate = log2(estimate / ins_rate_genome),
            adj.p = p.adjust(p.value, method="fdr")) %>%
     arrange(adj.p, p.value)
 
@@ -53,7 +53,8 @@ p = result %>%
     mutate(size = n_smp,
            label = external_gene_name) %>%
     plt$p_effect() %>%
-    plt$volcano(label_top=30, repel=TRUE)
+    plt$volcano(label_top=30, repel=TRUE, ceil=1e-30) +
+        xlab("log2 fold change poisson rate")
 
 pdf(args$plotfile)
 print(p)
