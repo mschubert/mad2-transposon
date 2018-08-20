@@ -27,7 +27,7 @@ test_set = function(dset, set_name, ext_var, is_type=NA, sets) {
         dplyr::select(reads, sample, in_set, ext)
     mod = glm(reads ~ 0 + sample + in_set * ext, family=poisson(), data=tset)
     broom::tidy(mod) %>%
-        dplyr::mutate(size = length(sets[[set_name]])) %>%
+        dplyr::mutate(size = sum(tset$in_set & tset$reads, na.rm=TRUE)) %>%
         dplyr::filter(term == "in_setTRUE:ext") %>%
         dplyr::select(-term)
 }

@@ -25,7 +25,7 @@ test_gene = function(dset, gene, ext_var, is_type=NA) {
         dplyr::select(reads, sample, is_gene, ext)
     mod = glm(reads ~ 0 + sample + is_gene * ext, family=poisson(), data=tset)
     broom::tidy(mod) %>%
-        dplyr::mutate(size = sum(tset$is_gene)) %>%
+        dplyr::mutate(size = sum(tset$is_gene & tset$reads, na.rm=TRUE)) %>%
         dplyr::filter(term == "is_geneTRUE:ext") %>%
         dplyr::select(-term)
 }
