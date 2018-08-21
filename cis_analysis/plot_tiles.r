@@ -8,10 +8,10 @@ sys = import('sys')
 
 plot_dna_tiles = function(cis_samples, cis_result, aneup_assocs, n_dna) {
     genes = cis_result %>%
-        filter(adj.p < 1e-5,
+        filter(adj.p < 0.01,
                n_smp >= as.integer(n_dna)) %>%
-        inner_join(aneup_assocs %>% select(external_gene_name, cohens_d)) %>%
-        arrange(cohens_d) %>%
+        inner_join(aneup_assocs %>% select(external_gene_name, st=statistic)) %>%
+        arrange(st) %>%
         pull(external_gene_name)
 
     dna_tiles = cis_samples %>%
@@ -68,10 +68,10 @@ sys$run({
         opt('a', 'aneup', 'sample-level aneup scores', '../ploidy_compare/analysis_set.RData'),
         opt('i', 'ins_dna', 'all DNA insertions table', 'poisson.RData'),
         opt('j', 'ins_rna', 'all RNA insertions table', '../data/rnaseq_imfusion/insertions.txt'),
-        opt('d', 'assocs_dna', 'CIS in DNA', 'aneup_assocs.RData'),
+        opt('d', 'assocs_dna', 'CIS in DNA', 'ext_gene.RData'),
         opt('r', 'assocs_rna', 'CTG in RNA', '../data/rnaseq_imfusion/merged_ctgs.txt'),
         opt('e', 'exons', 'exon expression table', '../data/rnaseq_imfusion/exon_counts.txt'),
-        opt('n', 'n_dna', 'min number samples with ins', '5'),
+        opt('n', 'n_dna', 'min number samples with ins', '3'),
         opt('m', 'n_rna', 'min number samples with ins', '2'),
         opt('p', 'plotfile', 'pdf to plot to', 'plot_tiles.pdf'))
 

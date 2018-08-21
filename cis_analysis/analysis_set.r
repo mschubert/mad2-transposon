@@ -36,7 +36,7 @@ ins = io$load(args$infile) %>%
     filter(grepl("[0-9]{3}[st]", sample),
            reads >= as.integer(args$reads)) %>%
     group_by(sample) %>%
-    filter(reads >= max(reads) * as.numeric(args$read_frac)) %>%
+    filter(reads >= sum(reads) * as.numeric(args$read_frac)) %>%
     ungroup() %>%
     arrange(sample, chr, position) %>%
     group_by(sample, chr) %>%

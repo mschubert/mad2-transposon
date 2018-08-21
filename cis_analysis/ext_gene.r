@@ -36,6 +36,7 @@ test_gene = function(dset, gene, ext_var, is_type=NA) {
 #' @return  ggplot2 object
 plot_volcano = function(res) {
     res %>%
+        filter(size >= 2) %>%
         mutate(label = external_gene_name) %>%
         plt$p_effect("p.value", thresh=0.1) %>%
         plt$volcano(p=0.1, label_top=30, repel=TRUE) +
@@ -69,8 +70,7 @@ sys$run({
         filter(is.na(type) | ext == "aneuploidy") %>%
         mutate(res = clustermq::Q(test_gene, const=list(dset=aset),
             gene=external_gene_name, ext_var=ext, is_type=type,
-            job_size=50, n_jobs=20, memory=1024, fail_on_error=FALSE)) %>%
-        filter(sapply(res, class) != "error") %>%
+            job_size=50, n_jobs=20, memory=1024)) %>%
         tidyr::unnest() %>%
         mutate(cohens_d = statistic / sqrt(size))
 
