@@ -59,8 +59,9 @@ sys$run({
         filter(external_gene_name %in% genes) %>%
         mutate(reads=TRUE) %>%
         tidyr::complete(sample, external_gene_name, fill=list(reads=FALSE)) %>%
-        inner_join(dset$sample_rates %>% select(sample, rate)) %>%
-        inner_join(meta)
+        inner_join(dset$sample_rates %>% select(sample, n_ins, n_reads, rate)) %>%
+        inner_join(meta %>% select(sample, aneuploidy, type,
+                                   `T-cell`, Myeloid, Other))
 
     fields = c("aneuploidy", "T-cell", "Myeloid", "Other")
     result = expand.grid(external_gene_name=genes, ext=fields,
