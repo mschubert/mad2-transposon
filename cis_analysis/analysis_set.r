@@ -19,8 +19,9 @@ is_local_hop = function(pos, reads, wsize) {
 args = sys$cmd$parse(
     opt('i', 'infile', 'all samples .RData', '../data/cis/cis_per_tumor.RData'),
     opt('r', 'reads', 'min reads to consider ins', '20'),
+    opt('f', 'read_frac', 'min frac of reads for gene', '0.01'),
     opt('s', 'sheet', 'exclude/replace yaml', 'analysis_set.yaml'),
-    opt('w', 'wsize', 'window size local hops', '10000'),
+    opt('w', 'wsize', 'window size local hops', '0'),
     opt('o', 'outfile', 'filtered samples & positions', 'analysis_set.RData'))
 
 sheet = io$read_yaml(args$sheet)
@@ -34,6 +35,9 @@ ins = io$load(args$infile) %>%
                            unlist(sheet$replace)[sample], sample)) %>%
     filter(grepl("[0-9]{3}[st]", sample),
            reads >= as.integer(args$reads)) %>%
+    group_by(sample) %>%
+    filter(reads >= max(reads) * as.numeric(args$read_frac)) %>%
+    ungroup() %>%
     arrange(sample, chr, position) %>%
     group_by(sample, chr) %>%
     mutate(is_local = is_local_hop(position, reads, as.integer(args$wsize))) %>%
