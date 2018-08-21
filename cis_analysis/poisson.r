@@ -13,22 +13,25 @@ args = sys$cmd$parse(
     opt('p', 'plotfile', 'volcano pdf', 'poisson.pdf'))
 
 ins = io$load(args$infile) %>%
-    filter(chr %in% c(1:19, 'X')) %>%
+    filter(chr %in% c(1:19, 'X'), !is_local) %>%
     GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns=TRUE,
         start.field="position", end.field="position")
 
 genome = seq$genome("GRCm38", chrs=c(1:19, 'X'))
-ins_sites_genome = seq$count_pattern("TTAA", genome, rc=TRUE)
-n_smp = length(unique(ins$sample))
-ins_per_sample = length(ins) / n_smp
-ins_rate_genome = ins_per_sample / ins_sites_genome
-
 genes = seq$coords$gene(dset="mmusculus_gene_ensembl", granges=TRUE) %>%
     filter(seqnames(.) %in% seqnames(ins)) %>%
     select(external_gene_name) %>%
     anchor_3p() %>% stretch(as.integer(args$upstream)) %>%
     anchor_5p() %>% stretch(as.integer(args$downstream)) %>%
     mutate(TTAAs = seq$count_pattern("TTAA", genome, ., rc=TRUE))
+
+ins_sites_genome = seq$count_pattern("TTAA", genome, rc=TRUE)
+n_smp = length(unique(ins$sample))
+sample_rates = as.data.frame(ins) %>%
+    group_by(sample) %>%
+    summarize(n_ins = dplyr::n()) %>%
+    mutate(rate = n_ins / ins_sites_genome)
+ins_rate_genome = mean(sample_rates$rate)
 
 samples = seq$intersect(ins, genes) %>%
     select(sample, external_gene_name, reads) %>%
@@ -60,4 +63,4 @@ pdf(args$plotfile)
 print(p)
 dev.off()
 
-save(samples, genes, result, n_smp, ins_rate_genome, file=args$outfile)
+save(samples, genes, sample_rates, result, file=args$outfile)
