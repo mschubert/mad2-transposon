@@ -69,7 +69,8 @@ sys$run({
         filter(is.na(type) | ext == "aneuploidy") %>%
         mutate(res = clustermq::Q(test_gene, const=list(dset=aset),
             gene=external_gene_name, ext_var=ext, is_type=type,
-            job_size=50, n_jobs=20, memory=1024)) %>%
+            job_size=50, n_jobs=20, memory=1024, fail_on_error=FALSE)) %>%
+        filter(sapply(res, class) != "error") %>%
         tidyr::unnest() %>%
         mutate(cohens_d = statistic / sqrt(size))
 
