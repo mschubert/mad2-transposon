@@ -16,17 +16,17 @@ plt = import('plot')
 #' @return  data.frame with tidy association results
 test_gene = function(dset, gene, ext_var, is_type=NA) {
     `%>%` = magrittr::`%>%`
-    if (is.na(is_type))
+    if (is.na(is_type)) {
         is_type = unique(dset$type)
+        fml = reads ~ type + ext
+    } else
+        fml = reads ~ ext
     tset = dset %>%
-        dplyr::filter(type %in% is_type) %>%
-        dplyr::mutate(is_gene = external_gene_name == gene,
-                      ext = !! rlang::sym(ext_var)) %>%
-        dplyr::select(reads, sample, is_gene, ext)
-    mod = glm(reads ~ 0 + sample + is_gene * ext, family=poisson(), data=tset)
-    broom::tidy(mod) %>%
-        dplyr::mutate(size = sum(tset$is_gene & tset$reads, na.rm=TRUE)) %>%
-        dplyr::filter(term == "is_geneTRUE:ext") %>%
+        dplyr::filter(type %in% is_type, external_gene_name == gene) %>%
+        dplyr::mutate(ext = !! rlang::sym(ext_var))
+    broom::tidy(glm(fml, family=poisson(), data=tset)) %>%
+        dplyr::mutate(size = sum(tset$reads, na.rm=TRUE)) %>%
+        dplyr::filter(term == "ext") %>%
         dplyr::select(-term)
 }
 
@@ -37,9 +37,9 @@ test_gene = function(dset, gene, ext_var, is_type=NA) {
 plot_volcano = function(res) {
     res %>%
         mutate(label = external_gene_name) %>%
-        plt$p_effect(thresh=0.1) %>%
+        plt$p_effect("p.value", thresh=0.1) %>%
         plt$volcano(p=0.1, label_top=30, repel=TRUE) +
-            ylab("p-value (non-adj.)")
+            ylab("non-adj. p-value")
 }
 
 sys$run({
@@ -47,7 +47,7 @@ sys$run({
         opt('m', 'meta', 'meta+aneuploidy', '../ploidy_compare/analysis_set.RData'),
         opt('p', 'poisson', 'cis assocs RData', 'poisson.RData'),
         opt('o', 'outfile', 'external assocs RData', 'ext_gene.RData'),
-        opt('p', 'plotfile', 'pdf', 'aneup_assocs.pdf'))
+        opt('p', 'plotfile', 'pdf', 'ext_gene.pdf'))
 
     meta = io$load(args$meta)
     dset = io$load(args$poisson)
@@ -59,7 +59,8 @@ sys$run({
         filter(external_gene_name %in% genes) %>%
         mutate(reads=TRUE) %>%
         tidyr::complete(sample, external_gene_name, fill=list(reads=FALSE)) %>%
-        inner_join(meta, by="sample")
+        inner_join(dset$sample_rates %>% select(sample, rate)) %>%
+        inner_join(meta)
 
     fields = c("aneuploidy", "T-cell", "Myeloid", "Other")
     result = expand.grid(external_gene_name=genes, ext=fields,
@@ -67,7 +68,7 @@ sys$run({
         filter(is.na(type) | ext == "aneuploidy") %>%
         mutate(res = clustermq::Q(test_gene, const=list(dset=aset),
             gene=external_gene_name, ext_var=ext, is_type=type,
-            job_size=5, n_jobs=200, memory=5120)) %>%
+            job_size=50, n_jobs=20, memory=1024)) %>%
         tidyr::unnest() %>%
         mutate(cohens_d = statistic / sqrt(size))
 
@@ -77,8 +78,10 @@ sys$run({
         split(.$subset)
 
     pdf(args$plotfile)
-    for (rn in names(results))
+    for (rn in names(results)) {
+        message(rn)
         print(plot_volcano(results[[rn]]) + ggtitle(rn))
+    }
     dev.off()
 
     save(results, file=args$outfile)
