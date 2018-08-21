@@ -20,7 +20,7 @@ args = sys$cmd$parse(
     opt('i', 'infile', 'all samples .RData', '../data/cis/cis_per_tumor.RData'),
     opt('r', 'reads', 'min reads to consider ins', '20'),
     opt('s', 'sheet', 'exclude/replace yaml', 'analysis_set.yaml'),
-    opt('w', 'wsize', 'window size local hops', '50000'),
+    opt('w', 'wsize', 'window size local hops', '10000'),
     opt('o', 'outfile', 'filtered samples & positions', 'analysis_set.RData'))
 
 sheet = io$read_yaml(args$sheet)
