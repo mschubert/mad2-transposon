@@ -1,0 +1,35 @@
+# samples to exclude from further analysis (sample: reason)
+exclude:
+    401s: using t
+    408s: ctl
+    410s: only one transposon; use uLN instead
+    414s: ctl
+    418s: using t
+    422t: using s
+    426s: ctl
+    430s: ctl
+    436s: ctl
+    438s: ctl
+    439s: ctl
+    441s: ctl
+    445s: ctl
+    446t: using s
+    452s: using t
+    460s: ctl
+    475s: ctl
+    477s: using t
+    478s: control
+    480s: control
+    610s: '?'
+    612s: using t
+    613s: using t
+
+# old identifiers (left) to replace with new ones (right)
+replace:
+    1jspbpb: 145s
+    2jspbpb: 155s
+    3jspbpb: 157s
+    4jspbpb: 180s
+    8jspbpb: 184s
+    23jspbpb: 212s
+    410uln: 410s

@@ -117,8 +117,9 @@ rule cimpl:
 rule analysis_set:
     input:
         rscript = "analysis_set.r",
+        sheet = "analysis_set.yaml",
         data = cis("cis_per_tumor.RData")
     output:
         aset = "analysis_set.RData"
     shell:
-        "Rscript {input.rscript} --infile {input.data} --outfile {output.aset}"
+        "Rscript {input.rscript} --infile {input.data} --sheet {input.sheet} --outfile {output.aset}"
