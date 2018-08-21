@@ -46,7 +46,7 @@ sys$run({
     args = sys$cmd$parse(
         opt('m', 'meta', 'meta+aneuploidy', '../ploidy_compare/analysis_set.RData'),
         opt('p', 'poisson', 'cis assocs RData', 'poisson.RData'),
-        opt('o', 'outfile', 'aneuploidy assocs', 'aneup_assocs.RData'),
+        opt('o', 'outfile', 'external assocs RData', 'ext_gene.RData'),
         opt('p', 'plotfile', 'pdf', 'aneup_assocs.pdf'))
 
     meta = io$load(args$meta)

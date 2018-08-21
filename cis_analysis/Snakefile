@@ -20,7 +20,7 @@ ins = ['Erg', 'Ets1', 'Pten', 'Rapgef6', 'Notch1', 'Arid2', 'Sfi1', 'Eif4enif1',
 
 rule all:
     input:
-        "plot_tiles.pdf", "poisson.pdf", "aneup_assocs.pdf", "bionet.pdf",
+        "plot_tiles.pdf", "poisson.pdf", "ext_gene.pdf", "bionet.pdf",
         expand("ins/{ins}.pdf", ins=ins)
 
 rule plot_ins:
@@ -49,7 +49,7 @@ rule plot_tiles:
         aneup = "../ploidy_compare/analysis_set.RData",
         ins_dna = "poisson.RData",
         ins_rna = imfusion("insertions.txt"),
-        assocs_dna = "aneup_assocs.RData",
+        assocs_dna = "ext_gene.RData",
         assocs_rna = imfusion("merged_ctgs.txt"),
         exons = imfusion("exon_counts.txt")
     output:
@@ -68,7 +68,7 @@ rule bionet:
     input:
         rscript = "bionet.r",
         cis = "poisson.RData",
-        aneup = "aneup_assocs.RData"
+        aneup = "ext_gene.RData"
     output:
         plot = "bionet.pdf"
     shell:
@@ -77,14 +77,14 @@ rule bionet:
             " --aneup {input.aneup}"
             " --plotfile {output.plot}"
 
-rule aneup_assocs:
+rule ext_assocs:
     input:
-        rscript = "aneup_assocs.r",
+        rscript = "ext_gene.r",
         poisson = "poisson.RData",
         meta = aneup("analysis_set.RData")
     output:
-        result = "aneup_assocs.RData",
-        plot = "aneup_assocs.pdf"
+        result = "ext_gene.RData",
+        plot = "ext_gene.pdf"
     shell:
         "Rscript {input.rscript}"
             " --meta {input.meta}"

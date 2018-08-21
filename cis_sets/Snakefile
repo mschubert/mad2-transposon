@@ -8,16 +8,16 @@ subworkflow ploidy_compare:
 
 rule all:
     input:
-        "poisson_set.pdf", "aneup_assocs.pdf"
+        "poisson_set.pdf", "ext_set.pdf"
 
-rule aneup_assocs:
+rule ext_assocs:
     input:
-        rscript = "aneup_assocs.r",
+        rscript = "ext_set.r",
         poisson = cis("poisson.RData"),
         meta = ploidy_compare("analysis_set.RData")
     output:
-        result = "aneup_assocs.RData",
-        plot = "aneup_assocs.pdf"
+        result = "ext_set.RData",
+        plot = "ext_set.pdf"
     shell:
         "Rscript {input.rscript}"
             " --meta {input.meta}"
