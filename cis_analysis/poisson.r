@@ -29,7 +29,8 @@ ins_sites_genome = seq$count_pattern("TTAA", genome, rc=TRUE)
 n_smp = length(unique(ins$sample))
 sample_rates = as.data.frame(ins) %>%
     group_by(sample) %>%
-    summarize(n_ins = dplyr::n()) %>%
+    summarize(n_ins = dplyr::n(),
+              n_reads = sum(reads)) %>%
     mutate(rate = n_ins / ins_sites_genome)
 ins_rate_genome = mean(sample_rates$rate)
 
