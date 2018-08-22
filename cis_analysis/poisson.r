@@ -21,9 +21,13 @@ genome = seq$genome("GRCm38", chrs=c(1:19, 'X'))
 genes = seq$coords$gene(dset="mmusculus_gene_ensembl", granges=TRUE) %>%
     filter(seqnames(.) %in% seqnames(ins)) %>%
     select(external_gene_name) %>%
+    group_by(seqnames, strand, external_gene_name) %>% # 100 dups w/ diff pos
+    summarize(start = min(start), end = max(end)) %>%
+    GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns=TRUE) %>%
     anchor_3p() %>% stretch(as.integer(args$upstream)) %>%
     anchor_5p() %>% stretch(as.integer(args$downstream)) %>%
-    mutate(TTAAs = seq$count_pattern("TTAA", genome, ., rc=TRUE))
+    mutate(TTAAs = seq$count_pattern("TTAA", genome, ., rc=TRUE)) %>%
+    filter(TTAAs > 0) # if no upstream, Mir5136 has 0 TTAAs, 1 insert
 
 ins_sites_genome = seq$count_pattern("TTAA", genome, rc=TRUE)
 n_smp = length(unique(ins$sample))

@@ -8,7 +8,7 @@ sys = import('sys')
 
 plot_dna_tiles = function(cis_samples, cis_result, aneup_assocs, n_dna) {
     genes = cis_result %>%
-        filter(adj.p < 0.01,
+        filter(adj.p < 1e-3,
                n_smp >= as.integer(n_dna)) %>%
         inner_join(aneup_assocs %>% select(external_gene_name, st=statistic)) %>%
         arrange(st) %>%
