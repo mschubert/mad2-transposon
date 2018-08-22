@@ -16,15 +16,12 @@ plt = import('plot')
 #' @return  data.frame with tidy association results
 test_gene = function(dset, gene, ext_var, is_type=NA) {
     `%>%` = magrittr::`%>%`
-    if (is.na(is_type)) {
+    if (is.na(is_type))
         is_type = unique(dset$type)
-        fml = reads ~ type + ext
-    } else
-        fml = reads ~ ext
     tset = dset %>%
         dplyr::filter(type %in% is_type, external_gene_name == gene) %>%
         dplyr::mutate(ext = !! rlang::sym(ext_var))
-    broom::tidy(glm(fml, family=poisson(), data=tset)) %>%
+    broom::tidy(glm(reads ~ ext, family=poisson(), data=tset)) %>%
         dplyr::mutate(size = sum(tset$reads, na.rm=TRUE)) %>%
         dplyr::filter(term == "ext") %>%
         dplyr::select(-term)
@@ -50,7 +47,8 @@ sys$run({
         opt('o', 'outfile', 'external assocs RData', 'ext_gene.RData'),
         opt('p', 'plotfile', 'pdf', 'ext_gene.pdf'))
 
-    meta = io$load(args$meta)
+    meta = io$load(args$meta) %>%
+        mutate(aneuploidy = pmin(aneuploidy, 0.2))
     dset = io$load(args$poisson)
     genes = with(dset, intersect(samples$external_gene_name,
                                  result$external_gene_name))

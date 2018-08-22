@@ -72,7 +72,7 @@ sys$run({
                p.value = cis$p.value[match(name, cis$name)],
                adj.p = cis$adj.p[match(name, cis$name)])
 
-    subnet = bionet(net, fdr=0.01)
+    subnet = bionet(net, fdr=0.3)
 
     pdf(args$plotfile)
     print(plot_net(subnet, aes(size=n_smp)))
