@@ -71,7 +71,7 @@ sys$run({
         opt('d', 'assocs_dna', 'CIS in DNA', 'ext_gene.RData'),
         opt('r', 'assocs_rna', 'CTG in RNA', '../data/rnaseq_imfusion/merged_ctgs.txt'),
         opt('e', 'exons', 'exon expression table', '../data/rnaseq_imfusion/exon_counts.txt'),
-        opt('n', 'n_dna', 'min number samples with ins', '3'),
+        opt('n', 'n_dna', 'min number samples with ins', '5'),
         opt('m', 'n_rna', 'min number samples with ins', '2'),
         opt('p', 'plotfile', 'pdf to plot to', 'plot_tiles.pdf'))
 
