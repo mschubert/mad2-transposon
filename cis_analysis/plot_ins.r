@@ -15,12 +15,13 @@ args = sys$cmd$parse(
     opt('c', 'ctgs', 'imfusion merged CTGs', '../data/rnaseq_imfusion/merged_ctgs.txt'),
     opt('r', 'rna_ins', 'imfusion insertions', '../data/rnaseq_imfusion/insertions.txt'),
     opt('d', 'dna_ins', '', '../cis_analysis/analysis_set.RData'),
+    opt('m', 'meta', 'metadata', '../ploidy_compare/analysis_set.RData'),
     opt('a', 'gtf', 'assembly GTF', '../data/genome/Mus_musculus.GRCm38.92.gtf'),
     opt('g', 'gene', 'gene name to plot', 'Erg'),
     opt('f', 'flank', 'plot flank around gene', '10000'),
     opt('p', 'plotfile', 'PDF to save to', 'Erg.pdf'))
 
-args$flank = as.integer(args$flank)
+meta = io$load(args$meta)
 de_ctgs = io$read_table(args$ctgs, header=TRUE)
 rna_ins = io$read_table(args$rna_ins, header=TRUE)
 exons = io$read_table(args$exons, header=TRUE)
@@ -75,14 +76,16 @@ use_samples = intersect(names(bams), c(rna_smp, dna_ins$sample))
 
 exon_ins = exons %>%
     mutate(ins_type = 2*(sample %in% rna_smp) + (sample %in% dna_ins$sample),
-           ins_type = factor(ins_type, levels=0:3))
+           ins_type = factor(ins_type, levels=0:3)) %>%
+    left_join(meta %>% select(sample, type)) %>%
+    mutate(type = ifelse(is.na(type), "unknown", type))
 levels(exon_ins$ins_type) = c("none", "DNA", "RNA", "both")
 
 pdf(args$plotfile)
 ggplot(exon_ins, aes(color=ins_type, alpha=0.5)) +
     geom_segment(aes(x=end, xend=next_start, y=reads_per_kb, yend=next_reads),
-                 size=0.3, linetype="dashed", na.rm=TRUE) +
-    geom_segment(aes(x=start, xend=end, y=reads_per_kb, yend=reads_per_kb), size=1) +
+                 size=0.2, linetype="dashed", na.rm=TRUE) +
+    geom_segment(aes(x=start, xend=end, y=reads_per_kb, yend=reads_per_kb), size=0.7) +
     scale_color_manual(values=c("#b3b3b3", "#e41a1c", "#377eb8", "#4daf4a"),
                        labels=levels(exon_ins$ins_type)) +
     scale_y_log10() +
@@ -90,7 +93,8 @@ ggplot(exon_ins, aes(color=ins_type, alpha=0.5)) +
                   alpha=1, na.rm=TRUE, check_overlap=TRUE) +
     xlab("distance_from_start") +
     guides(alpha=FALSE) +
-    ggtitle(paste(args$gene, "exon expression"))
+    ggtitle(paste(args$gene, "exon expression")) +
+    facet_wrap(~type)
 
 for (sample_id in use_samples) {
     message(sample_id)

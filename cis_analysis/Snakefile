@@ -29,7 +29,8 @@ rule plot_ins:
         exons = imfusion("exon_counts.txt"),
         ctgs = imfusion("merged_ctgs.txt"),
         rna_ins = imfusion("insertions.txt"),
-        dna_ins = "analysis_set.RData"
+        dna_ins = "analysis_set.RData",
+        meta = aneup("analysis_set.RData")
     output:
         plot = "ins/{gene}.pdf"
     resources:
@@ -40,6 +41,7 @@ rule plot_ins:
             " --ctgs {input.ctgs}"
             " --rna_ins {input.rna_ins}"
             " --dna_ins {input.dna_ins}"
+            " --meta {input.meta}"
             " --gene {wildcards.gene}"
             " --plotfile {output.plot}"
 
