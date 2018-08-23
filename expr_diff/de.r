@@ -43,10 +43,14 @@ plot_volcano = function(res, highlight=NULL) {
 
 plot_gset = function(res, sets, highlight=NULL) {
     test_one = function(set_name) {
-        stats = cur$stat[cur$ensembl_gene_id %in% sets[[set_name]]]
-        mod = try(lm(stats ~ 1))
-        if (class(mod) != "try-error")
-            broom::tidy(mod) %>% select(-term) %>% mutate(size = nobs(mod))
+        fdata = mutate(cur, in_set = ensembl_gene_id %in% sets[[set_name]])
+        mod = try(lm(stats ~ in_set, data=fdata))
+        if (class(mod) == "try-error")
+            return()
+        broom::tidy(mod) %>%
+            filter(term == "in_setTRUE") %>%
+            select(-term) %>%
+            mutate(size = sum(fdata$in_set, na.rm=TRUE))
     }
     cur = res %>% mutate(stat = log2FoldChange / lfcSE)
     result = sapply(names(sets), test_one, simplify=FALSE) %>%
