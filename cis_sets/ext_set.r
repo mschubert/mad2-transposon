@@ -21,14 +21,13 @@ test_set = function(dset, set_name, ext_var, is_type=NA, sets) {
     if (is.na(is_type))
         is_type = unique(dset$type)
     tset = dset %>%
-        dplyr::filter(type %in% is_type) %>%
-        dplyr::mutate(in_set = external_gene_name %in% sets[[set_name]],
-                      ext = !! rlang::sym(ext_var)) %>%
-        dplyr::select(reads, sample, in_set, ext)
-    mod = glm(reads ~ 0 + sample + in_set * ext, family=poisson(), data=tset)
+        dplyr::filter(type %in% is_type,
+                      external_gene_name %in% sets[[set_name]]) %>%
+        dplyr::mutate(ext = !! rlang::sym(ext_var))
+    mod = glm(reads ~ external_gene_name + ext, family=poisson(), data=tset)
     broom::tidy(mod) %>%
-        dplyr::mutate(size = sum(tset$in_set & tset$reads, na.rm=TRUE)) %>%
-        dplyr::filter(term == "in_setTRUE:ext") %>%
+        dplyr::mutate(size = sum(tset$reads, na.rm=TRUE)) %>%
+        dplyr::filter(term == "ext") %>%
         dplyr::select(-term)
 }
 
@@ -40,7 +39,7 @@ plot_volcano = function(res) {
     res %>%
         mutate(label = set_name) %>%
         plt$p_effect(thresh=0.1) %>%
-        plt$volcano(p=0.1, label_top=30, repel=TRUE) +
+        plt$volcano(p=0.1, label_top=30, base.size=0.2, text.size=2, repel=TRUE) +
             ylab("p-value (non-adj.)")
 }
 
@@ -51,7 +50,8 @@ sys$run({
         opt('o', 'outfile', 'aneuploidy assocs', 'aneup_assocs.RData'),
         opt('p', 'plotfile', 'pdf', 'aneup_assocs.pdf'))
 
-    meta = io$load(args$meta)
+    meta = io$load(args$meta) %>%
+        mutate(aneuploidy = pmin(aneuploidy, 0.2))
     dset = io$load(args$poisson)
     go = gset$go('mmusculus_gene_ensembl', 'external_gene_name', as_list=TRUE) %>%
         gset$filter(min=5, max=200, valid=dset$result$external_gene_name)
@@ -68,7 +68,7 @@ sys$run({
         filter(is.na(type) | ext == "aneuploidy") %>%
         mutate(res = clustermq::Q(test_set, const=list(dset=aset, sets=go),
             set_name=set_name, ext_var=ext, is_type=type,
-            job_size=5, n_jobs=200, memory=5120)) %>%
+            job_size=50, n_jobs=20, memory=5120)) %>%
         tidyr::unnest() %>%
         mutate(cohens_d = statistic / sqrt(size))
 
