@@ -77,7 +77,7 @@ use_samples = intersect(names(bams), c(rna_smp, dna_ins$sample))
 exon_ins = exons %>%
     mutate(ins_type = 2*(sample %in% rna_smp) + (sample %in% dna_ins$sample),
            ins_type = factor(ins_type, levels=0:3)) %>%
-    left_join(meta %>% select(sample, type, aneuploidy)) %>%
+    inner_join(meta %>% select(sample, type, aneuploidy)) %>%
     mutate(type = ifelse(is.na(type), "unknown", type))
 levels(exon_ins$ins_type) = c("none", "DNA", "RNA", "both")
 
@@ -90,7 +90,7 @@ ggplot(exon_ins, aes(color=ins_type, alpha=aneuploidy)) +
                        labels=levels(exon_ins$ins_type)) +
     scale_y_log10() +
     ggrepel::geom_text_repel(aes(x=end+200, y=reads_per_kb, label=label),
-                             alpha=1, na.rm=TRUE, size=2, box.padding=0, label.padding=0) +
+                             alpha=1, na.rm=TRUE, size=2, box.padding=0) +
     xlab("distance_from_start") +
     ggtitle(paste(args$gene, "exon expression")) +
     facet_wrap(~type)
