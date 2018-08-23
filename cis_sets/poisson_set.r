@@ -9,19 +9,21 @@ test_set = function(set_name) {
     len = sum(stats$TTAAs[subs])
     ins = sum(stats$n_smp[subs])
     smps = unlist(stats$sample[subs])
-    broom::tidy(poisson.test(ins, len*assocs$n_smp, assocs$ins_rate_genome)) %>%
+    broom::tidy(poisson.test(ins, len*n_smp, ins_rate_genome)) %>%
         mutate(size = sum(subs),
                n_smps = length(unique(smps)),
                samples = list(sample=smps))
 }
 
 args = sys$cmd$parse(
-    opt('i', 'infile', 'gene-level poisson', 'poisson.RData'),
+    opt('i', 'infile', 'gene-level poisson', '../cis_analysis/poisson.RData'),
 #    opt('s', 'set', 'gene set file', '{set}.RData'),
     opt('o', 'outfile', 'save results .RData', 'poisson_set.RData'),
     opt('p', 'plotfile', 'pdf', 'poisson_set.pdf'))
 
 assocs = io$load(args$infile)
+n_smp = nrow(assocs$sample_rates)
+ins_rate_genome = mean(assocs$sample_rates$rate)
 cis_genes = assocs$result %>%
     filter(adj.p < 1e-5) %>%
     pull(external_gene_name)
@@ -41,7 +43,7 @@ result = sapply(names(sets), test_set, simplify=FALSE) %>%
     dplyr::bind_rows(.id="set") %>%
     select(-(parameter:alternative)) %>%
     select(set, size, n_smps, everything()) %>%
-    mutate(estimate = log2(estimate / assocs$ins_rate_genome),
+    mutate(estimate = log2(estimate / ins_rate_genome),
            adj.p = p.adjust(p.value, method="fdr")) %>%
     arrange(adj.p, p.value)
 
@@ -59,7 +61,7 @@ result = result %>%
 p = result %>% # y = y0 - y0/x0 * x, all *(-1)
     mutate(label = ifelse((60/3.3)*estimate-60 > log10(adj.p) | estimate < -1, set, NA)) %>%
     plt$p_effect() %>%
-    plt$volcano(text.size=2, label_top=Inf, repel=TRUE) +
+    plt$volcano(base.size=0.2, text.size=2, label_top=Inf, repel=TRUE) +
         xlab("log2 fold change poisson rate")
 
 pdf(args$plotfile, 8, 6)
