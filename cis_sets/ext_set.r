@@ -5,30 +5,24 @@ sys = import('sys')
 plt = import('plot')
 gset = import('data/genesets')
 
-#' Test different insertion statistics of a gene with an external variable
+#' Test if poisson insertion statistic is different for a set vs rest of genes
 #'
-#' This currently does not correct for when a cancer type is both more aneuploid
-#' and has more insertions in a given gene.
-#'
-#' @param dset  data.frame with fields: sample, gene, ext_var[, subset]
-#' @param set_name  name of set in sets
-#' @param ext_var  differential insertion rate with what, e.g. 'aneuploidy'
-#' @param is_type  filter dset with specific 'type' (default: all)
-#' @param sets  named list of character vectors for gene sets
-#' @return  data.frame with tidy association results
-test_set = function(dset, set_name, ext_var, is_type=NA, sets) {
-    `%>%` = magrittr::`%>%`
-    if (is.na(is_type))
-        is_type = unique(dset$type)
-    tset = dset %>%
-        dplyr::filter(type %in% is_type,
-                      external_gene_name %in% sets[[set_name]]) %>%
-        dplyr::mutate(ext = !! rlang::sym(ext_var))
-    mod = glm(reads ~ external_gene_name + ext, family=poisson(), data=tset)
-    broom::tidy(mod) %>%
-        dplyr::mutate(size = sum(tset$reads, na.rm=TRUE)) %>%
-        dplyr::filter(term == "ext") %>%
-        dplyr::select(-term)
+#' @param ext_gene  association table from poisson regression
+#' @param sets  List of character vectors for gene sets
+#' @return  data.frame with associations for all sets
+test_sets = function(ext_gene, sets) {
+    test_one = function(set_name) {
+        cur = mutate(ext_gene, in_set = external_gene_name %in% sets[[set_name]])
+        lm(statistic ~ in_set, data=cur) %>%
+            broom::tidy() %>%
+            filter(term == "in_setTRUE") %>%
+            select(-term) %>%
+            mutate(size = sum(cur$in_set, na.rm=TRUE))
+    }
+    result = sapply(names(sets), test_one, simplify=FALSE) %>%
+        dplyr::bind_rows(.id="set_name") %>%
+        mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
+        arrange(adj.p, p.value)
 }
 
 #' Volcano plot
@@ -38,44 +32,27 @@ test_set = function(dset, set_name, ext_var, is_type=NA, sets) {
 plot_volcano = function(res) {
     res %>%
         mutate(label = set_name) %>%
-        plt$p_effect(thresh=0.1) %>%
-        plt$volcano(p=0.1, label_top=30, base.size=0.2, text.size=2, repel=TRUE) +
-            ylab("p-value (non-adj.)")
+        plt$p_effect("adj.p", thresh=0.1) %>%
+        plt$volcano(p=0.1, label_top=30, base.size=0.2, text.size=2, repel=TRUE)
 }
 
 sys$run({
     args = sys$cmd$parse(
         opt('m', 'meta', 'meta+aneuploidy', '../ploidy_compare/analysis_set.RData'),
-        opt('p', 'poisson', 'cis assocs RData', '../cis_analysis/poisson.RData'),
-        opt('o', 'outfile', 'aneuploidy assocs', 'aneup_assocs.RData'),
-        opt('p', 'plotfile', 'pdf', 'aneup_assocs.pdf'))
+        opt('g', 'gene', 'cis assocs RData', '../cis_analysis/ext_gene.RData'),
+        opt('s', 'set', 'cis for sets', 'poisson_set.RData'),
+        opt('o', 'outfile', 'aneuploidy assocs', 'ext_set.RData'),
+        opt('p', 'plotfile', 'pdf', 'ext_set.pdf'))
 
     meta = io$load(args$meta) %>%
         mutate(aneuploidy = pmin(aneuploidy, 0.2))
-    dset = io$load(args$poisson)
-    go = gset$go('mmusculus_gene_ensembl', 'external_gene_name', as_list=TRUE) %>%
-        gset$filter(min=5, max=200, valid=dset$result$external_gene_name)
+    cis_sets = io$load(args$set)$result %>%
+        filter(adj.p < 0.05) %>% pull(set)
+    dset = io$load(args$gene)
+    go = gset$go('mmusculus_gene_ensembl', 'external_gene_name', as_list=TRUE)
+    go = go[cis_sets]
 
-    aset = dset$samples %>%
-        select(-n_ins) %>%
-        mutate(reads=TRUE) %>%
-        tidyr::complete(sample, external_gene_name, fill=list(reads=FALSE)) %>%
-        inner_join(meta, by="sample")
-
-    fields = c("aneuploidy", "T-cell", "Myeloid", "Other")
-    result = expand.grid(set_name=names(go), ext=fields,
-            type=unique(aset$type), stringsAsFactors=FALSE) %>%
-        filter(is.na(type) | ext == "aneuploidy") %>%
-        mutate(res = clustermq::Q(test_set, const=list(dset=aset, sets=go),
-            set_name=set_name, ext_var=ext, is_type=type,
-            job_size=50, n_jobs=20, memory=5120)) %>%
-        tidyr::unnest() %>%
-        mutate(cohens_d = statistic / sqrt(size))
-
-    results = result %>%
-        mutate(subset = ifelse(is.na(type), ext, paste0(type, ":", ext))) %>%
-        select(-ext, -type) %>%
-        split(.$subset)
+    results = lapply(dset, test_sets, sets=go)
 
     pdf(args$plotfile)
     for (rn in names(results))

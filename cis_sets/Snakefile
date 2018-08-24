@@ -13,15 +13,17 @@ rule all:
 rule ext_assocs:
     input:
         rscript = "ext_set.r",
-        poisson = cis("poisson.RData"),
-        meta = ploidy_compare("analysis_set.RData")
+        gene = cis("ext_gene.RData"),
+        meta = ploidy_compare("analysis_set.RData"),
+        set = "poisson_set.RData"
     output:
         result = "ext_set.RData",
         plot = "ext_set.pdf"
     shell:
         "Rscript {input.rscript}"
             " --meta {input.meta}"
-            " --poisson {input.poisson}"
+            " --gene {input.gene}"
+            " --set {input.set}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"
 
