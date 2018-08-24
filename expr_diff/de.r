@@ -41,27 +41,6 @@ plot_volcano = function(res, highlight=NULL) {
         plt$volcano(p=0.1, base.size=5, label_top=30, repel=TRUE)
 }
 
-plot_gset = function(res, sets, highlight=NULL) {
-    test_one = function(set_name) {
-        fdata = mutate(cur, in_set = ensembl_gene_id %in% sets[[set_name]])
-        mod = try(lm(stat ~ in_set, data=fdata))
-        if (class(mod) == "try-error")
-            return()
-        broom::tidy(mod) %>%
-            filter(term == "in_setTRUE") %>%
-            select(-term) %>%
-            mutate(size = sum(fdata$in_set, na.rm=TRUE))
-    }
-    cur = res %>% mutate(stat = log2FoldChange / lfcSE)
-    result = sapply(names(sets), test_one, simplify=FALSE) %>%
-        dplyr::bind_rows(.id="label") %>%
-        mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
-        arrange(adj.p, p.value)
-    result %>%
-        plt$p_effect(thresh=0.1) %>%
-        plt$volcano(p=0.1, base.size=0.5, label_top=30, repel=TRUE, text.size=2)
-}
-
 sys$run({
     args = sys$cmd$parse(
         opt('e', 'expr', 'gene expression RData', '../data/rnaseq/assemble.RData'),
@@ -118,8 +97,6 @@ sys$run({
     res = c(res, setNames(lapply(ats, aneup_tissue), paste0(ats, ":aneuploidy")))
 
     names(res) = sub("T\\.cell", "T-cell", names(res)) # fix "T-cell" in meta?
-    go = gset$go('mmusculus_gene_ensembl', 'ensembl_gene_id', as_list=TRUE) %>%
-        gset$filter(min=5, max=200, valid=rownames(counts))
 
     pdf(args$plotfile)
     pca = prcomp(t(vs[apply(vs, 1, var) > 0,]), center=TRUE, scale=FALSE)
@@ -129,7 +106,6 @@ sys$run({
     for (name in names(res)) {
         message(name)
         print(plot_volcano(res[[name]], cis_genes) + ggtitle(name))
-        print(plot_gset(res[[name]], go) + ggtitle(name))
     }
     dev.off()
 

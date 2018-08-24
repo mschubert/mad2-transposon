@@ -15,8 +15,17 @@ ins = ['Erg', 'Ets1', 'Arid2', 'Drg1', 'Crebbp', 'Xrcc6', 'Trp53',
 
 rule all:
     input:
-        "de.pdf",
+        "de.pdf", "de_sets.pdf",
         expand("ins/{ins}.pdf", ins=ins)
+
+rule de_sets:
+    input:
+        rscript = "de_sets.r",
+        de = "de.RData"
+    output:
+        plot = "de_sets.pdf"
+    shell:
+        "Rscript {input.rscript} --de {input.de} --plotfile {output.plot}"
 
 rule de:
     input:
