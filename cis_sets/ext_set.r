@@ -24,11 +24,14 @@ test_set = function(dset, set_name, ext_var, is_type=NA, sets) {
         dplyr::filter(type %in% is_type) %>%
         dplyr::mutate(in_set = external_gene_name %in% sets[[set_name]],
                       ext = !! rlang::sym(ext_var))
-    mod = glm(reads ~ external_gene_name + ext + ext:in_set, family=poisson(), data=tset)
+    # try 1|sample, 1|type
+    mod = lme4::glmer(reads ~ ext + ext:in_set + (1|external_gene_name),
+                      family=poisson(), data=tset)
     broom::tidy(mod) %>%
-        dplyr::mutate(size = sum(tset$reads, na.rm=TRUE)) %>%
         dplyr::filter(term == "ext:in_setTRUE") %>%
-        dplyr::select(-term)
+        dplyr::mutate(n_set = length(sets[[set_name]]),
+                      ins_set = sum(with(tset, reads[in_set]))) %>%
+        dplyr::select(n_set, ins_set, estimate:p.value)
 }
 
 #' Volcano plot
@@ -54,30 +57,24 @@ sys$run({
     meta = io$load(args$meta) %>%
         mutate(aneuploidy = pmin(aneuploidy, 0.2))
     dset = io$load(args$cis_gene)
-    cis_genes = dset$result %>%
-        filter(adj.p < 0.05) %>%
-        pull(external_gene_name)
     go = gset$go('mmusculus_gene_ensembl', 'external_gene_name', as_list=TRUE) %>%
-        gset$filter(min=3, max=200, valid=cis_genes)
-    # valid sets by CIS genes, but then include all genes w/ at least 1 ins?
-
-    # could fit sample rate, gene rate separately and correct with 1 var each?
+        gset$filter(min=5, max=200, valid=dset$result$external_gene_name)
 
     aset = dset$samples %>%
-        filter(external_gene_name %in% cis_genes) %>%
         select(-n_ins) %>%
         mutate(reads=TRUE) %>%
         tidyr::complete(sample, external_gene_name, fill=list(reads=FALSE)) %>%
         inner_join(meta, by="sample")
 
-    # 1800 sets, 2 hours per set -> 300 jobs = 12 hours (aset @ 160k rows)
+    # ca 1 minute per model; 40k -> 30 hours total, 20 min @ 100 jobs
     fields = c("aneuploidy", "T-cell", "Myeloid", "Other")
     result = expand.grid(set_name=names(go), ext=fields,
             type=unique(aset$type), stringsAsFactors=FALSE) %>%
         filter(is.na(type) | ext == "aneuploidy") %>%
+        sample_n(20) %>% # debug
         mutate(res = clustermq::Q(test_set, const=list(dset=aset, sets=go),
             set_name=set_name, ext_var=ext, is_type=type,
-            job_size=5, n_jobs=300, memory=10240)) %>%
+            job_size=50, n_jobs=200, memory=10240)) %>%
         tidyr::unnest() %>%
         mutate(cohens_d = statistic / sqrt(size))
 
