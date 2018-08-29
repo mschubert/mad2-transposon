@@ -17,6 +17,10 @@ rule all:
         expand("poisson_set/{sets}.pdf", sets=config['genesets']),
         expand("ext_{type}/{sets}.pdf", type=['set', 'set_derived'], sets=config['genesets'])
 
+rule derived:
+    input:
+        expand("ext_set_derived/{sets}.pdf", sets=config['genesets'])
+
 rule ext_assocs:
     input:
         rscript = "ext_{type}.r",
@@ -36,7 +40,7 @@ rule ext_assocs:
             " --cis_gene {input.cis_gene}"
             " --cis_set {input.cis_set}"
             " --ext_gene {input.ext_gene}"
-            " --sets {wildcards.sets}"
+            " --sets {input.sets}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"
 
