@@ -5,6 +5,7 @@ genesets:
     - GO_Molecular_Function_2018
     - ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X
     - Reactome_2016
+    - KEGG_2016
     - TargetScan_microRNA
     - MSigDB_Oncogenic_Signatures
     - CH.HALLMARK
