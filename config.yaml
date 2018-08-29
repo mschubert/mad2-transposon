@@ -1,0 +1,10 @@
+genesets:
+    - KEA_2015
+    - GO_Biological_Process_2017b
+    - GO_Cellular_Component_2017b
+    - GO_Molecular_Function_2017b
+    - ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X
+    - Reactome_2016
+    - TargetScan_microRNA
+    - MSigDB_Oncogenic_Signatures
+    - CH.HALLMARK
