@@ -14,8 +14,8 @@ subworkflow sets:
 
 rule all:
     input:
-        expand("poisson-{sets}.pdf", sets=config['genesets']),
-        expand("ext_{type}-{sets}.pdf", type=['set', 'set_derived'], sets=config['genesets'])
+        expand("poisson_set/{sets}.pdf", sets=config['genesets']),
+        expand("ext_{type}/{sets}.pdf", type=['set', 'set_derived'], sets=config['genesets'])
 
 rule ext_assocs:
     input:
@@ -26,8 +26,8 @@ rule ext_assocs:
         ext_gene = cis("ext_gene.RData"),
         sets = sets("{sets}.RData")
     output:
-        result = "ext_{type}-{sets}.RData",
-        plot = "ext_{type}-{sets}.pdf"
+        result = "ext_{type}/{sets}.RData",
+        plot = "ext_{type}/{sets}.pdf"
     wildcard_constraints:
         type = "[^-]+"
     shell:
@@ -46,8 +46,8 @@ rule poisson_set:
         gene = cis("poisson.RData"),
         sets = sets("{sets}.RData")
     output:
-        result = "poisson-{sets}.RData",
-        plot = "poisson-{sets}.pdf"
+        result = "poisson_set/{sets}.RData",
+        plot = "poisson_set/{sets}.pdf"
     shell:
         "Rscript {input.rscript}"
             " --infile {input.gene}"

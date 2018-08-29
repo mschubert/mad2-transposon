@@ -22,7 +22,7 @@ ins = ['Erg', 'Ets1', 'Arid2', 'Drg1', 'Crebbp', 'Xrcc6', 'Trp53',
 rule all:
     input:
         "de.pdf",
-        expand("de-{sets}.pdf", sets=config['genesets']),
+        expand("de_sets/{sets}.pdf", sets=config['genesets']),
         expand("ins/{ins}.pdf", ins=ins)
 
 rule de_sets:
@@ -31,7 +31,7 @@ rule de_sets:
         de = "de.RData",
         sets = sets("{set}.RData")
     output:
-        plot = "de-{set}.pdf"
+        plot = "de_sets/{set}.pdf"
     shell:
         "Rscript {input.rscript}"
             " --de {input.de}"
