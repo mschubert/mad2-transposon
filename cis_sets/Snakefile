@@ -14,7 +14,7 @@ subworkflow sets:
 
 rule all:
     input:
-        "poisson_set.pdf",
+        expand("poisson-{sets}.pdf", sets=config['genesets']),
         expand("ext_{type}-{sets}.pdf", type=['set', 'set_derived'], sets=config['genesets'])
 
 rule ext_assocs:
@@ -43,12 +43,14 @@ rule ext_assocs:
 rule poisson_set:
     input:
         rscript = "poisson_set.r",
-        gene = cis("poisson.RData")
+        gene = cis("poisson.RData"),
+        sets = sets("{sets}.RData")
     output:
-        result = "poisson_set.RData",
-        plot = "poisson_set.pdf"
+        result = "poisson-{sets}.RData",
+        plot = "poisson-{sets}.pdf"
     shell:
         "Rscript {input.rscript}"
             " --infile {input.gene}"
+            " --sets {input.sets}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"
