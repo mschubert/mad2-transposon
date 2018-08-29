@@ -1,0 +1,11 @@
+rule all:
+    input:
+        "gdsc.pdf", "mad2pb.pdf"
+
+rule plot:
+    input:
+        rscript = "{script}.r"
+    output:
+        plot = "{script}.pdf"
+    shell:
+        "Rscript {input.rscript}"
