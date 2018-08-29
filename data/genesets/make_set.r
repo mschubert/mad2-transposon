@@ -7,11 +7,11 @@ args = sys$cmd$parse(
     opt('g', 'geneset', 'Identifier of the gene set', 'KEA_2015'),
     opt('o', 'outfile', 'File to save gene set to', '/dev/null'))
 
-if (args$geneset %in% enr$dbs()$name)
+if (args$geneset %in% enr$dbs()$name) {
     sets = enr$genes(args$geneset)
-else if (args$geneset %in% msdb$dbs())
+} else if (args$geneset %in% msdb$dbs()) {
     sets = msdb$genes(args$geneset)
-else
+} else
     stop("invalid gene set: ", args$geneset)
 
 mouse = stack(sets)
