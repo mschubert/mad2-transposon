@@ -1,3 +1,5 @@
+configfile: "../config.yaml"
+
 subworkflow cis:
     workdir: "../cis_analysis"
     snakefile: "../cis_analysis/Snakefile"
@@ -6,27 +8,35 @@ subworkflow ploidy_compare:
     workdir: "../ploidy_compare"
     snakefile: "../ploidy_compare/Snakefile"
 
+subworkflow sets:
+    workdir: "../data/genesets"
+    snakefile: "../data/genesets/Snakefile"
+
 rule all:
     input:
         "poisson_set.pdf",
-        expand("ext_{set}.pdf", set=['set', 'set_derived'])
+        expand("ext_{type}-{sets}.pdf", type=['set', 'set_derived'], sets=config['genesets'])
 
 rule ext_assocs:
     input:
-        rscript = "ext_{set}.r",
+        rscript = "ext_{type}.r",
         meta = ploidy_compare("analysis_set.RData"),
         cis_gene = cis("poisson.RData"),
         cis_set = "poisson_set.RData",
-        ext_gene = cis("ext_gene.RData")
+        ext_gene = cis("ext_gene.RData"),
+        sets = sets("{sets}.RData")
     output:
-        result = "ext_{set}.RData",
-        plot = "ext_{set}.pdf"
+        result = "ext_{type}-{sets}.RData",
+        plot = "ext_{type}-{sets}.pdf"
+    wildcard_constraints:
+        type = "[^-]+"
     shell:
         "Rscript {input.rscript}"
             " --meta {input.meta}"
             " --cis_gene {input.cis_gene}"
             " --cis_set {input.cis_set}"
             " --ext_gene {input.ext_gene}"
+            " --sets {wildcards.sets}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"
 

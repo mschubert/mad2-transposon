@@ -42,18 +42,19 @@ sys$run({
         opt('c', 'cis_gene', 'poisson cis', '../cis_analysis/poisson.RData'), # ignored
         opt('g', 'ext_gene', 'cis assocs RData', '../cis_analysis/ext_gene.RData'),
         opt('s', 'cis_set', 'cis for sets', 'poisson_set.RData'),
+        opt('f', 'sets', 'RData for gene set', '../data/genesets/KEA_2015.RData'),
         opt('o', 'outfile', 'aneuploidy assocs', 'ext_set_derived.RData'),
         opt('p', 'plotfile', 'pdf', 'ext_set_derived.pdf'))
 
     meta = io$load(args$meta) %>%
         mutate(aneuploidy = pmin(aneuploidy, 0.2))
-    cis_sets = io$load(args$cis_set)$result %>%
-        filter(adj.p < 0.05) %>% pull(set)
+#    cis_sets = io$load(args$cis_set)$result %>%
+#        filter(adj.p < 0.05) %>% pull(set)
     dset = io$load(args$ext_gene)
-    go = gset$go('mmusculus_gene_ensembl', 'external_gene_name', as_list=TRUE)
-    go = go[cis_sets]
+    sets = io$load(args$sets) %>%
+        gset$filter(min=5, max=200)
 
-    results = lapply(dset, test_sets, sets=go)
+    results = lapply(dset, test_sets, sets=sets)
 
     pdf(args$plotfile)
     for (rn in names(results))
