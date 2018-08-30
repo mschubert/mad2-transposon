@@ -1,0 +1,16 @@
+rule all:
+    input:
+        "E-GEOD-13159.RData", "E-GEOD-28497.RData"
+
+rule dataset:
+    input:
+        rscript = "process.r"
+    output:
+        outfile = "{accession}.RData"
+    resources:
+        mem = 50123
+    shell:
+        "Rscript {input.rscript}"
+            " --accession {wildcards.accession}"
+            " --summarize ensembl_gene_id"
+            " --outfile {output.outfile}"
