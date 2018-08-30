@@ -40,7 +40,7 @@ stats = as.data.frame(assocs$gene) %>%
     inner_join(ins)
 
 sets = io$load(args$sets) %>%
-    gset$filter(min=5, max=200)
+    gset$filter(min=5)
 
 result = sapply(names(sets), test_set, simplify=FALSE) %>%
     dplyr::bind_rows(.id="set") %>%

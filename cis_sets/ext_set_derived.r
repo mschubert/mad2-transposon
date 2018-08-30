@@ -52,7 +52,7 @@ sys$run({
 #        filter(adj.p < 0.05) %>% pull(set)
     dset = io$load(args$ext_gene)
     sets = io$load(args$sets) %>%
-        gset$filter(min=5, max=200)
+        gset$filter(min=5)
 
     results = lapply(dset, test_sets, sets=sets)
 

@@ -40,7 +40,7 @@ sys$run({
 
     res = io$load(args$de)$res
     sets = io$load(args$sets) %>%
-        gset$filter(min=5, max=200, valid=rownames(counts))
+        gset$filter(min=5, valid=rownames(counts))
 
     pdf(args$plotfile)
     for (name in names(res)) {

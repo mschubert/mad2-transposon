@@ -34,7 +34,7 @@ res = DESeq2::estimateDispersions(eset) %>%
 
 sets = io$load(args$sets) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
-    lapply(function(x) set$gset$filter(x, min=5, max=200, valid=na.omit(res$gene_name)))
+    lapply(function(x) set$gset$filter(x, min=5, valid=na.omit(res$gene_name)))
 
 pdf(args$plotfile)
 print(de$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))

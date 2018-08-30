@@ -62,7 +62,7 @@ sys$run({
         mutate(aneuploidy = pmin(aneuploidy, 0.2))
     dset = io$load(args$cis_gene)
     sets = io$load(args$sets)
-        gset$filter(min=5, max=200, valid=dset$result$external_gene_name)
+        gset$filter(min=5, valid=dset$result$external_gene_name)
 
     aset = dset$samples %>%
         select(-n_ins) %>%
