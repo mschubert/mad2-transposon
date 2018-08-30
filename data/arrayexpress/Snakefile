@@ -8,7 +8,7 @@ rule dataset:
     output:
         outfile = "{accession}.RData"
     resources:
-        mem = 50123
+        mem = 102400
     shell:
         "Rscript {input.rscript}"
             " --accession {wildcards.accession}"
