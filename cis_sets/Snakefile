@@ -21,6 +21,10 @@ rule derived:
     input:
         expand("ext_set_derived/{sets}.pdf", sets=config['genesets'])
 
+rule int:
+    input:
+        expand("poisson_set/{sets}.pdf", sets=config['genesets'])
+
 rule ext_assocs:
     input:
         rscript = "ext_{type}.r",
