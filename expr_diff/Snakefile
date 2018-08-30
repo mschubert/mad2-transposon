@@ -16,14 +16,11 @@ subworkflow sets:
     workdir: "../data/genesets"
     snakefile: "../data/genesets/Snakefile"
 
-ins = ['Erg', 'Ets1', 'Arid2', 'Drg1', 'Crebbp', 'Xrcc6', 'Trp53',
-       'Ikzf1', 'Wrap53', 'Pten', 'Suz12', 'Notch1', 'Rapgef6', 'Nf1']
-
 rule all:
     input:
         "de.pdf",
         expand("de_sets/{sets}.pdf", sets=config['genesets']),
-        expand("ins/{ins}.pdf", ins=ins)
+        expand("ins/{ins}.pdf", ins=config['ins_plots'])
 
 rule de_sets:
     input:
