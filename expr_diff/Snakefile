@@ -61,7 +61,8 @@ rule de:
 rule de_ins:
     input:
         rscript = "ins.r",
-        diff_expr = "de.RData"
+        diff_expr = "de.RData",
+        sets = sets(expand("{sets}.RData", sets=config['genesets']))
     output:
         result = "ins/{ins}.RData",
         plot = "ins/{ins}.pdf"
@@ -74,3 +75,4 @@ rule de_ins:
             " --diff_expr {input.diff_expr}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"
+            " {input.sets}"
