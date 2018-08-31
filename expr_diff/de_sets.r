@@ -29,7 +29,7 @@ plot_gset = function(res, sets, highlight=NULL) {
         arrange(adj.p, p.value)
     result %>%
         plt$p_effect("adj.p", thresh=0.1) %>%
-        plt$volcano(p=0.1, base.size=0.5, label_top=30, repel=TRUE, text.size=2)
+        plt$volcano(p=0.1, base.size=0.1, label_top=30, repel=TRUE, text.size=2)
 }
 
 sys$run({
