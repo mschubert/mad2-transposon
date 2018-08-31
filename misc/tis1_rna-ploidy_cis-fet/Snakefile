@@ -1,6 +1,6 @@
 subworkflow rnaseq:
-    workdir: "../data/rnaseq"
-    snakefile: "../data/rnaseq/Snakefile"
+    workdir: "../../data/rnaseq"
+    snakefile: "../../data/rnaseq/Snakefile"
 
 subworkflow ploidy_eT:
     workdir: "compare_rna-scWGS_ploidy"
@@ -35,7 +35,7 @@ rule cis_fet:
     input:
         rscript = "cis_fet.r",
         data = "aneuploidy_mad2.RData",
-        cis = "../data/cis/171212 CIS RNA seq samples.xlsx"
+        cis = "../../data/cis/171212 CIS RNA seq samples.xlsx"
     output:
         result = "cis_fet.RData",
         plot = "cis_fet.pdf"

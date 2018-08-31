@@ -1,10 +1,10 @@
 subworkflow cis:
-    workdir: "../data/cis"
-    snakefile: "../data/cis/Snakefile"
+    workdir: "../../data/cis"
+    snakefile: "../../data/cis/Snakefile"
 
 subworkflow imfusion:
-    workdir: "../data/rnaseq_imfusion"
-    snakefile: "../data/rnaseq_imfusion/Snakefile"
+    workdir: "../../data/rnaseq_imfusion"
+    snakefile: "../../data/rnaseq_imfusion/Snakefile"
 
 subworkflow tis2:
     workdir: "../tis2_assoc-tryout"
