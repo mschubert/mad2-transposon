@@ -66,7 +66,7 @@ p = result %>% # y = y0 - y0/x0 * x, all *(-1)
 #    mutate(label = ifelse((60/3.3)*estimate-60 > log10(adj.p) | estimate < -1, set, NA)) %>%
     mutate(label = set) %>%
     plt$p_effect("adj.p", thresh=0.1) %>%
-    plt$volcano(p=0.1, base.size=0.2, text.size=2, label_top=30, repel=TRUE) +
+    plt$volcano(p=0.1, base.size=0.1, text.size=2, label_top=30, repel=TRUE) +
         xlab("log2 fold change poisson rate")
 
 pdf(args$plotfile, 8, 6)
