@@ -14,16 +14,17 @@ subworkflow sets:
 
 rule all:
     input:
-        expand("poisson_set/{sets}.pdf", sets=config['genesets']),
-        expand("ext_{type}/{sets}.pdf", type=['set', 'set_derived'], sets=config['genesets'])
+        expand("poisson_set_plots/{sets}.pdf", sets=config['genesets']),
+        expand("ext_{type}_plots/{sets}.pdf",
+                type=['set', 'set_derived'], sets=config['genesets'])
 
 rule derived:
     input:
-        expand("ext_set_derived/{sets}.pdf", sets=config['genesets'])
+        expand("ext_set_derived_plots/{sets}.pdf", sets=config['genesets'])
 
 rule int:
     input:
-        expand("poisson_set/{sets}.pdf", sets=config['genesets'])
+        expand("poisson_set_plots/{sets}.pdf", sets=config['genesets'])
 
 rule ext_assocs:
     input:
@@ -35,7 +36,7 @@ rule ext_assocs:
         sets = sets("{sets}.RData")
     output:
         result = "ext_{type}/{sets}.RData",
-        plot = "ext_{type}/{sets}.pdf"
+        plot = "ext_{type}_plots/{sets}.pdf"
     wildcard_constraints:
         type = "[^-]+"
     shell:
@@ -55,7 +56,7 @@ rule poisson_set:
         sets = sets("{sets}.RData")
     output:
         result = "poisson_set/{sets}.RData",
-        plot = "poisson_set/{sets}.pdf"
+        plot = "poisson_set_plots/{sets}.pdf"
     shell:
         "Rscript {input.rscript}"
             " --infile {input.gene}"

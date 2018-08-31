@@ -20,7 +20,7 @@ rule all:
     input:
         "de.pdf",
         expand("de_sets/{sets}.pdf", sets=config['genesets']),
-        expand("ins/{ins}.pdf", ins=config['ins_plots'])
+        expand("ins_plots/{ins}.pdf", ins=config['ins_plots'])
 
 rule de_sets:
     input:
@@ -62,7 +62,7 @@ rule de_ins:
         sets = sets(expand("{sets}.RData", sets=config['genesets']))
     output:
         result = "ins/{ins}.RData",
-        plot = "ins/{ins}.pdf"
+        plot = "ins_plots/{ins}.pdf"
     resources:
         mem = 5000,
         walltime = 60
