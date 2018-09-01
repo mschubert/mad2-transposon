@@ -88,7 +88,7 @@ sys$run({
         tidyr::unnest()
 
     results = result %>%
-        na.omit() %>%
+        filter(!is.na(p.value)) %>%
         mutate(label = ifelse(is.na(type), ext, paste(type, ext, sep=":")),
                size = n_ins,
                adj.p = p.adjust(p.value, method="fdr")) %>%
