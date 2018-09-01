@@ -18,22 +18,24 @@ gset = import('data/genesets')
 #' @return  data.frame with tidy association results
 test_set = function(dset, set_name, ext_var, is_type=NA, sets) {
     `%>%` = magrittr::`%>%`
-    if (is.na(is_type))
+    if (is.na(is_type)) {
         is_type = unique(dset$type)
+        fml = reads ~ ext + ext:in_set + (1|sample) + (ext|type) + (1|external_gene_name)
+    } else
+        fml = reads ~ ext + ext:in_set + (1|sample) + (1|external_gene_name)
     tset = dset %>%
         dplyr::filter(type %in% is_type) %>%
         dplyr::mutate(in_set = external_gene_name %in% sets[[set_name]],
                       ext = !! rlang::sym(ext_var))
+    n_genes = length(sets[[set_name]])
     n_ins = sum(with(tset, reads[in_set]))
-    if (n_ins < 5)
-        return()
-    mod6 = lme4::glmer(reads ~ ext + ext:in_set + (1|sample) + 
-        (ext|type) + (1|external_gene_name), family=poisson(), data=tset,
+    if (n_genes < 5 || n_ins < 5)
+        return(data.frame(n_genes = n_genes, n_ins=n_ins))
+    mod = lme4::glmer(fml, family=poisson(), data=tset,
         control=lme4::glmerControl(optCtrl=list(method="L-BFGS-B")))
     broom::tidy(mod) %>%
         dplyr::filter(term == "ext:in_setTRUE") %>%
-        dplyr::mutate(n_genes = length(sets[[set_name]]),
-                      n_ins = n_ins) %>%
+        dplyr::mutate(n_genes = n_genes, n_ins = n_ins) %>%
         dplyr::select(n_genes, n_ins, estimate:p.value)
 }
 
@@ -45,7 +47,7 @@ plot_volcano = function(res) {
     res %>%
         mutate(label = set_name) %>%
         plt$p_effect("adj.p", thresh=0.1) %>%
-        plt$volcano(p=0.1, label_top=30, base.size=0.2, text.size=2, repel=TRUE)
+        plt$volcano(p=0.1, label_top=30, base.size=0.1, text.size=2, repel=TRUE)
 }
 
 sys$run({
@@ -61,7 +63,7 @@ sys$run({
     meta = io$load(args$meta) %>%
         mutate(aneuploidy = pmin(aneuploidy, 0.2))
     dset = io$load(args$cis_gene)
-    sets = io$load(args$sets)
+    sets = io$load(args$sets) %>%
         gset$filter(min=5, valid=dset$result$external_gene_name)
 
     aset = dset$samples %>%
@@ -77,10 +79,10 @@ sys$run({
         filter(is.na(type) | ext == "aneuploidy") %>%
         mutate(res = clustermq::Q(test_set, const=list(dset=aset, sets=sets),
             set_name=set_name, ext_var=ext, is_type=type,
-            job_size=5, n_jobs=300, memory=3072)) %>%
+            job_size=10, n_jobs=500, memory=3072, chunk_size=1)) %>%
         tidyr::unnest()
 
-    results = res %>%
+    results = result %>%
         mutate(label = ifelse(is.na(type), ext, paste(type, ext, sep=":")),
                size = n_ins,
                adj.p = p.adjust(p.value, method="fdr"))

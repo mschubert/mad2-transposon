@@ -39,6 +39,9 @@ rule ext_assocs:
         plot = "ext_{type}_plots/{sets}.pdf"
     wildcard_constraints:
         type = "[^-]+"
+    resources:
+        memory = 10240,
+        walltime = 4200
     shell:
         "Rscript {input.rscript}"
             " --meta {input.meta}"
