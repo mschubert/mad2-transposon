@@ -16,27 +16,32 @@ gset = import('data/genesets')
 #' @param is_type  filter dset with specific 'type' (default: all)
 #' @param sets  named list of character vectors for gene sets
 #' @return  data.frame with tidy association results
-test_set = function(dset, set_name, ext_var, is_type=NA, sets) {
-    `%>%` = magrittr::`%>%`
+test_set = function(dset, set_name, ext_var, is_type=NA, sets, min_n=5) {
+    library(dplyr)
     if (is.na(is_type)) {
-        is_type = unique(dset$type)
-        fml = reads ~ ext + ext:in_set + (1|sample) + (ext|type) + (1|external_gene_name)
+        is_type = names(table(dset$type))
+        fml = ins_set ~ type + ins_total + ext
     } else
-        fml = reads ~ ext + ext:in_set + (1|sample) + (1|external_gene_name)
+        fml = ins_set ~ ext + (1|ins_total)
     tset = dset %>%
-        dplyr::filter(type %in% is_type) %>%
-        dplyr::mutate(in_set = external_gene_name %in% sets[[set_name]],
-                      ext = !! rlang::sym(ext_var))
+        filter(type %in% is_type) %>%
+        mutate(in_set = external_gene_name %in% sets[[set_name]],
+               ext = !! rlang::sym(ext_var)) %>%
+        group_by(sample) %>%
+        summarize(type = unique(type),
+                  ins_set = sum(reads[in_set]),
+                  ins_total = sum(reads),
+                  ext = unique(ext)) %>%
+        ungroup()
     n_genes = length(sets[[set_name]])
-    n_ins = sum(with(tset, reads[in_set]))
-    if (n_genes < 5 || n_ins < 5)
+    n_ins = sum(tset$ins_set)
+    if (n_genes < min_n || n_ins < min_n)
         return(data.frame(n_genes = n_genes, n_ins=n_ins))
-    mod = lme4::glmer(fml, family=poisson(), data=tset,
-        control=lme4::glmerControl(optCtrl=list(method="L-BFGS-B")))
+    mod = glm(fml, family=poisson(), data=tset)
     broom::tidy(mod) %>%
-        dplyr::filter(term == "ext:in_setTRUE") %>%
-        dplyr::mutate(n_genes = n_genes, n_ins = n_ins) %>%
-        dplyr::select(n_genes, n_ins, estimate:p.value)
+        filter(term == "ext") %>%
+        mutate(n_genes = n_genes, n_ins = n_ins) %>%
+        select(n_genes, n_ins, estimate:p.value)
 }
 
 #' Volcano plot
@@ -79,13 +84,15 @@ sys$run({
         filter(is.na(type) | ext == "aneuploidy") %>%
         mutate(res = clustermq::Q(test_set, const=list(dset=aset, sets=sets),
             set_name=set_name, ext_var=ext, is_type=type,
-            job_size=10, n_jobs=500, memory=3072, chunk_size=1)) %>%
+            job_size=500, n_jobs=100, memory=1024, chunk_size=1)) %>%
         tidyr::unnest()
 
     results = result %>%
+        na.omit() %>%
         mutate(label = ifelse(is.na(type), ext, paste(type, ext, sep=":")),
                size = n_ins,
-               adj.p = p.adjust(p.value, method="fdr"))
+               adj.p = p.adjust(p.value, method="fdr")) %>%
+        arrange(adj.p, p.value)
     results = split(results, results$label)
 
     pdf(args$plotfile)
