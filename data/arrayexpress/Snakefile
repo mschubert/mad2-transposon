@@ -9,7 +9,7 @@ rule dataset:
         outfile = "{accession}.RData"
     resources:
         mem = 204800,
-        walltime = 240
+        walltime = 4200
     shell:
         "Rscript {input.rscript}"
             " --accession {wildcards.accession}"
