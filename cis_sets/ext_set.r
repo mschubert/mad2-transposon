@@ -18,25 +18,30 @@ gset = import('data/genesets')
 #' @return  data.frame with tidy association results
 test_set = function(dset, set_name, ext_var, is_type=NA, sets, min_n=5) {
     library(dplyr)
-    if (is.na(is_type)) {
-        is_type = names(table(dset$type))
+    if (!is.na(is_type))
+        dset = dset %>% filter(type %in% is_type)
+
+    # regressing out ins_total yields (almost) no signif assocs
+    # i.e. diff gene sets are mainly driven by overall number
+    if (ext_var == "aneuploidy" && is.na(is_type))
         fml = ins_set ~ type + ins_total + ext
-    } else
-        fml = ins_set ~ ext + (1|ins_total)
+    else
+        fml = ins_set ~ ins_total + ext
+
     tset = dset %>%
-        filter(type %in% is_type) %>%
         mutate(in_set = external_gene_name %in% sets[[set_name]],
                ext = !! rlang::sym(ext_var)) %>%
         group_by(sample) %>%
         summarize(type = unique(type),
                   ins_set = sum(reads[in_set]),
                   ins_total = sum(reads),
-                  ext = unique(ext)) %>%
-        ungroup()
+                  ext = unique(ext))
+
     n_genes = length(sets[[set_name]])
     n_ins = sum(tset$ins_set)
     if (n_genes < min_n || n_ins < min_n)
         return(data.frame(n_genes = n_genes, n_ins=n_ins))
+
     mod = glm(fml, family=poisson(), data=tset)
     broom::tidy(mod) %>%
         filter(term == "ext") %>%
@@ -50,9 +55,11 @@ test_set = function(dset, set_name, ext_var, is_type=NA, sets, min_n=5) {
 #' @return  ggplot2 object
 plot_volcano = function(res) {
     res %>%
-        mutate(label = set_name) %>%
-        plt$p_effect("adj.p", thresh=0.1) %>%
-        plt$volcano(p=0.1, label_top=30, base.size=0.1, text.size=2, repel=TRUE)
+        mutate(label = set_name, size = n_genes) %>%
+#        plt$p_effect("adj.p", thresh=0.1) %>%
+        plt$p_effect("p.value", thresh=0.05) %>%
+        plt$volcano(p=0.05, label_top=30, base.size=0.1, text.size=2, repel=TRUE) +
+            ylab("p-value")
 }
 
 sys$run({
@@ -60,16 +67,20 @@ sys$run({
         opt('m', 'meta', 'meta+aneuploidy', '../ploidy_compare/analysis_set.RData'),
         opt('c', 'cis_gene', 'poisson cis', '../cis_analysis/poisson.RData'),
         opt('g', 'ext_gene', 'cis assocs RData', '../cis_analysis/ext_gene.RData'), # ignored
-        opt('s', 'cis_set', 'cis for sets', 'poisson_set.RData'), # ignored
-        opt('f', 'sets', 'RData for gene set', '../data/genesets/KEA_2015.RData'),
-        opt('o', 'outfile', 'aneuploidy assocs', 'ext_set/KEA_2015.RData'),
-        opt('p', 'plotfile', 'pdf', 'ext_set/KEA_2015.pdf'))
+        opt('s', 'cis_set', 'cis for sets', 'poisson_set/GO_Biological_Process_2018.RData'), # ignored
+        opt('f', 'sets', 'genes per set', '../data/genesets/GO_Biological_Process_2018.RData'),
+        opt('o', 'outfile', 'aneuploidy assocs', 'ext_set/GO_Biological_Process_2018.RData'),
+        opt('p', 'plotfile', 'pdf', 'ext_set/GO_Biological_Process_2018.pdf'))
 
     meta = io$load(args$meta) %>%
         mutate(aneuploidy = pmin(aneuploidy, 0.2))
     dset = io$load(args$cis_gene)
     sets = io$load(args$sets) %>%
         gset$filter(min=5, valid=dset$result$external_gene_name)
+#    cis_sets = io$load(args$cis_set)$result %>%
+#        filter(abs(estimate) > 2 & adj.p < 0.01) %>%
+#        pull(set)
+#    sets = sets[cis_sets]
 
     aset = dset$samples %>%
         select(-n_ins) %>%
@@ -85,16 +96,15 @@ sys$run({
         mutate(res = clustermq::Q(test_set, const=list(dset=aset, sets=sets),
             set_name=set_name, ext_var=ext, is_type=type,
             job_size=500, n_jobs=100, memory=1024, chunk_size=1)) %>%
-        tidyr::unnest()
-
-    results = result %>%
+        tidyr::unnest() %>%
         filter(!is.na(p.value)) %>%
-        mutate(label = ifelse(is.na(type), ext, paste(type, ext, sep=":")),
-               size = n_ins,
-               adj.p = p.adjust(p.value, method="fdr")) %>%
-        arrange(adj.p, p.value)
-    results = split(results, results$label)
+        mutate(label = ifelse(is.na(type), ext, paste(type, ext, sep=":"))) %>%
+        group_by(label) %>%
+        mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
+        ungroup() %>%
+        arrange(adj.p)
 
+    results = split(result, result$label)
     pdf(args$plotfile)
     for (rn in names(results))
         print(plot_volcano(results[[rn]]) + ggtitle(rn))
