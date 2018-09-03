@@ -1,0 +1,19 @@
+subworkflow aex:
+    workdir: "../arrayexpress"
+    snakefile: "../arrayexpress/Snakefile"
+
+rule all:
+    input:
+        "E-GEOD-13159.RData"
+
+rule aracne:
+    input:
+        rscript = "aracne.r",
+        expr = aex("{accession}.RData")
+    output:
+        data = "{accession}.RData"
+    resources:
+        mem = 10240,
+        walltime = 720
+    shell:
+        "Rscript {input.rscript} --infile {input.expr} --outfile {output.data}"
