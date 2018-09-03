@@ -12,13 +12,8 @@ sys = import('sys')
 #' @param assocs  data.frame with fields: n_smp, p.value, adj.p
 #' @param thresh  p-value/fdr cutoff
 #' @return  tidygraph object
-bionet = function(g, assocs, thresh, var="adj.p") {
-    g = g %>%
-        # no join, tidygraph?
-        mutate(n_smp = assocs$n_smp[match(name, assocs$name)],
-               p.value = assocs$p.value[match(name, assocs$name)],
-               adj.p = assocs$adj.p[match(name, assocs$name)])
-
+bionet = function(g, assocs, thresh=0.05, var="adj.p") {
+    g = g %>% activate(nodes) %>% left_join(assocs)
     scores = setNames(pull(g, !! rlang::sym(var)), pull(g, name))
     scores[is.na(scores)] = 1
     scores = pmax(-log10(scores) + log10(thresh), 0)
@@ -32,12 +27,14 @@ bionet = function(g, assocs, thresh, var="adj.p") {
 #' @return  ggplot2 object
 plot_net = function(net, node_aes, ...) {
     set.seed(121979) # same layout if same nodes
-    ggraph(net) +
-        geom_edge_link(alpha=0.2) +
+    p = ggraph(net) +
         geom_node_point(node_aes, alpha=0.7, ...) +
         geom_node_text(aes(label = name), size=2, repel=TRUE) +
         viridis::scale_fill_viridis(option="magma", direction=-1) +
         theme_void()
+    if (igraph::gsize(net) > 0)
+        p = p + geom_edge_link(alpha=0.2)
+    p
 }
 
 #' Plot a network overlayed with external associations
@@ -46,6 +43,8 @@ plot_net = function(net, node_aes, ...) {
 #' @param ov  data.frame with fields: external_gene_name, statistic
 #' @return  ggplot2 object
 plot_net_overlay = function(net, ov) {
+    if (igraph::vcount(net) == 0)
+        return(patchwork::plot_spacer())
     net %>%
         as_tbl_graph() %>%
         activate(nodes) %>%
@@ -62,7 +61,7 @@ plot_net_overlay = function(net, ov) {
 sys$run({
     args = sys$cmd$parse(
         opt('c', 'cis', 'gene-level poisson', '../cis_analysis/poisson.RData'),
-        opt('a', 'aneup', 'aneup assocs', 'aneup_assocs.RData'),
+        opt('a', 'aneup', 'aneup assocs', 'ext_gene.RData'),
         opt('p', 'plotfile', 'pdf', 'bionet.pdf'))
 
     aneup = io$load(args$aneup)
@@ -76,10 +75,18 @@ sys$run({
         select(name = geneSymbol)
 
     cis_net = bionet(net, cis, 0.01, "adj.p")
+    ext_nets = lapply(aneup, function(a) {
+        bionet(net, mutate(a, name=toupper(external_gene_name), adj.p = NA, n_smp=size),
+               thresh=0.1, var="p.value")
+    })
 
     pdf(args$plotfile)
     print(plot_net(cis_net, aes(size=n_smp)))
-    for(ov in names(aneup))
+    for(ov in names(aneup)) {
+        message(ov)
         print(plot_net_overlay(cis_net, aneup[[ov]]) + ggtitle(ov))
+        print(plot_net_overlay(ext_nets[[ov]], aneup[[ov]]) +
+              ggtitle(sprintf("%s (subnetwork)", ov)))
+    }
     dev.off()
 })
