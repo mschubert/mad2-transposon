@@ -9,12 +9,19 @@ sys = import('sys')
 #' Return BioNet Steiner Tree subnetwork
 #'
 #' @param g  tidygraph-compatible network
-#' @param fdr  fdr cutoff
+#' @param assocs  data.frame with fields: n_smp, p.value, adj.p
+#' @param thresh  p-value/fdr cutoff
 #' @return  tidygraph object
-bionet = function(g, fdr) {
-    scores = setNames(pull(g, adj.p), pull(g, name))
+bionet = function(g, assocs, thresh, var="adj.p") {
+    g = g %>%
+        # no join, tidygraph?
+        mutate(n_smp = assocs$n_smp[match(name, assocs$name)],
+               p.value = assocs$p.value[match(name, assocs$name)],
+               adj.p = assocs$adj.p[match(name, assocs$name)])
+
+    scores = setNames(pull(g, !! rlang::sym(var)), pull(g, name))
     scores[is.na(scores)] = 1
-    scores = pmax(-log10(scores) + log10(fdr), 0)
+    scores = pmax(-log10(scores) + log10(thresh), 0)
     as_tbl_graph(runFastHeinz(g, scores))
 }
 
@@ -66,17 +73,13 @@ sys$run({
         igraph::igraph.from.graphNEL() %>%
         as_tbl_graph() %>%
         activate(nodes) %>%
-        select(name = geneSymbol) %>%
-        # no join, tidygraph?
-        mutate(n_smp = cis$n_smp[match(name, cis$name)],
-               p.value = cis$p.value[match(name, cis$name)],
-               adj.p = cis$adj.p[match(name, cis$name)])
+        select(name = geneSymbol)
 
-    subnet = bionet(net, fdr=0.01)
+    cis_net = bionet(net, cis, 0.01, "adj.p")
 
     pdf(args$plotfile)
-    print(plot_net(subnet, aes(size=n_smp)))
+    print(plot_net(cis_net, aes(size=n_smp)))
     for(ov in names(aneup))
-        print(plot_net_overlay(subnet, aneup[[ov]]) + ggtitle(ov))
+        print(plot_net_overlay(cis_net, aneup[[ov]]) + ggtitle(ov))
     dev.off()
 })
