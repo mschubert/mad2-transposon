@@ -77,7 +77,7 @@ sys$run({
     cis_net = bionet(net, cis, 0.01, "adj.p")
     ext_nets = lapply(aneup, function(a) {
         bionet(net, mutate(a, name=toupper(external_gene_name), adj.p = NA, n_smp=size),
-               thresh=0.1, var="p.value")
+               thresh=0.2, var="p.value")
     })
 
     pdf(args$plotfile)
