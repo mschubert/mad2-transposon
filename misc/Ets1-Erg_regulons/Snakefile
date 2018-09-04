@@ -7,5 +7,8 @@ rule plot:
         rscript = "{script}.r"
     output:
         plot = "Ets1+Erg_{script}.pdf"
+    resources:
+        mem = 10240,
+        walltime = 60
     shell:
         "Rscript {input.rscript} --plotfile {output.plot}"
