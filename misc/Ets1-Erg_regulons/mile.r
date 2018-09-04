@@ -31,22 +31,19 @@ scores = GSVA::gsva(expr, regs)
 idx = cbind(meta, t(scores),
             ERG_expr=expr["ERG",], ETS1_expr=expr["ETS1",])
 
-pdf(args$plotfile)
+pdf(args$plotfile, 10, 6)
 ggplot(idx, aes(x=ERG_expr, y=ETS1_expr)) +
-    geom_point(aes(size=1, fill=type), shape=21) + # size=aneuploidy
-    ggrepel::geom_text_repel(aes(label=sample), size=2) +
+    geom_point(aes(size=0.5, fill=type), alpha=0.5, shape=21) + # size=aneuploidy
     ggtitle("TF expression")
 
 plt$venn(regs)
 
 ggplot(idx, aes(x=ERG_chip, y=ETS1_chip)) +
-    geom_point(aes(size=1, fill=type), shape=21) + #s=anp
-    geom_text_repel(aes(label=sample), size=2) +
+    geom_point(aes(size=0.5, fill=type), alpha=0.5, shape=21) + #s=anp
     ggtitle("ChIP regulon enrichment")
 
 ggplot(idx, aes(x=ERG_mi, y=ETS1_mi)) +
-    geom_point(aes(size=1, fill=type), shape=21) + #s=anp
-    geom_text_repel(aes(label=sample), size=2) +
+    geom_point(aes(size=0.5, fill=type), alpha=0.5, shape=21) + #s=anp
     ggtitle("MI regulon enrichment")
 
 dev.off()
