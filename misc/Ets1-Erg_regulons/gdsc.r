@@ -4,6 +4,11 @@ io = import('io')
 gdsc = import('data/gdsc')
 enr = import('tools/enrichr')
 plt = import('plot')
+sys = import('sys')
+
+args = sys$cmd$parse(
+    opt('p', 'plotfile', 'pdf', 'gdsc.pdf')
+)
 
 keep = gdsc$tissues(c("LAML", "DLBC", "LCML", "ALL"))
 expr = gdsc$basal_expression()
@@ -21,7 +26,7 @@ scores = GSVA::gsva(expr, regs)
 idx = cbind(aneup, tissue=unname(keep), t(scores),
             ERG_expr=expr["ERG",], ETS1_expr=expr["ETS1",])
 
-pdf("gdsc.pdf")
+pdf(args$plotfile)
 ggplot(idx, aes(x=ERG_expr, y=ETS1_expr)) +
     geom_hline(yintercept=3.5, linetype="dashed") +
     geom_vline(xintercept=3.5, linetype="dashed") +

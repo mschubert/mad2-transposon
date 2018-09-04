@@ -1,11 +1,11 @@
 rule all:
     input:
-        "gdsc.pdf", "mad2pb.pdf"
+        expand("Ets1+Erg_{set}.pdf", set=['gdsc', 'mad2pb', 'mile'])
 
 rule plot:
     input:
         rscript = "{script}.r"
     output:
-        plot = "{script}.pdf"
+        plot = "Ets1+Erg_{script}.pdf"
     shell:
-        "Rscript {input.rscript}"
+        "Rscript {input.rscript} --plotfile {output.plot}"
