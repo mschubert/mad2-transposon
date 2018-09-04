@@ -1,0 +1,27 @@
+configfile: "../config.yaml"
+
+subworkflow genesets:
+    workdir: "../data/genesets"
+    snakefile: "../data/genesets/Snakefile"
+
+expr = {
+    'mile' : '../data/arrayexpress/E-GEOD-13159.RData',
+    'mad2pb' : '../data/rnaseq/assemble.RData'
+}
+
+rule all:
+    input:
+        expand("gsva_{expr}/{set}.RData", expr=expr.keys(), set=config['genesets'])
+
+rule gsva:
+    input:
+        rscript = "set_gsva.r",
+        geneset = genesets("{set}.RData"),
+        expr = lambda wc: expr[wc.expr]
+    output:
+        scores = "gsva_{expr}/{set}.RData"
+    shell:
+        "Rscript {input.rscript}"
+            " --expr {input.expr}"
+            " --geneset {input.geneset}"
+            " --outfile {output.scores}"
