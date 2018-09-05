@@ -21,13 +21,15 @@ sets = lapply(names(select), function(s) sets[[s]][select[[s]],,drop=FALSE])
 
 mat = narray::stack(c(sets, list(expr)), along=1)
 tmat = narray::split(mat, along=2, subsets=types)
-
-pm = util$pcor(t(mat))
+mat2 = rbind(mat, narray::mask(types, along=1) + 0)
 
 pdf(args$plotfile, 20, 15)
-util$plot_cor_matrix(t(mat), text_color=NULL)
-util$plot_pcor_net(pm, node_size=4, edge_size=1)
+util$plot_cor_matrix(t(mat2), text_color=NULL)
+util$pcor(t(mat)) %>% util$plot_pcor_net(node_size=4, edge_size=1)
 util$plot_bootstrapped_pcor(t(mat), node_size=4)
+
+util$pcor(t(mat2)) %>% util$plot_pcor_net(node_size=4, edge_size=1)
+util$plot_bootstrapped_pcor(t(mat2), node_size=4)
 
 for (i in seq_along(tmat)) {
     name = names(tmat)[i]

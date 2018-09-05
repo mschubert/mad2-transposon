@@ -21,7 +21,7 @@ sets = lapply(names(select), function(s) sets[[s]][select[[s]],,drop=FALSE])
 
 mat = narray::stack(c(sets, list(expr)), along=1)
 tmat = narray::split(mat, along=2, subsets=types)
-mat2 = rbind(mat, narray::mask(types, along=1)[-1,] + 0) # remove 1 for full rank
+mat2 = rbind(mat, narray::mask(types, along=1) + 0) # remove 1 type for full rank
 
 pdf(args$plotfile, 20, 15)
 util$plot_cor_matrix(t(mat2), text_color=NULL)
