@@ -14,6 +14,10 @@ rule all:
         "gene_overlap.pdf",
         expand("cor_{expr}.pdf", expr=expr.keys())
 
+rule gsva:
+    input:
+        expand("gsva_{expr}/{set}.RData", expr=expr.keys(), set=config['genesets'])
+
 rule set_overlap:
     input:
         rscript = "gene_overlap.r",
@@ -27,7 +31,7 @@ rule set_overlap:
             " --plotfile {output.plot}"
             " {input.genesets}"
 
-rule gsva:
+rule gsva_set:
     input:
         rscript = "set_gsva.r",
         geneset = genesets("{set}.RData"),
