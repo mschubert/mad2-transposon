@@ -50,10 +50,12 @@ rule gsva_set:
 rule cor_net:
     input:
         rscript = "cor_{expr}.r",
+        select = "interesting_sets.yaml",
         genesets = expand("gsva_{{expr}}/{sets}.RData", sets=config['genesets'])
     output:
         plot = "cor_{expr}.pdf"
     shell:
         "Rscript {input.rscript}"
+            " --select {input.select}"
             " --plotfile {output.plot}"
             " {input.genesets}"
