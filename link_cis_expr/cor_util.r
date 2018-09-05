@@ -30,7 +30,8 @@ pcor = function(mat, fdr=1) {
                lab=sprintf("pcor %.2f\nFDR %.2g", pcor, qval))
 }
 
-plot_pcor_net = function(pm, fdr=0.2, node_size=6, edge_size=2.5) {
+plot_pcor_net = function(pm, fdr=0.2, node_size=6, edge_size=2.5,
+                         title=sprintf("original data, FDR cutoff %.2g", fdr)) {
     g = tidygraph::as_tbl_graph(pm) %>%
         tidygraph::activate(edges) %>%
         tidygraph::filter(qval < fdr)
@@ -43,12 +44,13 @@ plot_pcor_net = function(pm, fdr=0.2, node_size=6, edge_size=2.5) {
     p = p +
         geom_node_text(aes(label=name), size=node_size) +
         theme_void() +
-        ggtitle(sprintf("original data, FDR cutoff %.2g", fdr))
+        ggtitle(title)
 
     print(p)
 }
 
-plot_bootstrapped_pcor = function(mat, fdr=0.2, n=100, show_edge_if=10, node_size=6) {
+plot_bootstrapped_pcor = function(mat, fdr=0.2, n=100, show_edge_if=10, node_size=6,
+        title=sprintf("%i bootstraps, edges if fdr<%.2f in at least %i runs", n, fdr, show_edge_if)) {
     do_bs = function(mat) {
         mat = mat[sample(seq_len(nrow(mat)), replace=TRUE),]
         pm = pcor(mat, fdr=fdr)
@@ -67,8 +69,7 @@ plot_bootstrapped_pcor = function(mat, fdr=0.2, n=100, show_edge_if=10, node_siz
                        #angle_calc='along', size=2.5) +
         geom_node_text(aes(label=name), size=node_size) +
         theme_void() +
-        ggtitle(sprintf("%i bootstraps, edges if fdr<%.2f in at least %i runs",
-                        n, fdr, show_edge_if))
+        ggtitle(title)
 
     print(p)
 }
