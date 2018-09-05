@@ -14,15 +14,15 @@ expr_sets:
         - mitochondrial translation (GO:0032543)
         - NADH dehydrogenase complex assembly (GO:0010257)
         - tRNA aminoacylation (GO:0043039)
-        - U4 snRNA 3'−end processing (GO:0034475)
-        - snoRNA 3'−end processing (GO:0031126)
+        - U4 snRNA 3'-end processing (GO:0034475)
+        - snoRNA 3'-end processing (GO:0031126)
         - establishment of protein localization to mitochondrial membrane (GO:0090151)
         - protein import into mitochondrial inner membrane (GO:0045039)
         - proteasome assembly (GO:0043248)
-        - oligosaccharide−lipid intermediate biosynthetic process (GO:0006490)
+        - oligosaccharide-lipid intermediate biosynthetic process (GO:0006490)
         - mitochondrial tRNA modification (GO:0070900)
         - negative regulation of peptide secretion (GO:0002792)
-        - peptidyl−lysine methylation (GO:0018022)
+        - peptidyl-lysine methylation (GO:0018022)
         - rRNA modification (GO:0000154)
         - positive regulation of epithelial to mesenchymal transition (GO:0010718)
         - protein sumoylation (GO:0016925)
@@ -31,14 +31,14 @@ expr_sets:
         - ribosome biogenesis (GO:0042254)
     GO_Cellular_Component_2018:
         - mitochondrial small ribosomal subunit (GO:0005763)
-        - DNA−directed RNA polymerase complex (GO:0000428)
+        - DNA-directed RNA polymerase complex (GO:0000428)
         - methylosome (GO:0034709)
         - nuclear proteasome complex (GO:0031595)
-        - small−subunit processome (GO:0032040)
+        - small-subunit processome (GO:0032040)
     GO_Molecular_Function_2018:
         - NADH dehydrogenase (quinone) activity (GO:0050136)
         - RNA polymerase II activity (GO:0001055)
-        - aminoacyl−tRNA ligase activity (GO:0004812)
+        - aminoacyl-tRNA ligase activity (GO:0004812)
         - protein channel activity (GO:0015266)
     KEA_2015:
         - PRKG1
@@ -46,17 +46,21 @@ expr_sets:
         - FGFR3
     KEGG_2016:
         - Ribosome_Homo sapiens_hsa03010
-        - Aminoacyl−tRNA biosynthesis_Homo sapiens_hsa00970
+        - Aminoacyl-tRNA biosynthesis_Homo sapiens_hsa00970
         - Proteasome_Homo sapiens_hsa03050
         - Sulfur relay system_Homo sapiens_hsa04122
-        - Ubiquinone and other terpenoid−quinone biosynthesis_Homo sapiens_hsa00130
+        - Ubiquinone and other terpenoid-quinone biosynthesis_Homo sapiens_hsa00130
         - Mismatch repair_Homo sapiens_hsa03430
     Reactome_2016:
-        - Mitochondrial translation_Homo sapiens_R−HSA−5368287
-        - mRNA decay by 3' to 5' exoribonuclease_Homo sapiens_R−HSA−429958
-        - Pyrimidine biosynthesis_Homo sapiens_R−HSA−500753
-        - tRNA processing in the mitochondrion_Homo sapiens_R−HSA−6785470
-        - Cytosolic tRNA aminoacylation_Homo sapiens_R−HSA−379716
+        - Mitochondrial translation_Homo sapiens_R-HSA-5368287
+        - mRNA decay by 3' to 5' exoribonuclease_Homo sapiens_R-HSA-429958
+        - Pyrimidine biosynthesis_Homo sapiens_R-HSA-500753
+        - tRNA processing in the mitochondrion_Homo sapiens_R-HSA-6785470
+        - Cytosolic tRNA aminoacylation_Homo sapiens_R-HSA-379716
+
+expr_genes:
+    - Ets1
+    - Erg
 
 #ins_sets:
 #    key: value
