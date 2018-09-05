@@ -38,6 +38,9 @@ rule gsva_set:
         expr = lambda wc: expr[wc.expr]
     output:
         scores = "gsva_{expr}/{set}.RData"
+    resources:
+        mem = 10240,
+        walltime = 120
     shell:
         "Rscript {input.rscript}"
             " --expr {input.expr}"
@@ -46,7 +49,7 @@ rule gsva_set:
 
 rule cor_net:
     input:
-        rscript = "set_cor.r",
+        rscript = "cor_{expr}.r",
         genesets = expand("gsva_{{expr}}/{sets}.RData", sets=config['genesets'])
     output:
         plot = "cor_{expr}.pdf"
