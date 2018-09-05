@@ -30,9 +30,11 @@ pcor = function(mat, fdr=1) {
                lab=sprintf("pcor %.2f\nFDR %.2g", pcor, qval))
 }
 
-plot_pcor_net = function(pm, fdr=0.2, node_size=6, edge_size=2.5,
-                         title=sprintf("original data, FDR cutoff %.2g", fdr)) {
-    g = tidygraph::as_tbl_graph(pm) %>%
+plot_pcor_net = function(pm, fdr=0.2, node_size=6, edge_size=2.5, excl=c(),
+        title=sprintf("original data, FDR cutoff %.2g", fdr)) {
+    g = pm %>%
+        dplyr::filter(! (node1 %in% excl | node2 %in% excl)) %>%
+        tidygraph::as_tbl_graph() %>%
         tidygraph::activate(edges) %>%
         tidygraph::filter(qval < fdr)
 
@@ -49,7 +51,7 @@ plot_pcor_net = function(pm, fdr=0.2, node_size=6, edge_size=2.5,
     print(p)
 }
 
-plot_bootstrapped_pcor = function(mat, fdr=0.2, n=100, show_edge_if=10, node_size=6,
+plot_bootstrapped_pcor = function(mat, fdr=0.2, n=100, show_edge_if=10, node_size=6, excl=c(),
         title=sprintf("%i bootstraps, edges if fdr<%.2f in at least %i runs", n, fdr, show_edge_if)) {
     do_bs = function(mat) {
         mat = mat[sample(seq_len(nrow(mat)), replace=TRUE),]
@@ -57,6 +59,7 @@ plot_bootstrapped_pcor = function(mat, fdr=0.2, n=100, show_edge_if=10, node_siz
     }
     g = replicate(100, do_bs(mat), simplify=FALSE) %>%
         dplyr::bind_rows() %>%
+        dplyr::filter(! (node1 %in% excl | node2 %in% excl)) %>%
         group_by(node1, node2) %>%
         summarize(pcor = median(pcor),
                   dir = as.factor(sign(median(pcor))),
