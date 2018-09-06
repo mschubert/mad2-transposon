@@ -2,6 +2,8 @@ library(dplyr)
 library(corrplot)
 library(cowplot)
 library(ggraph)
+io = import('io')
+sys = import('sys')
 st = import('stats')
 
 plot_cor_matrix = function(mat, title="", text_color="black") {
@@ -92,3 +94,48 @@ plot_pcor_table = function(pm, field="aneuploidy") {
                             "For each PRMT, this accounts for all others", sep="\n\n"),
                             gridExtra::tableGrob(res))
 }
+
+sys$run({
+    args = sys$cmd$parse(
+        opt('s', 'select', 'yaml', 'interesting_sets.yaml'),
+        opt('e', 'expr', 'expr RData', '../data/rnaseq/assemble.RData'),
+        opt('p', 'plotfile', 'pdf', 'genenet_mad2pb.pdf'),
+        arg('genesets', 'RData files', arity='*',
+            list.files("gsva_mad2pb", "\\.RData$", full.names=TRUE))
+    )
+
+    dset = io$load(args$expr)
+
+    if (grepl("rnaseq/assemble.RData", args$expr)) {
+        types = dset$idx$type
+        expr = dset$expr[match(c("Ets1", "Erg"), dset$genes),]
+        rownames(expr) = c("Ets1", "Erg")
+    } else {
+        types = Biobase::pData(dset)$FactorValue..LEUKEMIA.CLASS.
+        expr = Biobase::exprs(dset)[c("ENSG00000134954", "ENSG00000157554"),]
+        rownames(expr) = c("ETS1", "ERG")
+    }
+
+    select = io$read_yaml(args$select)$expr_sets
+    sets = io$load(args$genesets)
+    sets = lapply(names(select), function(s) sets[[s]][select[[s]],,drop=FALSE])
+
+    mat = narray::stack(c(sets, list(expr)), along=1)
+    tmat = narray::split(mat, along=2, subsets=types)
+    mat2 = rbind(mat, narray::mask(types, along=1) + 0)
+
+    pdf(args$plotfile, 20, 15)
+    plot_cor_matrix(t(mat2), text_color=NULL)
+    pcor(t(mat)) %>% plot_pcor_net(node_size=4, edge_size=1)
+    plot_bootstrapped_pcor(t(mat), node_size=4)
+
+    pcor(t(mat2)) %>% plot_pcor_net(node_size=4, edge_size=1)
+    plot_bootstrapped_pcor(t(mat2), node_size=4)
+
+    for (i in seq_along(tmat)) {
+        name = names(tmat)[i]
+        plot_cor_matrix(t(tmat[[i]]), title=name, text_color=NULL)
+        try(plot_bootstrapped_pcor(t(tmat[[i]]), fdr=0.3, node_size=4, title=name))
+    }
+    dev.off()
+})

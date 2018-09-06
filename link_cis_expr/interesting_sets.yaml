@@ -43,10 +43,6 @@ expr_sets:
         - Pyrimidine biosynthesis_Homo sapiens_R-HSA-500753
         - tRNA processing in the mitochondrion_Homo sapiens_R-HSA-6785470
 
-expr_genes:
-    - Ets1
-    - Erg
-
 #ins_sets:
 #    key: value
 

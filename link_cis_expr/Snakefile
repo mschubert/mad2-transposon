@@ -12,7 +12,7 @@ expr = {
 rule all:
     input:
         "gene_overlap.pdf",
-        expand("cor_{expr}.pdf", expr=expr.keys())
+        expand("genenet_{expr}.pdf", expr=expr.keys())
 
 rule gsva:
     input:
@@ -47,15 +47,17 @@ rule gsva_set:
             " --geneset {input.geneset}"
             " --outfile {output.scores}"
 
-rule cor_net:
+rule cor_genenet:
     input:
-        rscript = "cor_{expr}.r",
+        rscript = "cor_genenet.r",
         select = "interesting_sets.yaml",
+        expr = lambda wc: expr[wc.expr],
         genesets = expand("gsva_{{expr}}/{sets}.RData", sets=config['genesets'])
     output:
-        plot = "cor_{expr}.pdf"
+        plot = "genenet_{expr}.pdf"
     shell:
         "Rscript {input.rscript}"
             " --select {input.select}"
+            " --expr {input.expr}"
             " --plotfile {output.plot}"
             " {input.genesets}"
