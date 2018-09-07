@@ -84,20 +84,23 @@ sample_viper = function() {
 plot_subnet = function(vobj, net, fdr=0.2) {
     g = net %>%
         tidygraph::as_tbl_graph() %>%
+        activate(edges) %>%
+        mutate(cor_dir = factor(sign(d_cor))) %>%
         activate(nodes) %>%
         inner_join(vobj %>% rename(name=Regulon)) %>%
         arrange(FDR) %>%
         to_subgraph(FDR < fdr)
 
     ggraph(g$subgraph) +
-        geom_edge_link(aes(width=MI), alpha=0.1) +
-        geom_edge_link(aes(width=d_cor, color=sign(d_cor)), alpha=0.1) +
+        geom_edge_link(aes(width=MI), alpha=0.05) +
+        geom_edge_link(aes(width=d_cor, color=cor_dir), alpha=0.2) +
         geom_node_point(aes(size=Size, fill=NES, stroke=de_adjp<fdr, color=de_adjp<fdr),
                         alpha=0.7, shape=21) +
         geom_node_text(aes(label = name), size=2, repel=TRUE) +
         scale_fill_gradient2(low="red", mid="white", high="blue", midpoint=0) +
-        scale_color_manual(name="TF_de", labels=c("n.s.", "FDR<0.05"),
+        scale_color_manual(name="TF_de", labels=c("n.s.", paste("FDR<",fdr)),
                            values=c("#ffffff00", "#000000ff")) +
+        scale_edge_color_discrete(drop=FALSE) +
         theme_void()
 }
 
