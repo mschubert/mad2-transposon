@@ -16,6 +16,10 @@ subworkflow sets:
     workdir: "../data/genesets"
     snakefile: "../data/genesets/Snakefile"
 
+subworkflow net:
+    workdir: "../data/networks"
+    snakefile: "../data/networks/Snakefile"
+
 rule all:
     input:
         "de.pdf",
@@ -59,6 +63,7 @@ rule de_ins:
     input:
         rscript = "ins.r",
         diff_expr = "de.RData",
+        net = net("E-GEOD-13159.RData"),
         sets = sets(expand("{sets}.RData", sets=config['genesets']))
     output:
         result = "ins/{ins}.RData",
@@ -70,6 +75,7 @@ rule de_ins:
         "Rscript {input.rscript}"
             " --ins {wildcards.ins}"
             " --diff_expr {input.diff_expr}"
+            " --network {input.net}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"
             " {input.sets}"
