@@ -1,5 +1,6 @@
 library(dplyr)
 library(tidygraph)
+library(ggplot2)
 library(ggraph)
 io = import('io')
 sys = import('sys')
@@ -17,7 +18,7 @@ aracne = import('tools/aracne')
 #' @param net  Coexpression network [data.frame w/ Regulator, Target]
 #' @param condition  Logical vector [samples] indicating group=T/F/NA
 #' @return  network with edge attributes 'diff_cor', 'diff_pval'
-diff_cor = function(expr, net, condition, fdr=0.1) {
+diff_cor = function(expr, net, condition, fdr=0.2) {
     keep = intersect(rownames(expr), net$Regulator)
     x = expr[keep ,!is.na(condition) & condition, drop=FALSE]
     y = expr[keep ,!is.na(condition) & !condition, drop=FALSE]
@@ -51,7 +52,7 @@ diff_cor = function(expr, net, condition, fdr=0.1) {
 #' @param ledge  Logical indicating whether to perform leading edge analysis (default: FALSE)
 #' @param fdr  FDR cutoff to include filter network edges for
 #' @return  data.frame with TF activity differences between groups
-diff_viper = function(expr, net, condition, nperm=1000, ledge=FALSE, shadow=FALSE, fdr=0.1) {
+diff_viper = function(expr, net, condition, nperm=1000, ledge=FALSE, shadow=FALSE, fdr=0.2) {
     x = expr[,!is.na(condition) & condition, drop=FALSE]
     y = expr[,!is.na(condition) & !condition, drop=FALSE]
     sig = viper::rowTtest(x=x, y=y)
@@ -80,7 +81,7 @@ sample_viper = function() {
 #' @param vobj  TF activity difference data.frame from 'diff_viper'
 #' @param net  Correlation network (which is subset to TFs)
 #' @param diff_cor  Correlation differences between TFs data.frame from 'diff_cor'
-plot_subnet = function(vobj, net, fdr=0.1) {
+plot_subnet = function(vobj, net, fdr=0.2) {
     g = net %>%
         tidygraph::as_tbl_graph() %>%
         activate(nodes) %>%
@@ -102,6 +103,7 @@ plot_subnet = function(vobj, net, fdr=0.1) {
 
 sys$run({
     args = sys$cmd$parse(
+        opt('m', 'meta', 'sample metadata', '../ploidy_compare/analysis_set.RData'), # only mad2pb
         opt('e', 'expr', 'expr RData', '../data/rnaseq/assemble.RData'),
         opt('n', 'network', 'aracne', '../data/networks/E-GEOD-13159.RData'),
         opt('p', 'plotfile', 'pdf', 'viper_mad2pb.pdf')
@@ -123,14 +125,25 @@ sys$run({
     }
 
     tmat = narray::mask(types, along=2) + 0
-#    texpr = narray::split(expr, along=2, subsets=types)
-#  ...aneuploidy per type...
+    if (grepl("rnaseq/assemble.RData", args$expr)) {
+        meta = io$load(args$meta)
+        meta = meta[match(colnames(expr), meta$sample),]
+        mask = cbind(all=1, tmat)
+        colnames(mask) = paste("aneuploidy", colnames(mask), sep=":")
+        mask[!mask] = NA
+        add = mask * meta$aneuploidy
+        mask = apply(add, 2, function(x) x > median(x, na.rm=TRUE)) + 0
+        tmat = cbind(tmat, mask)
+    }
 
-    pdf(args$plotfile, 20, 15)
+    pdf(args$plotfile)
     for (cond in colnames(tmat)) {
         dviper = diff_viper(expr, net, tmat[,cond])
         dcor = diff_cor(expr, tf_net, tmat[,cond])
-        print(plot_subnet(dviper, dcor) + ggtitle(cond))
+        p = try(plot_subnet(dviper, dcor))
+        if (class(p) == "try-error" || class(try(ggplot_build(p))) == "try-error")
+            p = ggplot(data.frame()) + geom_point() + xlim(0, 10) + ylim(0, 100)
+        print(p + ggtitle(cond))
     }
     dev.off()
 })

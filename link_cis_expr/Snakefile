@@ -4,6 +4,10 @@ subworkflow genesets:
     workdir: "../data/genesets"
     snakefile: "../data/genesets/Snakefile"
 
+subworkflow network:
+    workdir: "../data/networks"
+    snakefile: "../data/networks/Snakefile"
+
 expr = {
     'mile' : '../data/arrayexpress/E-GEOD-13159.RData',
     'mad2pb' : '../data/rnaseq/assemble.RData'
@@ -12,7 +16,8 @@ expr = {
 rule all:
     input:
         "gene_overlap.pdf",
-        expand("genenet_{expr}.pdf", expr=expr.keys())
+        expand("genenet_{expr}.pdf", expr=expr.keys()),
+        expand("viper_{expr}.pdf", expr=expr.keys())
 
 rule gsva:
     input:
@@ -61,3 +66,16 @@ rule cor_genenet:
             " --expr {input.expr}"
             " --plotfile {output.plot}"
             " {input.genesets}"
+
+rule cor_viper:
+    input:
+        rscript = "cor_viper.r",
+        expr = lambda wc: expr[wc.expr],
+        net = network("E-GEOD-13159.RData")
+    output:
+        plot = "viper_{expr}.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --expr {input.expr}"
+            " --network {input.net}"
+            " --plotfile {output.plot}"
