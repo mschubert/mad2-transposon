@@ -78,29 +78,34 @@ diff_viper = function(expr, net, condition, nperm=1000, ledge=FALSE, shadow=FALS
 sample_viper = function() {
 }
 
+#' Plot a network of different activity, expression, and correlation
+#'
 #' @param vobj  TF activity difference data.frame from 'diff_viper'
 #' @param net  Correlation network (which is subset to TFs)
 #' @param diff_cor  Correlation differences between TFs data.frame from 'diff_cor'
-plot_subnet = function(vobj, net, fdr=0.2) {
+#' @param highlight  Character vector of node identifiers to highlight
+plot_subnet = function(vobj, net, fdr=0.2, highlight=c()) {
     g = net %>%
         tidygraph::as_tbl_graph() %>%
         activate(edges) %>%
         mutate(cor_dir = factor(sign(d_cor))) %>%
         activate(nodes) %>%
         inner_join(vobj %>% rename(name=Regulon)) %>%
+        mutate(CIS = factor(name %in% highlight, levels=c("FALSE", "TRUE"), ordered=TRUE)) %>%
         arrange(FDR) %>%
         to_subgraph(FDR < fdr)
 
     ggraph(g$subgraph) +
         geom_edge_link(aes(width=MI), alpha=0.05) +
         geom_edge_link(aes(width=d_cor, color=cor_dir), alpha=0.2) +
-        geom_node_point(aes(size=Size, fill=NES, stroke=de_adjp<fdr, color=de_adjp<fdr),
-                        alpha=0.7, shape=21) +
+        geom_node_point(aes(size=Size, fill=NES, stroke=de_adjp<fdr,
+                            color=de_adjp<fdr, shape=CIS), alpha=0.7) +
         geom_node_text(aes(label = name), size=2, repel=TRUE) +
         scale_fill_gradient2(low="red", mid="white", high="blue", midpoint=0) +
         scale_color_manual(name="TF_de", labels=c("n.s.", paste("FDR<",fdr)),
                            values=c("#ffffff00", "#000000ff")) +
         scale_edge_color_discrete(drop=FALSE) +
+        scale_shape_manual(values=c(21, 22)) +
         theme_void()
 }
 
@@ -109,6 +114,8 @@ sys$run({
         opt('m', 'meta', 'sample metadata', '../ploidy_compare/analysis_set.RData'), # only mad2pb
         opt('e', 'expr', 'expr RData', '../data/rnaseq/assemble.RData'),
         opt('n', 'network', 'aracne', '../data/networks/E-GEOD-13159.RData'),
+        opt('c', 'cis', 'common insertion .RData', '../cis_analysis/poisson.RData'),
+        opt('f', 'fdr', 'CIS fdr for highlight', '0.001'),
         opt('p', 'plotfile', 'pdf', 'viper_mad2pb.pdf')
     )
 
@@ -122,9 +129,15 @@ sys$run({
         rownames(expr) = idmap$orthologue(rownames(expr),
             from="ensembl_gene_id", to="hgnc_symbol", dset="mmusculus_gene_ensembl")
         expr = expr[!is.na(rownames(expr)),]
+        highlight = io$load(args$cis)$result %>%
+            filter(adj.p < as.numeric(args$fdr)) %>%
+            pull(external_gene_name) %>%
+            idmap$orthologue(from="external_gene_name", to="hgnc_symbol",
+                             dset="mmusculus_gene_ensembl")
     } else {
         types = Biobase::pData(dset)$FactorValue..LEUKEMIA.CLASS.
         expr = Biobase::exprs(dset)
+        highlight = c()
     }
 
     tmat = narray::mask(types, along=2) + 0
@@ -143,7 +156,7 @@ sys$run({
     for (cond in colnames(tmat)) {
         dviper = diff_viper(expr, net, tmat[,cond])
         dcor = diff_cor(expr, tf_net, tmat[,cond])
-        p = try(plot_subnet(dviper, dcor))
+        p = try(plot_subnet(dviper, dcor, highlight=highlight))
         if (class(p) == "try-error" || class(try(ggplot_build(p))) == "try-error")
             p = ggplot(data.frame()) + geom_point() + xlim(0, 10) + ylim(0, 100)
         print(p + ggtitle(cond))
