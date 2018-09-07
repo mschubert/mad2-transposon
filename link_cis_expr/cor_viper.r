@@ -37,10 +37,10 @@ diff_cor = function(expr, net, condition, fdr=0.2) {
         filter(adj.p < fdr)
     g = net %>%
         select(Regulator, Target, MI) %>%
-        inner_join(diff_cor) %>%
+        left_join(diff_cor) %>%
         igraph::graph_from_data_frame() %>%
         tidygraph::as_tbl_graph() %>%
-        inner_join(diff_expr)
+        left_join(diff_expr)
 }
 
 #' Condition-wise VIPER: TF activity differences
