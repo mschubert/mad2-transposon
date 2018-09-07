@@ -52,17 +52,13 @@ sets = io$load(args$sets) %>%
     lapply(function(x) set$gset$filter(x, min=5, valid=na.omit(res$gene_name)))
 
 pdf(args$plotfile)
-
 print(de$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))
-print(de$plot_volcano(res) + ggtitle("ins"))
 
 dviper = vp$diff_viper(expr, net, eset$ins)
 dcor = vp$diff_cor(expr, tf_net, eset$ins)
-p = try(vp$plot_subnet(dviper, dcor))
-if (class(p) == "try-error" || class(try(ggplot_build(p))) == "try-error")
-    p = ggplot(data.frame()) + geom_point() + xlim(0, 10) + ylim(0, 100)
-print(p + ggtitle("MI network"))
+print(vp$plot_subnet(dviper, dcor) + ggtitle("MI network"))
 
+print(de$plot_volcano(res) + ggtitle("ins"))
 for (name in names(sets))
     print(set$plot_gset(res, sets[[name]]) + ggtitle(name))
 dev.off()

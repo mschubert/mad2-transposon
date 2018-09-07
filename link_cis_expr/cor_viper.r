@@ -1,12 +1,12 @@
 library(dplyr)
 library(tidygraph)
-library(ggplot2)
 library(ggraph)
 io = import('io')
 sys = import('sys')
 st = import('stats')
 idmap = import('process/idmap')
 aracne = import('tools/aracne')
+plt = import('plot')
 
 #TODO: move diff/sample viper to aracne module
 # (also move genenet to util)
@@ -86,25 +86,29 @@ sample_viper = function() {
 #' @param highlight  Character vector of node identifiers to highlight
 plot_subnet = function(vobj, net, fdr=0.2, highlight=c()) {
     g = net %>%
-        tidygraph::as_tbl_graph() %>%
+        as_tbl_graph() %>%
         activate(edges) %>%
         mutate(cor_dir = factor(sign(d_cor))) %>%
         activate(nodes) %>%
         inner_join(vobj %>% rename(name=Regulon)) %>%
         mutate(CIS = factor(name %in% highlight, levels=c("FALSE", "TRUE"), ordered=TRUE)) %>%
-        arrange(FDR) %>%
-        to_subgraph(FDR < fdr)
+        arrange(FDR)
+    g_sub = to_subgraph(g, FDR < fdr)
 
-    ggraph(g$subgraph) +
-        geom_edge_link(aes(width=MI), alpha=0.05) +
-        geom_edge_link(aes(width=d_cor, color=cor_dir), alpha=0.2) +
-        geom_node_point(aes(size=Size, fill=NES, stroke=de_adjp<fdr,
+    if (length(igraph::V(g_sub$subgraph)) == 0)
+        return(plt$error(sprintf("no nodes (fdr < %.1g)", fdr)))
+
+    p = ggraph(g_sub$subgraph)
+    if (length(igraph::E(g_sub$subgraph)) != 0)
+        p = p + geom_edge_link(aes(width=MI), alpha=0.05) +
+            geom_edge_link(aes(width=d_cor, color=cor_dir), alpha=0.2) +
+            scale_edge_color_discrete(drop=FALSE)
+    p + geom_node_point(aes(size=Size, fill=NES, stroke=de_adjp<fdr,
                             color=de_adjp<fdr, shape=CIS), alpha=0.7) +
         geom_node_text(aes(label = name), size=2, repel=TRUE) +
         scale_fill_gradient2(low="red", mid="white", high="blue", midpoint=0) +
         scale_color_manual(name="TF_de", labels=c("n.s.", paste("FDR<",fdr)),
                            values=c("#ffffff00", "#000000ff")) +
-        scale_edge_color_discrete(drop=FALSE) +
         scale_shape_manual(values=c(21, 22)) +
         theme_void()
 }
@@ -156,10 +160,7 @@ sys$run({
     for (cond in colnames(tmat)) {
         dviper = diff_viper(expr, net, tmat[,cond])
         dcor = diff_cor(expr, tf_net, tmat[,cond])
-        p = try(plot_subnet(dviper, dcor, highlight=highlight))
-        if (class(p) == "try-error" || class(try(ggplot_build(p))) == "try-error")
-            p = ggplot(data.frame()) + geom_point() + xlim(0, 10) + ylim(0, 100)
-        print(p + ggtitle(cond))
+        print(plot_subnet(dviper, dcor, highlight=highlight) + ggtitle(cond))
     }
     dev.off()
 })
