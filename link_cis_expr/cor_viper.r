@@ -141,6 +141,8 @@ sys$run({
     } else {
         types = Biobase::pData(dset)$FactorValue..LEUKEMIA.CLASS.
         expr = Biobase::exprs(dset)
+        rownames(expr) = idmap$gene(rownames(expr), to="hgnc_symbol")
+        expr = expr[!is.na(rownames(expr)),]
         highlight = c()
     }
 
