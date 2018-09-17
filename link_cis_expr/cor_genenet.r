@@ -7,16 +7,17 @@ sys = import('sys')
 st = import('stats')
 
 plot_cor_matrix = function(mat, title="", text_color="black") {
-    p.mat = st$cor$test(mat)
+#    p.mat = st$cor$test(mat)
     cmat = cor(mat)
 
     col = colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
-    corrplot(cmat, method="color", col=col(200),
-             type="upper", order="hclust", mar=c(0,0,2,0), # title cut off otherwise
+    corrplot(cmat, method="color", col=col(200), title=title,
+             order="hclust", mar=c(0,0,2,0), # title cut off otherwise
              addCoef.col = text_color, # add coefficient of correlation
              tl.col="black", tl.srt=45, #text label color and rotation
-             p.mat = p.mat, sig.level = 0.05, insig = "blank", 
-             diag=FALSE, title=title)
+#             p.mat = p.mat, sig.level = 0.05, insig = "blank",
+#             diag=FALSE, type="upper"
+    )
 }
 
 pcor = function(mat, fdr=1) {
