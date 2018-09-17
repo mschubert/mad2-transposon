@@ -75,8 +75,9 @@ plot_sample = function(smp) {
     plt$build_or_spacer(p1, p1_dens, p2, p2_dens, pm2, pm3)
     p = p1 + p1_dens + p2 + p2_dens +
         plot_layout(ncol=2, widths=c(10,1)) & plt$theme$no_gx()
+    widths = c(1+2, 1+length(unique(mixcr$type)), 3+length(unique(expr$gene)))
     pm = pm1 + pm2 + pm3 +
-        plot_layout(nrow=1, widths=c(2,4,length(unique(expr$gene)))) &
+        plot_layout(nrow=1, widths=widths) &
         theme(axis.text.x = element_text(angle=30, hjust=0.8),
               axis.title.x = element_blank())
     p / pm + plot_layout(heights=c(2,1))
@@ -96,7 +97,7 @@ if (is.null(module_name())) {
     dna = io$load(args$dna)
     rna = io$load(args$rna)
 
-    genes = c("Mad2l1", "Msh2", "Pten", "Trp53", "Ets1", "Erg", "Myc", "Mycn")
+    genes = c("Mad2l1", "Msh2", "Pten", "Trp53", "Ets1", "Erg", "Myc", "Sox4")
     eset = io$load(args$expr)
     rownames(eset$expr) = eset$genes
     expr = narray::melt(eset$expr[genes,], dimnames=c("gene", "sample")) %>%
