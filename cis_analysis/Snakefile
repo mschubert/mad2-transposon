@@ -1,3 +1,5 @@
+configfile: "../config.yaml"
+
 subworkflow cis:
     workdir: "../data/cis"
     snakefile: "../data/cis/Snakefile"
@@ -10,18 +12,10 @@ subworkflow imfusion:
     workdir: "../data/rnaseq_imfusion"
     snakefile: "../data/rnaseq_imfusion/Snakefile"
 
-# not working: 'AC158777.2', 'Ikfz'
-ins = ['Erg', 'Ets1', 'Pten', 'Rapgef6', 'Notch1', 'Arid2', 'Sfi1', 'Eif4enif1',
-       'Xrcc6', 'Drg1', 'Nf1', 'Suz12', 'Crebbp', 'Trp53', 'Runx1',
-       'Gm11400', 'Gm11399', 'Gm10800', 'Foxn3', 'Rreb1', 'Elf1', 'Gm11400',
-       'Evi2', 'Evi2a', 'Pisd-ps2', 'Fau-ps2', 'Snrnp70', 'Eed', 'Inpp5d',
-       'Nfia', 'Lyn', 'Dhx15', 'Sp3', 'Nxf1', 'Ppp1r12a', 'Usp25',
-       'Arid1b', 'Mapk9', 'Naif1', 'Lrch3', 'Cd47', 'Bcl11a', 'Stat1', 'Stat4']
-
 rule all:
     input:
         "plot_tiles.pdf", "poisson.pdf", "ext_gene.pdf", "bionet.pdf",
-        expand("ins/{ins}.pdf", ins=ins)
+        expand("ins/{ins}.pdf", ins=config['ins_plots'])
 
 rule plot_ins:
     input:

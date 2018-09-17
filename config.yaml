@@ -14,4 +14,4 @@ genesets:
     - HMDB_Metabolites
 
 ins_plots: [ Erg, Ets1, Arid2, Drg1, Crebbp, Xrcc6, Trp53,
-    Ikzf1, Pten, Suz12, Notch1, Rapgef6, Nf1 ]
+    Ikzf1, Pten, Suz12, Notch1, Rapgef6, Nf1, Lrba, Stat1, Hs6st3 ]
