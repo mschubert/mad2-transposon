@@ -96,12 +96,12 @@ if (is.null(module_name())) {
     dna = io$load(args$dna)
     rna = io$load(args$rna)
 
-    genes = c("Mad2l1", "Msh2", "Pten", "Trp53")
+    genes = c("Mad2l1", "Msh2", "Pten", "Trp53", "Ets1", "Erg", "Myc", "Mycn")
     eset = io$load(args$expr)
     rownames(eset$expr) = eset$genes
     expr = narray::melt(eset$expr[genes,], dimnames=c("gene", "sample")) %>%
         mutate(gene = factor(gene, levels=genes, ordered=TRUE)) %>%
-        rename(vst = value_df)
+        rename(vst = value)
 
     samples = sort(unique(dna$segments$sample))
     samples = samples[sub("-.*", "", samples) %in% meta$sample]
