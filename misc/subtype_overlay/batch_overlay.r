@@ -30,11 +30,7 @@ mod = narray::mask(meta$covar, along=2) + 0
 corrected = sva::ComBat(dat=expr, batch=factor(meta$src), mod=mod)#,
 #                        ref.batch="mile", par.prior=FALSE)
 
-##DEBUG
-#corrected = corrected[,meta$covar %in% c("Tcell","Myeloid")]
-#meta = meta[meta$covar %in% c("Tcell","Myeloid"),]
-
-tsne = Rtsne::Rtsne(t(corrected))
+tsne = Rtsne::Rtsne(t(corrected), perplexity=50)
 pca = prcomp(t(corrected), scale=FALSE)
 meta$x = pca$x[,1]
 meta$y = pca$x[,2]
@@ -72,6 +68,5 @@ ggplot(meta, aes(x=x, y=y, shape=factor(covar))) +
          y = "t-SNE 2",
          title = "Overlay MILE + Mad2PB (t-SNE)") +
     guides(fill = guide_legend(override.aes=list(shape=21, color="#ffeeff00", size=4)))
-
 
 dev.off()
