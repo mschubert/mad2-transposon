@@ -4,6 +4,13 @@ b = import('base')
 io = import('io')
 st = import('stats')
 idmap = import('process/idmap')
+sys = import('sys')
+
+args = sys$cmd$parse(
+    opt('m', 'mile', 'expr rdata', '../../data/arrayexpress/E-GEOD-13159.RData'),
+    opt('t', 'mad2pb', 'rna-seq rdata', '../../data/rnaseq/assemble.RData'),
+    opt('a', 'aneup', 'mile aneup rdata', 'aneup_scores_mile.RData'),
+    opt('p', 'plotfile', 'pdf', 'batch_overlay.pdf'))
 
 plot_overlay = function(meta) {
     ggplot(meta, aes(x=x, y=y, shape=factor(covar))) +
@@ -16,13 +23,26 @@ plot_overlay = function(meta) {
         guides(fill = guide_legend(override.aes=list(shape=21, color="#ffeeff00", size=4)))
 }
 
-mile = io$load("../../data/arrayexpress/E-GEOD-13159.RData")
+plot_aneup = function(aneup) {
+    ord = aneup %>%
+        group_by(type) %>%
+        summarize(med = median(aneuploidy)) %>%
+        arrange(-med) %>%
+        pull(type)
+    aneup$type = factor(aneup$type, levels=ord)
+    ggplot(aneup, aes(x=type, y=aneuploidy)) +
+        geom_violin(color="#00888855", fill="#00000033", alpha=0.2, draw_quantiles=0.5) +
+        ggbeeswarm::geom_quasirandom(alpha=0.1) +
+        theme(axis.text.x = element_text(angle=45, hjust=1, size=6))
+}
+
+mile = io$load(args$mile)
 meta_mile = Biobase::pData(mile) %>%
     as.data.frame() %>%
     tibble::rownames_to_column("file") %>%
     transmute(file=file, type1=FactorValue..LEUKEMIA.CLASS., src="mile")
 
-mad2pb = io$load("../../data/rnaseq/assemble.RData")
+mad2pb = io$load(args$mad2pb)
 rownames(mad2pb$expr) = idmap$orthologue(rownames(mad2pb$expr),
     to="hsapiens_homolog_ensembl_gene", dset="mmusculus_gene_ensembl")
 mad2pb$expr = mad2pb$expr[!is.na(rownames(mad2pb$expr)),]
@@ -51,7 +71,9 @@ meta$type1 = factor(meta$type1) %>%
     relevel("ALL with t(1;19)") %>%
     relevel("ALL with hyperdiploid karyotype")
 
-pdf("subtype_overlay.pdf", 12, 8)
+pdf(args$plotfile, 12, 8)
+plot_aneup(io$load(args$aneup)$aneup)
+
 plot_overlay(meta) +
     labs(x = sprintf("PC1 (%.1f%%)", summary(pca)$importance[2,1]*100),
          y = sprintf("PC2 (%.1f%%)", summary(pca)$importance[2,2]*100),
