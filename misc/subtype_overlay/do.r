@@ -38,7 +38,7 @@ tsne = Rtsne::Rtsne(t(corrected))
 pca = prcomp(t(corrected), scale=FALSE)
 meta$x = pca$x[,1]
 meta$y = pca$x[,2]
-meta$covar = ifelse(meta$covar %in% c("Tcell", "Myeloid", "Other"), meta$covar, "other")
+meta$covar = ifelse(meta$covar %in% c("Tcell", "Myeloid", "Other"), meta$covar, "Other")
 meta$type1 = factor(meta$type1) %>%
     relevel("T-ALL") %>%
     relevel("ALL with t(12;21)") %>%
