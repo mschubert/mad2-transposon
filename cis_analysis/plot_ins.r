@@ -72,7 +72,8 @@ dna_ins = io$load(args$dna_ins) %>%
     mutate(strand = ifelse(strand == "-", -1L, 1L))
 
 rna_smp = rna_ins %>% filter(gene_name == args$gene) %>% pull(sample)
-use_samples = intersect(names(bams), c(rna_smp, dna_ins$sample))
+use_samples = c(intersect(names(bams), c(rna_smp, dna_ins$sample)),
+                setdiff(names(bams), c(rna_smp, dna_ins$sample)))
 
 exon_ins = exons %>%
     mutate(ins_type = 2*(sample %in% rna_smp) + (sample %in% dna_ins$sample),
