@@ -8,14 +8,15 @@ util = import('../../ploidy_from_rnaseq/eT_ploidy')
 plt = import('plot')
 putil = import('../../ploidy_compare/karyograms')
 
-plot_sample = function(smp) {
+plot_sample = function(smp, title="") {
     rbins = cbind(genes, ratio=ratio[,smp])
     rsegs = segments %>% filter(sample == smp) %>% mutate(rp = ploidy/2)
     p2 = ggplot() +
         plt$genome$pts(rbins, aes(y=ratio)) +
         plt$genome$segs(rsegs, aes(y=rp), ~./0.5, breaks=1:6) +
         coord_cartesian(ylim=c(0.25,3)) +
-        ylab("AML/normal karyotype ratio expr")
+        ylab("AML/normal karyotype ratio expr") +
+        ggtitle(title)
     p2_dens = putil$dens(rbins %>% mutate(p = ratio*2), "p", xlim=c(0.25,3)*2)
     p2 + p2_dens + plot_layout(nrow=1, widths=c(10,1))
 }
@@ -48,7 +49,7 @@ segments = expand.grid(sample=colnames(ratio), seqnames=c(1:22,'X')) %>%
                 const = list(genes=genes, ratio=ratio), n_jobs=100)) %>%
     tidyr::unnest() %>%
     group_by(sample) %>%
-    mutate(ploidy = 2 + util$center_segment_density(ploidy, w=width, bw=0.25)) %>%
+    mutate(ploidy = 2 + util$center_segment_density(ploidy, w=width)) %>%
     ungroup()
 
 aneup = seq$aneuploidy(segments, sample="sample") %>%
@@ -56,6 +57,7 @@ aneup = seq$aneuploidy(segments, sample="sample") %>%
     arrange(-aneuploidy)
 
 plot_aneup = aneup %>%
+    arrange(type, -aneuploidy) %>%
     group_by(type) %>%
     filter(row_number() %in% c(1:2, n()-1, n())) %>%
     ungroup()
@@ -66,7 +68,7 @@ for (i in seq_len(nrow(plot_aneup))) {
     message(cur$sample)
     tit = with(cur, sprintf("%s: %s (aneup %.2f, coverage %.2f)",
                             type, sample, aneuploidy, coverage))
-    print(plot_sample(cur$sample) + ggtitle(tit) & plt$theme$no_gx())
+    print(plot_sample(cur$sample, tit) & plt$theme$no_gx())
 }
 dev.off()
 
