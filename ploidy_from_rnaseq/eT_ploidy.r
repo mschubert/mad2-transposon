@@ -41,7 +41,9 @@ extract_segment = function(smp, chr, ratio, genes) {
 
     `%>%` = magrittr::`%>%`
     message(smp, "", chr)
-    chr_genes = genes[genes$seqnames == chr,]
+    chr_genes = genes %>%
+        dplyr::filter(seqnames == chr) %>%
+        dplyr::arrange(start)
     mat = ratio[chr_genes$ensembl_gene_id, smp]
     ediv = ecp::e.divisive(as.matrix(mat), min.size=50)
 

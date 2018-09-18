@@ -40,10 +40,10 @@ narray::intersect(expr, genes$ensembl_gene_id, along=1)
 ref = expr[,meta$type == "AML with normal karyotype + other abnormalities"]
 ratio = 2^(expr - rowMeans(ref))
 
-# ca. 2 hours
+# ca. 1 hour for 2000 samples @ 200 jobs
 segments = expand.grid(sample=colnames(ratio), seqnames=c(1:22,'X')) %>%
     mutate(result = clustermq::Q(util$extract_segment, smp=sample, chr=seqnames,
-                const = list(genes=genes, ratio=ratio), n_jobs=100)) %>%
+                const = list(genes=genes, ratio=ratio), n_jobs=200)) %>%
     tidyr::unnest() %>%
     group_by(sample) %>%
     mutate(ploidy = 2 + util$center_segment_density(ploidy, w=width, bw=0.25)) %>%
@@ -61,6 +61,7 @@ plot_aneup = aneup %>%
 pdf(args$plotfile, 9, 4)
 for (i in seq_len(nrow(plot_aneup))) {
     cur = plot_aneup[i,]
+    message(cur$sample)
     tit = with(cur, sprintf("%s: %s (aneup %.2f, coverage %.2f)",
                             type, sample, aneuploidy, coverage))
     print(plot_sample(cur$sample) + ggtitle(tit) & plt$theme$no_gx())
