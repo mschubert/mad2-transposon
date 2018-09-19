@@ -33,10 +33,19 @@ plot_aneup = function(aneup) {
     ggplot(aneup, aes(x=type, y=aneuploidy)) +
         geom_violin(color="#00888855", fill="#00000033", alpha=0.2, draw_quantiles=0.5) +
         ggbeeswarm::geom_quasirandom(alpha=0.1) +
-        theme(axis.text.x = element_text(angle=45, hjust=1, size=6))
+        theme(axis.text.x = element_text(angle=45, hjust=1, size=7))
+}
+
+plot_EtsErgAneup = function(aneup) {
+    ggplot(aneup, aes(y=ETS1, x=ERG)) +
+        geom_point(aes(color=type, size=aneuploidy), shape=21) +
+        facet_wrap(~ type) +
+        theme(text = element_text(size=7),
+              panel.grid.major = element_line(colour="grey", linetype="dashed", size=0.5))
 }
 
 mile = io$load(args$mile)
+expr_mile = Biobase::exprs(mile)
 meta_mile = Biobase::pData(mile) %>%
     as.data.frame() %>%
     tibble::rownames_to_column("file") %>%
@@ -49,7 +58,7 @@ mad2pb$expr = mad2pb$expr[!is.na(rownames(mad2pb$expr)),]
 meta_mad2pb = mad2pb$idx %>%
     transmute(sample=sample, type2=type, src="mad2pb")
 
-expr = narray::stack(Biobase::exprs(mile), mad2pb$expr, along=2) %>%
+expr = narray::stack(expr_mile, mad2pb$expr, along=2) %>%
     na.omit()
 meta = bind_rows(meta_mile, meta_mad2pb) %>%
     mutate(covar = ifelse(is.na(type2), type1, type2),
@@ -58,7 +67,7 @@ meta = bind_rows(meta_mile, meta_mad2pb) %>%
            covar = ifelse(grepl("T-cell|T-ALL", covar), "Tcell", covar),
            covar = ifelse(grepl("Myeloid|AML", covar), "Myeloid", covar))
 mod = narray::mask(meta$covar, along=2) + 0
-corrected = sva::ComBat(dat=expr, batch=factor(meta$src), mod=mod)
+corrected = sva::ComBat(dat=expr, batch=factor(meta$src), mod=mod, ref.batch="mile")
 
 tsne = Rtsne::Rtsne(t(corrected), perplexity=50)
 pca = prcomp(t(corrected), scale=FALSE)
@@ -71,8 +80,15 @@ meta$type1 = factor(meta$type1) %>%
     relevel("ALL with t(1;19)") %>%
     relevel("ALL with hyperdiploid karyotype")
 
+aneup = io$load(args$aneup)$aneup
+narray::intersect(expr_mile, aneup$sample, along=2)
+aneup = aneup %>%
+    mutate(ETS1 = expr_mile["ENSG00000134954",],
+           ERG = expr_mile["ENSG00000157554",])
+
 pdf(args$plotfile, 12, 8)
-plot_aneup(io$load(args$aneup)$aneup)
+plot_aneup(aneup)
+plot_EtsErgAneup(aneup)
 
 plot_overlay(meta) +
     labs(x = sprintf("PC1 (%.1f%%)", summary(pca)$importance[2,1]*100),
