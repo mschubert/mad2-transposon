@@ -30,9 +30,10 @@ center_segment_density = function(x, w=NULL, bw=bw.nrd0(x)) {
 #' @param chr  character string for chromosome
 #' @param ratio  numeric matrix [genes x samples]
 #' @param genes  gene info for rows in ratio
+#' @param bw  kernel width for estimating density (in ploidies up/down)
 #' @return  data.frame with estimated ploidy segments
-extract_segment = function(smp, chr, ratio, genes) {
-    center_of_density = function(x, bw=bw.nrd0(x)) {
+extract_segment = function(smp, chr, ratio, genes, bw="bw.nrd0") {
+    center_of_density = function(x, bw) {
 #        x = log2(x[x>0.5])
         den = density(x, kernel="gaussian", bw=bw)
         den$x[den$y==max(den$y)]
@@ -52,7 +53,7 @@ extract_segment = function(smp, chr, ratio, genes) {
         dplyr::summarize(start = min(start),
                          end = max(end),
                          width = abs(end - start),
-                         ploidy = 2 * center_of_density(cmat)) %>%
+                         ploidy = 2 * center_of_density(cmat, bw=bw)) %>%
         dplyr::select(-cluster)
 }
 

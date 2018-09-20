@@ -23,6 +23,7 @@ plot_sample = function(smp, title="") {
 
 args = sys$cmd$parse(
     opt('i', 'infile', 'MILE study', '../../data/arrayexpress/E-GEOD-13159.RData'),
+    opt('r', 'ref', 'type for diploid', 'Non-leukemia and healthy bone marrow'),
     opt('o', 'outfile', 'RData', 'aneup_scores_mile.RData'),
     opt('p', 'plotfile', 'pdf', 'aneup_scores_mile.pdf'))
 
@@ -37,7 +38,7 @@ genes = seq$coords$gene("ensembl_gene_id", granges=TRUE) %>%
     as.data.frame() %>%
     filter(seqnames %in% c(1:22, 'X'))
 
-ref = expr[,meta$type == "AML with normal karyotype + other abnormalities"]
+ref = expr[,meta$type == args$ref]
 keep = narray::map(ref, along=2, function(x) sum(x>5 & x<11) > 0.8 * length(x))
 ref = ref[keep,]
 narray::intersect(expr, ref, genes$ensembl_gene_id, along=1)
@@ -46,10 +47,10 @@ ratio = 2^(expr - rowMeans(ref))
 # ca. 10 minutes for 2000 samples @ 100 jobs
 segments = expand.grid(sample=colnames(ratio), seqnames=c(1:22,'X')) %>%
     mutate(result = clustermq::Q(util$extract_segment, smp=sample, chr=seqnames,
-                const = list(genes=genes, ratio=ratio), n_jobs=100)) %>%
+                const = list(genes=genes, ratio=ratio, bw=2), n_jobs=100)) %>%
     tidyr::unnest() %>%
     group_by(sample) %>%
-    mutate(ploidy = 2 + util$center_segment_density(ploidy, w=width)) %>%
+    mutate(ploidy = 2 + util$center_segment_density(ploidy, w=width, bw=0.5)) %>%
     ungroup()
 
 aneup = seq$aneuploidy(segments, sample="sample") %>%
@@ -72,4 +73,4 @@ for (i in seq_len(nrow(plot_aneup))) {
 }
 dev.off()
 
-save(segments, aneup, file=args$outfile)
+save(segments, aneup, ratio, file=args$outfile)
