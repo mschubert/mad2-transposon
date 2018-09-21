@@ -14,7 +14,7 @@ args = sys$cmd$parse(
     opt('i', 'ins', 'gene name of insert', 'Erg'),
     opt('n', 'network', 'aracne', '../data/networks/E-GEOD-13159.RData'),
     opt('o', 'outfile', 'results RData', 'ins/Erg.RData'),
-    opt('p', 'plotfile', 'pdf', 'ins/Erg.pdf'),
+    opt('p', 'plotfile', 'pdf', 'ins+aneup/Erg.pdf'),
     arg('sets', 'gene set .RData', arity='*',
         list.files("../data/genesets", "\\.RData", full.names=TRUE)))
 
@@ -33,30 +33,34 @@ eset = dset$eset
 idx = colData(eset) %>%
     as.data.frame() %>%
     left_join(cis) %>%
-    mutate(ins = ifelse(is.na(ins), 0, 1))
+    mutate(ins = ifelse(is.na(ins), 0, 1),
+           aneup0.2 = pmin(aneuploidy, 0.2))
 eset@colData = DataFrame(idx)
 
 expr = assay(eset)
 rownames(expr) = idmap$gene(rownames(expr),
     to="external_gene_name", dset="mmusculus_gene_ensembl")
 
-design(eset) = ~ tissue + type + ins
+design(eset) = ~ tissue + type + ins * aneup0.2
 res = DESeq2::estimateDispersions(eset) %>%
-    DESeq2::nbinomWaldTest(maxit=1000) %>%
-    de$extract_coef("ins") %>%
+    DESeq2::nbinomLRT(reduced=~ tissue + type + ins + aneup0.2, maxit=1000) %>%
+    DESeq2::results() %>%
+    as.data.frame() %>%
+    tibble::rownames_to_column("ensembl_gene_id") %>%
     mutate(gene_name = idmap$gene(ensembl_gene_id, from="ensembl_gene_id",
-        to="external_gene_name", dset="mmusculus_gene_ensembl"))
+        to="external_gene_name", dset="mmusculus_gene_ensembl")) %>%
+    arrange(padj, pvalue)
 
 sets = io$load(args$sets) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
     lapply(function(x) set$gset$filter(x, min=5, valid=na.omit(res$gene_name)))
 
 pdf(args$plotfile)
-print(de$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))
+#print(de$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))
 
-dviper = vp$diff_viper(expr, net, eset$ins)
-dcor = vp$diff_cor(expr, tf_net, eset$ins)
-print(vp$plot_subnet(dviper, dcor) + ggtitle("MI network"))
+#dviper = vp$diff_viper(expr, net, eset$ins)
+#dcor = vp$diff_cor(expr, tf_net, eset$ins)
+#print(vp$plot_subnet(dviper, dcor) + ggtitle("MI network"))
 
 print(de$plot_volcano(res) + ggtitle("gene"))
 for (name in names(sets))

@@ -24,7 +24,8 @@ rule all:
     input:
         "de.pdf",
         expand("de_sets/{sets}.pdf", sets=config['genesets']),
-        expand("ins_plots/{ins}.pdf", ins=config['ins_plots'])
+        expand("{ins_type}_plots/{ins}.pdf", ins=config['ins_plots'],
+                ins_type=['ins', 'ins+aneup'])
 
 rule de_sets:
     input:
@@ -61,13 +62,13 @@ rule de:
 
 rule de_ins:
     input:
-        rscript = "ins.r",
+        rscript = "{ins_type}.r",
         diff_expr = "de.RData",
         net = net("E-GEOD-13159.RData"),
         sets = sets(expand("{sets}.RData", sets=config['genesets']))
     output:
-        result = "ins/{ins}.RData",
-        plot = "ins_plots/{ins}.pdf"
+        result = "{ins_type}/{ins}.RData",
+        plot = "{ins_type}_plots/{ins}.pdf"
     resources:
         mem = 5000,
         walltime = 60
