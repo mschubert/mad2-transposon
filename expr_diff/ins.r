@@ -42,8 +42,10 @@ rownames(expr) = idmap$gene(rownames(expr),
 
 design(eset) = ~ tissue + type + ins
 res = DESeq2::estimateDispersions(eset) %>%
-    DESeq2::nbinomWaldTest(maxit=1000) %>%
-    de$extract_coef("ins") %>%
+    DESeq2::nbinomLRT(reduced=~ tissue + type, maxit=1000) %>%
+    DESeq2::results() %>%
+    as.data.frame() %>%
+    tibble::rownames_to_column("ensembl_gene_id") %>%
     mutate(gene_name = idmap$gene(ensembl_gene_id, from="ensembl_gene_id",
         to="external_gene_name", dset="mmusculus_gene_ensembl"))
 

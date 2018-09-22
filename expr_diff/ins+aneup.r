@@ -41,9 +41,9 @@ expr = assay(eset)
 rownames(expr) = idmap$gene(rownames(expr),
     to="external_gene_name", dset="mmusculus_gene_ensembl")
 
-design(eset) = ~ tissue + type + ins * aneup0.2
+design(eset) = ~ tissue + type + type:aneup0.2 + ins + ins:aneup0.2
 res = DESeq2::estimateDispersions(eset) %>%
-    DESeq2::nbinomLRT(reduced=~ tissue + type + ins + aneup0.2, maxit=1000) %>%
+    DESeq2::nbinomLRT(reduced=~ tissue + type + type:aneup0.2 + ins, maxit=1000) %>%
     DESeq2::results() %>%
     as.data.frame() %>%
     tibble::rownames_to_column("ensembl_gene_id") %>%
@@ -56,10 +56,10 @@ sets = io$load(args$sets) %>%
     lapply(function(x) set$gset$filter(x, min=5, valid=na.omit(res$gene_name)))
 
 pdf(args$plotfile)
-#print(de$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))
+print(de$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))
 
-#dviper = vp$diff_viper(expr, net, eset$ins)
-#dcor = vp$diff_cor(expr, tf_net, eset$ins)
+#dviper = vp$diff_viper(expr, net, eset$ins * eset$aneup0.2)
+#dcor = vp$diff_cor(expr, tf_net, eset$ins * eset$aneup0.2)
 #print(vp$plot_subnet(dviper, dcor) + ggtitle("MI network"))
 
 print(de$plot_volcano(res) + ggtitle("gene"))
