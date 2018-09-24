@@ -31,8 +31,8 @@ plot_aneup = function(aneup) {
         pull(type)
     aneup$type = factor(aneup$type, levels=ord)
     ggplot(aneup, aes(x=type, y=aneuploidy)) +
-        geom_violin(color="#00888855", fill="#00000033", alpha=0.2, draw_quantiles=0.5) +
-        ggbeeswarm::geom_quasirandom(alpha=0.1) +
+        geom_violin(color="#00888855", fill="#00000022", alpha=0.05, draw_quantiles=0.5) +
+        ggbeeswarm::geom_quasirandom(aes(color=type), alpha=0.2) +
         theme(axis.text.x = element_text(angle=45, hjust=1, size=7))
 }
 
@@ -41,6 +41,25 @@ plot_EtsErgAneup = function(aneup) {
         geom_point(aes(color=type, size=aneuploidy), shape=21) +
         facet_wrap(~ type) +
         theme(text = element_text(size=7),
+              panel.grid.major = element_line(colour="grey", linetype="dashed", size=0.5))
+}
+
+plot_immune = function(mile) {
+    expr = Biobase::exprs(mile)
+    rownames(expr) = idmap$gene(rownames(expr), to="hgnc_symbol")
+    df = data.frame(sample = colnames(expr),
+                    type = Biobase::pData(mile)$FactorValue..LEUKEMIA.CLASS.,
+            t(expr[grepl("^(TR[ABDG]V|IG[KL]V)", rownames(expr)),])) %>%
+        tidyr::gather("gene", "expr", -type, -sample) %>%
+        mutate(group = substr(gene, 1, 4)) %>%
+        group_by(sample, type, group) %>%
+        summarize(expr = max(expr))
+
+    ggplot(df, aes(x=group, y=expr)) +
+        ggbeeswarm::geom_quasirandom(aes(group=sample, color=type), alpha=0.2) +
+        facet_wrap(~ type) +
+        theme(text = element_text(size=7),
+              axis.text.x = element_text(angle=45, hjust=1, size=7),
               panel.grid.major = element_line(colour="grey", linetype="dashed", size=0.5))
 }
 
@@ -89,6 +108,7 @@ aneup = aneup %>%
 pdf(args$plotfile, 12, 8)
 plot_aneup(aneup)
 plot_EtsErgAneup(aneup)
+plot_immune(mile)
 
 plot_overlay(meta) +
     labs(x = sprintf("PC1 (%.1f%%)", summary(pca)$importance[2,1]*100),
