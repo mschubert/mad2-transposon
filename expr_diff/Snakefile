@@ -71,7 +71,7 @@ rule de_ins:
         plot = "{ins_type}_plots/{ins}.pdf"
     resources:
         mem = 5000,
-        walltime = 60
+        walltime = 120
     shell:
         "Rscript {input.rscript}"
             " --ins {wildcards.ins}"
