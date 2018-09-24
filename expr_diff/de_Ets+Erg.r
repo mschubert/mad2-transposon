@@ -60,14 +60,16 @@ idx = colData(eset) %>%
            keep = type %in% c("T-cell", "Other") & !sample %in% c("401t", "403t", "612t", "631s", "477t"),
            group = factor(DESeq2::counts(eset, normalized=TRUE)["ENSMUSG00000032035",] > 700))
 levels(idx$group) = c("Erg", "Ets1")
-idx$group = relevel(factor(paste(idx$group, idx$tissue, sep=":")), "Ets1:spleen")
+idx$group = paste(idx$group, idx$tissue, sep=":")
+idx$group[!idx$keep] = NA
+idx$group = relevel(factor(idx$group), "Ets1:spleen")
 eset@colData = DataFrame(idx)
 eset = eset[,idx$keep]
 idx = idx[idx$keep,]
 
-expr = assay(eset) #FIXME: normalized??
-rownames(expr) = idmap$gene(rownames(expr),
-    to="external_gene_name", dset="mmusculus_gene_ensembl")
+#expr = assay(eset) #FIXME: normalized??
+#rownames(expr) = idmap$gene(rownames(expr),
+#    to="external_gene_name", dset="mmusculus_gene_ensembl")
 
 res = do_wald(eset, ~ group)
 res$aneup0.3 = do_lrt(eset, ~ group + aneup0.3, ~ group)
@@ -82,11 +84,11 @@ sets = io$load(args$sets) %>%
 pdf(args$plotfile)
 for (rname in names(res)) {
     message(rname)
-    print(de$plot_volcano(res[[name]]) + ggtitle(rname))
+    print(de$plot_volcano(res[[rname]]) + ggtitle(rname))
     for (sname in names(sets)) {
         title = paste(rname, sname)
         message(title)
-        print(set$plot_gset(res[[name]], sets[[sname]]) + ggtitle(title))
+        print(set$plot_gset(res[[rname]], sets[[sname]]) + ggtitle(title))
     }
 }
 dev.off()
