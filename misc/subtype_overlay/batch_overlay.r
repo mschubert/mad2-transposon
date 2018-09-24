@@ -106,14 +106,14 @@ aneup = aneup %>%
            ERG = expr_mile["ENSG00000157554",])
 
 pdf(args$plotfile, 12, 8)
-plot_aneup(aneup)
-plot_EtsErgAneup(aneup)
-plot_immune(mile)
+plot_aneup(aneup) + ggtitle("Aneuploidy (average ploidy deviation) for subtypes")
+plot_EtsErgAneup(aneup) + ggtitle("ETS1 vs. ERG expression for subtypes")
+plot_immune(mile) + ggtitle("B/T-cell gene expression (maximum within family)")
 
 plot_overlay(meta) +
     labs(x = sprintf("PC1 (%.1f%%)", summary(pca)$importance[2,1]*100),
          y = sprintf("PC2 (%.1f%%)", summary(pca)$importance[2,2]*100),
-         title = "Overlay MILE + Mad2PB (PCA)")
+         title = "Overlay MILE + Mad2PB (PCA), corrected for Myeloid+T-cell")
 
 meta$x = tsne$Y[,1]
 meta$y = tsne$Y[,2]
@@ -121,6 +121,6 @@ meta$y = tsne$Y[,2]
 plot_overlay(meta) +
     labs(x = "t-SNE 1",
          y = "t-SNE 2",
-         title = "Overlay MILE + Mad2PB (t-SNE)")
+         title = "Overlay MILE + Mad2PB (t-SNE), corrected for Myeloid+T-cell")
 
 dev.off()
