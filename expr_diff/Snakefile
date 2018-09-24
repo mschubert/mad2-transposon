@@ -22,7 +22,7 @@ subworkflow net:
 
 rule all:
     input:
-        "de.pdf",
+        "de.pdf", "de_Ets+Erg.pdf",
         expand("de_sets/{sets}.pdf", sets=config['genesets']),
         expand("{ins_type}_plots/{ins}.pdf", ins=config['ins_plots'],
                 ins_type=['ins', 'ins+aneup'])
@@ -59,6 +59,23 @@ rule de:
             " --cis {input.cis}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"
+
+rule de_EtsErg:
+    input:
+        rscript = "de_Ets+Erg.r",
+        diff_expr = "de.RData",
+        sets = sets(expand("{sets}.RData", sets=config['genesets']))
+    output:
+        result = "de_Ets+Erg.RData",
+        plot = "de_Ets+Erg.pdf"
+    resources:
+        walltime = 240
+    shell:
+        "Rscript {input.rscript}"
+            " --diff_expr {input.diff_expr}"
+            " --outfile {output.result}"
+            " --plotfile {output.plot}"
+            " {input.sets}"
 
 rule de_ins:
     input:
