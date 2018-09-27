@@ -1,8 +1,15 @@
 configfile: "../../config.yaml"
 
+subworkflow mi_network:
+    workdir: "../networks"
+    snakefile: "../networks/Snakefile"
+
+enrichr_sets = set(config['genesets']) - set("MILE_regulons")
+
 rule all:
     input:
-        expand("{geneset}.RData", geneset=config['genesets'])
+        expand("{geneset}.RData", geneset=enrichr_sets),
+        "MILE_regulons.RData"
 
 rule enrichr:
     input:
@@ -11,3 +18,12 @@ rule enrichr:
         "{geneset}.RData"
     shell:
         "Rscript {input.rscript} --geneset {wildcards.geneset} --outfile {output}"
+
+rule mi_regulons:
+    input:
+        rscript = "mi_regulons.r",
+        network = mi_network("E-GEOD-13159.RData")
+    output:
+        "MILE_regulons.RData"
+    shell:
+        "Rscript {input.rscript} --network {input.network} --outfile {output}"
