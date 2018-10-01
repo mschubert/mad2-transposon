@@ -4,34 +4,10 @@ library(dplyr)
 library(tidygraph)
 io = import('io')
 sys = import('sys')
-de = import('./de')
 set = import('./de_sets')
 vp = import('../link_cis_expr/cor_viper')
 idmap = import('process/idmap')
-
-do_wald = function(eset, fml) {
-    design(eset) = fml
-    res = DESeq2::estimateDispersions(eset) %>%
-        DESeq2::nbinomWaldTest(maxit=1000)
-    ex = setdiff(DESeq2::resultsNames(res), "Intercept")
-    re = sapply(ex, de$extract_coef, res=res, simplify=FALSE)
-    if (length(re) == 1)
-        re = re[[1]]
-    re
-}
-
-do_lrt = function(eset, fml, red) {
-    design(eset) = fml
-    DESeq2::estimateDispersions(eset) %>%
-        DESeq2::nbinomWaldTest(maxit=1000) %>%
-        DESeq2::nbinomLRT(reduced=red, maxit=1000) %>%
-        DESeq2::results() %>%
-        as.data.frame() %>%
-        tibble::rownames_to_column("ensembl_gene_id") %>%
-        mutate(gene_name = idmap$gene(ensembl_gene_id, from="ensembl_gene_id",
-            to="external_gene_name", dset="mmusculus_gene_ensembl")) %>%
-        arrange(padj, pvalue)
-}
+util = import('./util')
 
 args = sys$cmd$parse(
     opt('d', 'diff_expr', 'gene expression RData', 'de.RData'),
@@ -84,7 +60,7 @@ sets = io$load(args$sets) %>%
 pdf(args$plotfile)
 for (rname in names(res)) {
     message(rname)
-    print(de$plot_volcano(res[[rname]]) + ggtitle(rname))
+    print(util$plot_volcano(res[[rname]]) + ggtitle(rname))
     for (sname in names(sets)) {
         title = paste(rname, sname)
         message(title)
@@ -92,13 +68,13 @@ for (rname in names(res)) {
     }
 }
 dev.off()
-#print(de$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))
+#print(util$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))
 #
 #dviper = vp$diff_viper(expr, net, eset$ins * eset$aneup0.2)
 #dcor = vp$diff_cor(expr, tf_net, eset$ins * eset$aneup0.2)
 #print(vp$plot_subnet(dviper, dcor) + ggtitle("MI network"))
 #
-#print(de$plot_volcano(res) + ggtitle("gene"))
+#print(util$plot_volcano(res) + ggtitle("gene"))
 #for (name in names(sets))
 #    print(set$plot_gset(res, sets[[name]]) + ggtitle(name))
 
