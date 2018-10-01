@@ -22,11 +22,30 @@ subworkflow net:
 
 rule all:
     input:
-        expand("eset_{eset}.RData", eset=['Mad2PB', 'Mad2PB+EtsErg', 'MILE'])
+        expand("de_{eset}.pdf", eset=['Mad2PB', 'Mad2PB+EtsErg']) # 'MILE'
 #        "de.pdf", "de_Ets+Erg.pdf",
 #        expand("de_sets/{sets}.pdf", sets=config['genesets']),
 #        expand("{ins_type}_plots/{ins}.pdf", ins=config['ins_plots'],
 #                ins_type=['ins', 'ins+aneup'])
+
+rule diff_expr:
+    input:
+        rscript = "de_{eset}.r",
+        eset = "eset_{eset}.RData",
+        cis = cis("poisson.RData")
+    output:
+        result = "de_{eset}.RData",
+        plot = "de_{eset}.pdf"
+    resources:
+        mem = 8000,
+        walltime = 120
+    shell:
+        "Rscript {input.rscript}"
+            " --eset {input.eset}"
+            " --cis {input.cis}"
+            " --outfile {output.result}"
+            " --plotfile {output.plot}"
+
 
 rule eset_Mad2PBEtsErg:
     input:
