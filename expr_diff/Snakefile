@@ -22,60 +22,50 @@ subworkflow net:
 
 rule all:
     input:
-        "de.pdf", "de_Ets+Erg.pdf",
-        expand("de_sets/{sets}.pdf", sets=config['genesets']),
-        expand("{ins_type}_plots/{ins}.pdf", ins=config['ins_plots'],
-                ins_type=['ins', 'ins+aneup'])
+        expand("eset_{eset}.RData", eset=['Mad2PB', 'Mad2PB+EtsErg', 'MILE'])
+#        "de.pdf", "de_Ets+Erg.pdf",
+#        expand("de_sets/{sets}.pdf", sets=config['genesets']),
+#        expand("{ins_type}_plots/{ins}.pdf", ins=config['ins_plots'],
+#                ins_type=['ins', 'ins+aneup'])
 
-rule de_sets:
+rule eset_Mad2PBEtsErg:
     input:
-        rscript = "de_sets.r",
-        de = "de.RData",
-        sets = sets("{set}.RData")
+        rscript = "eset_Mad2PB+EtsErg.r",
+        eset = "eset_Mad2PB.RData"
     output:
-        plot = "de_sets/{set}.pdf"
+        result = "eset_Mad2PB+EtsErg.RData",
+        plot = "eset_Mad2PB+EtsErg.pdf"
     shell:
         "Rscript {input.rscript}"
-            " --de {input.de}"
-            " --sets {input.sets}"
+            " --eset {input.eset}"
+            " --outfile {output.result}"
             " --plotfile {output.plot}"
 
-rule de:
+rule eset_Mad2PB:
     input:
-        rscript = "de.r",
+        rscript = "eset_Mad2PB.r",
         copies = ploidy("gene_copies.RData"),
-        meta = ploidy("analysis_set.RData"),
-        cis = cis("poisson.RData")
+        meta = ploidy("analysis_set.RData")
     output:
-        result = "de.RData",
-        plot = "de.pdf"
-    resources:
-        mem = 8000,
-        walltime = 120
+        result = "eset_Mad2PB.RData",
+        plot = "eset_Mad2PB.pdf"
     shell:
         "Rscript {input.rscript}"
             " --copies {input.copies}"
             " --meta {input.meta}"
-            " --cis {input.cis}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"
 
-rule de_EtsErg:
+rule eset_MILE:
     input:
-        rscript = "de_Ets+Erg.r",
-        diff_expr = "de.RData",
-        sets = sets(expand("{sets}.RData", sets=config['genesets']))
+        rscript = "eset_MILE.r"
     output:
-        result = "de_Ets+Erg.RData",
-        plot = "de_Ets+Erg.pdf"
-    resources:
-        walltime = 240
+        result = "eset_MILE.RData",
+        plot = "eset_MILE.pdf"
     shell:
         "Rscript {input.rscript}"
-            " --diff_expr {input.diff_expr}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"
-            " {input.sets}"
 
 rule de_ins:
     input:
