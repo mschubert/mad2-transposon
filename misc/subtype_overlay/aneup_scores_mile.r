@@ -8,6 +8,25 @@ util = import('../../ploidy_from_rnaseq/eT_ploidy')
 plt = import('plot')
 putil = import('../../ploidy_compare/karyograms')
 
+# from ../../ploidy_from_rnaseq/eT_ploidy.r, but uses median instead density
+extract_segment = function(smp, chr, ratio, genes) {
+    `%>%` = magrittr::`%>%`
+    message(smp, "", chr)
+    chr_genes = genes %>%
+        dplyr::filter(seqnames == chr) %>%
+        dplyr::arrange(start)
+    mat = ratio[chr_genes$ensembl_gene_id, smp]
+    ediv = ecp::e.divisive(as.matrix(mat), min.size=50)
+
+    res = cbind(chr_genes, cmat=mat, cluster=ediv$cluster) %>%
+        dplyr::group_by(cluster) %>%
+        dplyr::summarize(start = min(start),
+                         end = max(end),
+                         width = abs(end - start),
+                         ploidy = 2 * median(cmat, na.rm=TRUE)) %>%
+        dplyr::select(-cluster)
+}
+
 plot_sample = function(smp, title="") {
     rbins = cbind(genes, ratio=ratio[,smp])
     rsegs = segments %>% filter(sample == smp) %>% mutate(rp = ploidy/2)
@@ -46,8 +65,8 @@ ratio = 2^(expr - rowMeans(ref))
 
 # ca. 10 minutes for 2000 samples @ 100 jobs
 segments = expand.grid(sample=colnames(ratio), seqnames=c(1:22,'X')) %>%
-    mutate(result = clustermq::Q(util$extract_segment, smp=sample, chr=seqnames,
-                const = list(genes=genes, ratio=ratio, bw=2), n_jobs=100)) %>%
+    mutate(result = clustermq::Q(extract_segment, smp=sample, chr=seqnames,
+                const = list(genes=genes, ratio=ratio), n_jobs=100)) %>%
     tidyr::unnest() %>%
     group_by(sample) %>%
     mutate(ploidy = 2 + util$center_segment_density(ploidy, w=width, bw=0.5)) %>%
