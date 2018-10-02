@@ -83,7 +83,13 @@ plot_gset = function(res, sets, highlight=NULL) {
         dplyr::bind_rows(.id="label") %>%
         mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
         arrange(adj.p, p.value)
-    result %>%
+    p = result %>%
         plt$p_effect("adj.p", thresh=0.1) %>%
         plt$volcano(p=0.1, base.size=0.1, label_top=30, repel=TRUE, text.size=2)
+
+    built = try(ggplot_build(p))
+    if (class(built) == "try-error")
+        plt$error(as.character(built))
+    else
+        p
 }
