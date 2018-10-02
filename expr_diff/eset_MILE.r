@@ -29,7 +29,7 @@ meta = Biobase::pData(mile) %>%
                lineage == "Myeloid" ~ "Myeloid",
 #               annot == "mature B-ALL with t(8;14)" ~ "B_ALL",
                annot == "T-ALL" ~ "T_ALL",
-               lineage == "Lymphoid" ~ "B_like"
+               lineage == "Lymphoid" & annot != "CLL" ~ "B_like"
            ),
            aneuploidy = aneup$aneuploidy[match(.$id, aneup$sample)])
 
