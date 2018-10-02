@@ -22,11 +22,9 @@ subworkflow net:
 
 rule all:
     input:
-        expand("de_{eset}.pdf", eset=['Mad2PB', 'Mad2PB+EtsErg', 'Mad2PB+noCopyCor']) # 'MILE'
-#        "de.pdf", "de_Ets+Erg.pdf",
-#        expand("de_sets/{sets}.pdf", sets=config['genesets']),
-#        expand("{ins_type}_plots/{ins}.pdf", ins=config['ins_plots'],
-#                ins_type=['ins', 'ins+aneup'])
+        expand("de_{eset}.pdf", eset=['Mad2PB', 'Mad2PB+EtsErg', 'Mad2PB+noCopyCor']), # 'MILE'
+        expand("{ins_type}_plots/{ins}.pdf", ins=config['ins_plots'],
+                ins_type=['ins', 'ins+aneup'])
 
 rule diff_expr:
     input:
@@ -104,7 +102,8 @@ rule eset_MILE:
 rule de_ins:
     input:
         rscript = "{ins_type}.r",
-        diff_expr = "de.RData",
+        eset = "eset_Mad2PB.RData",
+        cis = cis("poisson.RData"),
         net = net("E-GEOD-13159.RData"),
         sets = sets(expand("{sets}.RData", sets=config['genesets']))
     output:
@@ -116,7 +115,8 @@ rule de_ins:
     shell:
         "Rscript {input.rscript}"
             " --ins {wildcards.ins}"
-            " --diff_expr {input.diff_expr}"
+            " --eset {input.eset}"
+            " --cis {input.cis}"
             " --network {input.net}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"

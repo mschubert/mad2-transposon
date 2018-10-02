@@ -4,13 +4,14 @@ library(dplyr)
 library(tidygraph)
 io = import('io')
 sys = import('sys')
-de = import('./de')
-set = import('./de_sets')
+gset = import('data/genesets')
 vp = import('../link_cis_expr/cor_viper')
 idmap = import('process/idmap')
+util = import('./util')
 
 args = sys$cmd$parse(
-    opt('d', 'diff_expr', 'gene expression RData', 'de.RData'),
+    opt('e', 'eset', 'gene expression RData', 'eset_Mad2PB.RData'),
+    opt('c', 'cis', 'cis RData', '../cis_analysis/poisson.RData'),
     opt('i', 'ins', 'gene name of insert', 'Erg'),
     opt('n', 'network', 'aracne', '../data/networks/E-GEOD-13159.RData'),
     opt('o', 'outfile', 'results RData', 'ins/Erg.RData'),
@@ -25,11 +26,11 @@ net = io$load(args$network) %>%
     na.omit()
 tf_net = filter(net, Target %in% Regulator)
 
-dset = io$load(args$diff_expr)
-cis = dset$cis$samples %>%
+cis = io$load(args$cis)$samples %>%
     filter(external_gene_name == args$ins) %>%
     select(sample, ins=external_gene_name)
-eset = dset$eset
+
+eset = io$load(args$eset)
 idx = colData(eset) %>%
     as.data.frame() %>%
     left_join(cis) %>%
@@ -53,18 +54,18 @@ res = DESeq2::estimateDispersions(eset) %>%
 
 sets = io$load(args$sets) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
-    lapply(function(x) set$gset$filter(x, min=5, valid=na.omit(res$gene_name)))
+    lapply(function(x) gset$filter(x, min=5, valid=na.omit(res$gene_name)))
 
 pdf(args$plotfile)
-print(de$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))
+print(util$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))
 
 #dviper = vp$diff_viper(expr, net, eset$ins * eset$aneup0.2)
 #dcor = vp$diff_cor(expr, tf_net, eset$ins * eset$aneup0.2)
 #print(vp$plot_subnet(dviper, dcor) + ggtitle("MI network"))
 
-print(de$plot_volcano(res) + ggtitle("gene"))
+print(util$plot_volcano(res) + ggtitle("gene"))
 for (name in names(sets))
-    print(set$plot_gset(res, sets[[name]]) + ggtitle(name))
+    print(util$plot_gset(res, sets[[name]]) + ggtitle(name))
 dev.off()
 
 save(res, file=args$outfile)
