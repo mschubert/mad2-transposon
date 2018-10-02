@@ -27,12 +27,13 @@ meta = Biobase::pData(mile) %>%
            ),
            type = case_when(
                lineage == "Myeloid" ~ "Myeloid",
+#               annot == "mature B-ALL with t(8;14)" ~ "B_ALL",
                annot == "T-ALL" ~ "T_ALL",
                lineage == "Lymphoid" ~ "B_like"
            ),
            aneuploidy = aneup$aneuploidy[match(.$id, aneup$sample)])
 
-idx = meta %>% mutate(sample=.$id, tissue=lineage)
+idx = meta %>% mutate(sample=NA, tissue=lineage)
 narray::intersect(meta$id, idx$id, expr, along=2)
 pca = prcomp(t(expr), center=TRUE, scale=FALSE)
 
