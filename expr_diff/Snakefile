@@ -22,7 +22,7 @@ subworkflow net:
 
 rule all:
     input:
-        expand("de_{eset}.pdf", eset=['Mad2PB', 'Mad2PB+EtsErg']) # 'MILE'
+        expand("de_{eset}.pdf", eset=['Mad2PB', 'Mad2PB+EtsErg', 'Mad2PB+noCopyCor']) # 'MILE'
 #        "de.pdf", "de_Ets+Erg.pdf",
 #        expand("de_sets/{sets}.pdf", sets=config['genesets']),
 #        expand("{ins_type}_plots/{ins}.pdf", ins=config['ins_plots'],
@@ -73,6 +73,19 @@ rule eset_Mad2PB:
     shell:
         "Rscript {input.rscript}"
             " --copies {input.copies}"
+            " --meta {input.meta}"
+            " --outfile {output.result}"
+            " --plotfile {output.plot}"
+
+rule eset_Mad2PBnoCopyCor:
+    input:
+        rscript = "eset_Mad2PB+noCopyCor.r",
+        meta = ploidy("analysis_set.RData")
+    output:
+        result = "eset_Mad2PB+noCopyCor.RData",
+        plot = "eset_Mad2PB+noCopyCor.pdf"
+    shell:
+        "Rscript {input.rscript}"
             " --meta {input.meta}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"
