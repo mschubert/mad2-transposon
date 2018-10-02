@@ -38,6 +38,10 @@ idx = colData(eset) %>%
            aneup0.2 = pmin(aneuploidy, 0.2))
 eset@colData = DataFrame(idx)
 
+expr = assay(eset)
+rownames(expr) = idmap$gene(rownames(expr),
+    to="external_gene_name", dset="mmusculus_gene_ensembl")
+
 design(eset) = ~ tissue + type + type:aneup0.2 + ins + ins:aneup0.2
 res = DESeq2::estimateDispersions(eset) %>%
     DESeq2::nbinomLRT(reduced=~ tissue + type + type:aneup0.2 + ins, maxit=1000) %>%
@@ -50,14 +54,11 @@ res = DESeq2::estimateDispersions(eset) %>%
 
 sets = io$load(args$sets) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
-    lapply(function(x) gset$filter(x, min=5, valid=na.omit(res$gene_name)))
+    lapply(function(x) gset$filter(x, min=5, valid=na.omit(rownames(expr))))
 
 pdf(args$plotfile)
 print(util$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))
 
-#expr = assay(eset)
-#rownames(expr) = idmap$gene(rownames(expr),
-#    to="external_gene_name", dset="mmusculus_gene_ensembl")
 #dviper = vp$diff_viper(expr, net, eset$ins * eset$aneup0.2)
 #dcor = vp$diff_cor(expr, tf_net, eset$ins * eset$aneup0.2)
 #print(vp$plot_subnet(dviper, dcor) + ggtitle("MI network"))

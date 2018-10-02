@@ -52,10 +52,10 @@ res = DESeq2::estimateDispersions(eset) %>%
 
 sets = io$load(args$sets) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
-    lapply(function(x) gset$filter(x, min=5, valid=na.omit(res$gene_name)))
+    lapply(function(x) gset$filter(x, min=5, valid=na.omit(rownames(vs))))
 
 pdf(args$plotfile)
-print(util$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))
+#print(util$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample)) #TODO: add pca
 
 #expr = assay(eset)
 #rownames(expr) = idmap$gene(rownames(expr),
