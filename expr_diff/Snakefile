@@ -32,7 +32,8 @@ rule diff_expr:
     input:
         rscript = "de_{eset}.r",
         eset = "eset_{eset}.RData",
-        cis = cis("poisson.RData")
+        cis = cis("poisson.RData"),
+        sets = sets(expand("{sets}.RData", sets=config['genesets']))
     output:
         result = "de_{eset}.RData",
         plot = "de_{eset}.pdf"
@@ -45,6 +46,7 @@ rule diff_expr:
             " --cis {input.cis}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"
+            " {input.sets}"
 
 
 rule eset_Mad2PBEtsErg:

@@ -11,8 +11,8 @@ util = import('./util')
 args = sys$cmd$parse(
     opt('e', 'eset', 'gene expression RData', 'eset_Mad2PB.RData'),
     opt('c', 'cis', 'cis site RData', '../cis_analysis/poisson.RData'),
-    opt('o', 'outfile', 'results RData', 'de.RData'),
-    opt('p', 'plotfile', 'pdf', 'de.pdf'),
+    opt('o', 'outfile', 'results RData', 'de_Mad2PB.RData'),
+    opt('p', 'plotfile', 'pdf', 'de_Mad2PB.pdf'),
     arg('sets', 'gene set .RData', arity='*',
         list.files("../data/genesets", "\\.RData", full.names=TRUE)))
 
@@ -52,7 +52,7 @@ sets = io$load(args$sets) %>%
 pdf(args$plotfile)
 for (rname in names(res)) {
     message(rname)
-    print(plot_volcano(res[[rname]], cis_genes) + ggtitle(rname))
+    print(util$plot_volcano(res[[rname]], cis_genes) + ggtitle(rname))
     for (sname in names(sets)) {
         title = paste(rname, sname)
         message(title)
