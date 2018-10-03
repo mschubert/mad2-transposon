@@ -55,7 +55,7 @@ sets = io$load(args$sets) %>%
     lapply(function(x) gset$filter(x, min=5, valid=na.omit(rownames(expr))))
 
 pdf(args$plotfile)
-print(util$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))
+#print(util$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample)) #TODO: fix
 
 dviper = vp$diff_viper(expr, net, eset$ins)
 dcor = vp$diff_cor(expr, tf_net, eset$ins)
