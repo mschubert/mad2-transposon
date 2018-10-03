@@ -31,13 +31,14 @@ cis = io$load(args$cis)$samples %>%
     filter(external_gene_name == args$ins) %>%
     select(sample, ins=external_gene_name)
 
-eset = io$load(args$eset)
-vs = rnaseq$vst(eset)
-rownames(vs) = idmap$gene(rownames(vs), to="external_gene_name", dset="mmusculus_gene_ensembl")
+dset = io$load(args$eset)
+eset = dset$eset
+mgi = rownames(dset$vs) %>%
+    idmap$gene(to="external_gene_name", dset="mmusculus_gene_ensembl")
 idx = colData(eset) %>%
     as.data.frame() %>%
     left_join(cis) %>%
-    mutate(expr = vs[args$ins,],
+    mutate(expr = dset$vs[which(args$ins == mgi),],
            ins = ifelse(is.na(ins), 0, 1))
 eset@colData = DataFrame(idx)
 
@@ -52,16 +53,16 @@ res = DESeq2::estimateDispersions(eset) %>%
 
 sets = io$load(args$sets) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
-    lapply(function(x) gset$filter(x, min=5, valid=na.omit(rownames(vs))))
+    lapply(function(x) gset$filter(x, min=5, valid=na.omit(mgi)))
 
 pdf(args$plotfile)
-#print(util$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample)) #TODO: add pca
+print(util$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))
 
 #expr = assay(eset)
 #rownames(expr) = idmap$gene(rownames(expr),
 #    to="external_gene_name", dset="mmusculus_gene_ensembl")
-dviper = vp$diff_viper(vs, net, eset$ins)
-dcor = vp$diff_cor(vs, tf_net, eset$ins)
+dviper = vp$diff_viper(dset$vs, net, eset$ins)
+dcor = vp$diff_cor(dset$vs, tf_net, eset$ins)
 print(vp$plot_subnet(dviper, dcor) + ggtitle("MI network"))
 
 print(util$plot_volcano(res) + ggtitle("gene"))

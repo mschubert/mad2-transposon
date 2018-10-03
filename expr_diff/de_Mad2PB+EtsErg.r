@@ -12,7 +12,7 @@ args = sys$cmd$parse(
     arg('sets', 'gene set .RData', arity='*',
         list.files("../data/genesets", "\\.RData", full.names=TRUE)))
 
-eset = io$load(args$eset)
+eset = io$load(args$eset)$eset
 
 res = util$do_wald(eset, ~ group)
 res$aneup0.3 = util$do_lrt(eset, ~ group + aneup0.3, ~ group)

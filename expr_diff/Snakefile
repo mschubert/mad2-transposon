@@ -24,7 +24,7 @@ rule all:
     input:
         expand("de_{eset}.pdf", eset=['Mad2PB', 'Mad2PB+EtsErg', 'Mad2PB+noCopyCor']), # 'MILE'
         expand("{ins_type}_plots/{ins}.pdf", ins=config['ins_plots'],
-                ins_type=['ins', 'ins+aneup', 'ins-over-expr'])
+                ins_type=['ins', 'ins+aneup', 'ins-over-expr', 'ins-under-expr'])
 
 rule diff_expr:
     input:

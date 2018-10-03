@@ -7,6 +7,7 @@ sys = import('sys')
 gset = import('data/genesets')
 vp = import('../link_cis_expr/cor_viper')
 idmap = import('process/idmap')
+rnaseq = import('process/rna-seq')
 util = import('./util')
 
 args = sys$cmd$parse(
@@ -37,12 +38,14 @@ mgi = rownames(dset$vs) %>%
 idx = colData(eset) %>%
     as.data.frame() %>%
     left_join(cis) %>%
-    mutate(ins = ifelse(is.na(ins), 0, 1))
+    mutate(expr = dset$vs[which(args$ins == mgi),],
+           ins = ifelse(is.na(ins), 0, 1))
 eset@colData = DataFrame(idx)
+eset = eset[-which(args$ins == mgi),]
 
-design(eset) = ~ tissue + type + ins
+design(eset) = ~ tissue + type + ins + expr
 res = DESeq2::estimateDispersions(eset) %>%
-    DESeq2::nbinomLRT(reduced=~ tissue + type, maxit=1000) %>%
+    DESeq2::nbinomLRT(reduced=~ tissue + type + ins, maxit=1000) %>%
     DESeq2::results() %>%
     as.data.frame() %>%
     tibble::rownames_to_column("ensembl_gene_id") %>%
@@ -56,8 +59,11 @@ sets = io$load(args$sets) %>%
 pdf(args$plotfile)
 print(util$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))
 
-dviper = vp$diff_viper(expr, net, eset$ins)
-dcor = vp$diff_cor(expr, tf_net, eset$ins)
+#expr = assay(eset)
+#rownames(expr) = idmap$gene(rownames(expr),
+#    to="external_gene_name", dset="mmusculus_gene_ensembl")
+dviper = vp$diff_viper(dset$vs, net, eset$ins)
+dcor = vp$diff_cor(dset$vs, tf_net, eset$ins)
 print(vp$plot_subnet(dviper, dcor) + ggtitle("MI network"))
 
 print(util$plot_volcano(res) + ggtitle("gene"))

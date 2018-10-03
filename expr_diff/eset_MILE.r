@@ -43,4 +43,4 @@ print(util$plot_pcs(idx, pca, 3, 4))
 print(util$plot_pcs(idx, pca, 5, 6))
 dev.off()
 
-save(expr, meta, file=args$outfile)
+save(expr, meta, pca, file=args$outfile)

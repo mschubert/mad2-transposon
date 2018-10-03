@@ -9,7 +9,7 @@ args = sys$cmd$parse(
     opt('o', 'outfile', 'results RData', 'eset_Mad2PB+EtsErg.RData'),
     opt('p', 'plotfile', 'pdf', 'eset_Mad2PB+EtsErg.pdf'))
 
-eset = io$load(args$eset)
+eset = io$load(args$eset)$eset
 idx = colData(eset) %>%
     as.data.frame() %>%
     mutate(aneup0.3 = pmin(aneuploidy, 0.3),
@@ -33,4 +33,4 @@ print(util$plot_pcs(idx, pca, 3, 4))
 print(util$plot_pcs(idx, pca, 5, 6))
 dev.off()
 
-save(eset, file=args$outfile)
+save(eset, vs, pca, file=args$outfile)

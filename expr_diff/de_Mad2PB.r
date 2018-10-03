@@ -16,7 +16,7 @@ args = sys$cmd$parse(
     arg('sets', 'gene set .RData', arity='*',
         list.files("../data/genesets", "\\.RData", full.names=TRUE)))
 
-eset = io$load(args$eset)
+eset = io$load(args$eset)$eset
 cis = io$load(args$cis)
 cis_genes = cis$result %>% filter(adj.p < 1e-3) %>% pull(external_gene_name)
 

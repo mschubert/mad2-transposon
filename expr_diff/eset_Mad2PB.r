@@ -32,4 +32,4 @@ print(util$plot_pcs(idx, pca, 3, 4))
 print(util$plot_pcs(idx, pca, 5, 6))
 dev.off()
 
-save(eset, file=args$outfile)
+save(eset, vs, pca, file=args$outfile)
