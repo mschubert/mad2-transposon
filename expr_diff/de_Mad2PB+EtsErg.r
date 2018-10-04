@@ -22,7 +22,7 @@ res$`B+Erg_aneup` = util$do_wald(eset[,eset$group == "Erg:spleen"], ~ aneup0.3)
 
 sets = io$load(args$sets) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
-    lapply(function(x) gset$filter(x, min=5, valid=na.omit(res[[1]]$gene_name)))
+    lapply(function(x) gset$filter(x, min=5, valid=rownames(eset)))
 
 pdf(args$plotfile)
 for (rname in names(res)) {

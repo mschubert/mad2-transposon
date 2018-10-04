@@ -3,6 +3,7 @@ library(dplyr)
 io = import('io')
 sys = import('sys')
 util = import('./util')
+idmap = import('process/idmap')
 
 args = sys$cmd$parse(
     opt('e', 'eset', 'gene expression RData', 'eset_Mad2PB.RData'),

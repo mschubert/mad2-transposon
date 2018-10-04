@@ -33,12 +33,10 @@ cis = io$load(args$cis)$samples %>%
 
 dset = io$load(args$eset)
 eset = dset$eset
-mgi = rownames(dset$vs) %>%
-    idmap$gene(to="external_gene_name", dset="mmusculus_gene_ensembl")
 idx = colData(eset) %>%
     as.data.frame() %>%
     left_join(cis) %>%
-    mutate(expr = dset$vs[which(args$ins == mgi),],
+    mutate(expr = dset$vs[args$ins,],
            ins = ifelse(is.na(ins), 0, 1))
 eset@colData = DataFrame(idx)
 
@@ -47,20 +45,15 @@ res = DESeq2::estimateDispersions(eset) %>%
     DESeq2::nbinomLRT(reduced=~ tissue + type + expr, maxit=1000) %>%
     DESeq2::results() %>%
     as.data.frame() %>%
-    tibble::rownames_to_column("ensembl_gene_id") %>%
-    mutate(gene_name = idmap$gene(ensembl_gene_id, from="ensembl_gene_id",
-        to="external_gene_name", dset="mmusculus_gene_ensembl"))
+    tibble::rownames_to_column("gene_name") %>%
 
 sets = io$load(args$sets) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
-    lapply(function(x) gset$filter(x, min=5, valid=na.omit(mgi)))
+    lapply(function(x) gset$filter(x, min=5, valid=rownames(eset)))
 
 pdf(args$plotfile)
 print(util$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))
 
-#expr = assay(eset)
-#rownames(expr) = idmap$gene(rownames(expr),
-#    to="external_gene_name", dset="mmusculus_gene_ensembl")
 dviper = vp$diff_viper(dset$vs, net, eset$ins)
 dcor = vp$diff_cor(dset$vs, tf_net, eset$ins)
 print(vp$plot_subnet(dviper, dcor) + ggtitle("MI network"))

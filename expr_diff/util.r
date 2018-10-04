@@ -2,7 +2,6 @@ library(dplyr)
 library(ggplot2)
 library(DESeq2)
 plt = import('plot')
-idmap = import('process/idmap')
 
 plot_pcs = function(idx, pca, x, y, hl=c()) {
     imp = summary(pca)$importance[2,c(x,y)] * 100
@@ -22,15 +21,14 @@ plot_pcs = function(idx, pca, x, y, hl=c()) {
 extract_coef = function(res, coef, type="apeglm") {
     DESeq2::lfcShrink(res, coef=coef, type=type) %>%
         as.data.frame() %>%
-        tibble::rownames_to_column("ensembl_gene_id") %>%
+        tibble::rownames_to_column("gene_name") %>%
         tbl_df() %>%
         arrange(pvalue)
 }
 
 plot_volcano = function(res, highlight=NULL) {
     res %>%
-        mutate(label = idmap$gene(ensembl_gene_id, to="external_gene_name",
-                                  dset="mmusculus_gene_ensembl"),
+        mutate(label = gene_name,
                circle = label %in% highlight,
                size = log10(baseMean + 1)) %>%
         plt$p_effect("padj", "log2FoldChange", thresh=0.1) %>%
@@ -58,9 +56,7 @@ do_lrt = function(eset, fml, red) {
         DESeq2::nbinomLRT(reduced=red, maxit=1000) %>%
         DESeq2::results() %>%
         as.data.frame() %>%
-        tibble::rownames_to_column("ensembl_gene_id") %>%
-        mutate(gene_name = idmap$gene(ensembl_gene_id, from="ensembl_gene_id",
-            to="external_gene_name", dset="mmusculus_gene_ensembl")) %>%
+        tibble::rownames_to_column("gene_name") %>%
         arrange(padj, pvalue)
 }
 
@@ -76,9 +72,7 @@ plot_gset = function(res, sets, highlight=NULL) {
             mutate(size = sum(fdata$in_set, na.rm=TRUE))
     }
     cur = res %>%
-        mutate(stat = log2FoldChange / lfcSE,
-               gene_name = idmap$gene(ensembl_gene_id,
-                    to="external_gene_name", dset="mmusculus_gene_ensembl"))
+        mutate(stat = log2FoldChange / lfcSE)
     result = sapply(names(sets), test_one, simplify=FALSE) %>%
         dplyr::bind_rows(.id="label") %>%
         mutate(adj.p = p.adjust(p.value, method="fdr")) %>%

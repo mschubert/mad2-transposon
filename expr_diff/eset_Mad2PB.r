@@ -3,6 +3,7 @@ library(DESeq2)
 io = import('io')
 sys = import('sys')
 util = import('./util')
+idmap = import('process/idmap')
 
 args = sys$cmd$parse(
     opt('e', 'expr', 'gene expression RData', '../data/rnaseq/assemble.RData'),
@@ -23,6 +24,9 @@ narray::intersect(gene_copies, counts, idx$sample, along=2)
 # vst w/ copy num corr
 eset = DESeq2::DESeqDataSetFromMatrix(counts, colData=idx, ~tissue+type) %>%
     DESeq2::estimateSizeFactors(normMatrix=gene_copies)
+rownames(eset) = idmap$gene(rownames(eset), from="ensembl_gene_id",
+    to="external_gene_name", dset="mmusculus_gene_ensembl")
+eset = eset[!is.na(rownames(eset)) & !duplicated(rownames(eset)),]
 vs = DESeq2::getVarianceStabilizedData(DESeq2::estimateDispersions(eset))
 
 pdf(args$plotfile)

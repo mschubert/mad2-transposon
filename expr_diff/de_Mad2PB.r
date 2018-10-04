@@ -29,7 +29,7 @@ cancer_type = function(term) {
         DESeq2::nbinomWaldTest(maxit=1000) %>%
         util$extract_coef(term)
 }
-ats = c("Tcell", "Myeloid", "Other") # fix "T-cell" in meta?
+ats = c("Tcell", "Myeloid", "Other")
 res = c(res, sapply(ats, cancer_type, simplify=FALSE))
 
 # fit aneuploidy within cancer types
@@ -47,7 +47,7 @@ res = c(res, setNames(lapply(ats, aneup_tissue), paste0(ats, ":aneuploidy")))
 
 sets = io$load(args$sets) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
-    lapply(function(x) gset$filter(x, min=5, valid=na.omit(res[[1]]$gene_name)))
+    lapply(function(x) gset$filter(x, min=5, valid=rownames(eset)))
 
 pdf(args$plotfile)
 for (rname in names(res)) {
