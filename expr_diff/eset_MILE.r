@@ -16,6 +16,10 @@ args = sys$cmd$parse(
 aneup = io$load(args$aneup)$aneup
 mile = io$load(args$mile)
 expr = Biobase::exprs(mile)
+
+rownames(expr) = idmap$gene(rownames(expr), to="external_gene_name")
+expr = expr[!is.na(rownames(expr)) & !duplicated(rownames(expr)),]
+
 meta = Biobase::pData(mile) %>%
     as.data.frame() %>%
     tibble::rownames_to_column("id") %>%
