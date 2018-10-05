@@ -24,7 +24,7 @@ res = data.frame(gene_name = rownames(expr), mean_expr = rowMeans(expr)) %>%
     tidyr::unnest() %>%
     filter(term != "(Intercept)") %>%
     group_by(term) %>%
-    mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
+    mutate(adj.p = 2^-abs(statistic)) %>%
     arrange(adj.p) %>%
     tidyr::nest()
 

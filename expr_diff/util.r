@@ -79,8 +79,10 @@ plot_gset = function(res, sets, highlight=NULL) {
             select(-term) %>%
             mutate(size = sum(fdata$in_set, na.rm=TRUE))
     }
-    cur = res %>%
-        mutate(stat = log2FoldChange / lfcSE)
+    if ("log2FoldChange" %in% colnames(res))
+        cur = res %>% mutate(stat = log2FoldChange / lfcSE)
+    else
+        cur = res %>% mutate(stat = statistic)
     result = sapply(names(sets), test_one, simplify=FALSE) %>%
         dplyr::bind_rows(.id="label") %>%
         mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
