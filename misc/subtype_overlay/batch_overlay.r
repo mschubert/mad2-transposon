@@ -36,8 +36,8 @@ plot_aneup = function(aneup) {
         theme(axis.text.x = element_text(angle=45, hjust=1, size=7))
 }
 
-plot_EtsErgAneup = function(aneup) {
-    ggplot(aneup, aes(y=ETS1, x=ERG)) +
+plot_2dgene = function(aneup, aes) {
+    ggplot(aneup, aes) +
         geom_point(aes(color=type, size=aneuploidy), shape=21) +
         facet_wrap(~ type) +
         theme(text = element_text(size=7),
@@ -103,11 +103,14 @@ aneup = io$load(args$aneup)$aneup
 narray::intersect(expr_mile, aneup$sample, along=2)
 aneup = aneup %>%
     mutate(ETS1 = expr_mile["ENSG00000134954",],
-           ERG = expr_mile["ENSG00000157554",])
+           ERG = expr_mile["ENSG00000157554",],
+           STAT1 = expr_mile["ENSG00000115415",],
+           PIAS1 = expr_mile["ENSG00000033800",])
 
 pdf(args$plotfile, 12, 8)
 plot_aneup(aneup) + ggtitle("Aneuploidy (average ploidy deviation) for subtypes")
-plot_EtsErgAneup(aneup) + ggtitle("ETS1 vs. ERG expression for subtypes")
+plot_2dgene(aneup, aes(x=ERG, y=ETS1)) + ggtitle("ETS1 vs. ERG expression")
+plot_2dgene(aneup, aes(x=PIAS1, y=STAT1)) + ggtitle("STAT1 vs PIAS1 expression")
 plot_immune(mile) + ggtitle("B/T-cell gene expression (maximum within family)")
 
 plot_overlay(meta) +
