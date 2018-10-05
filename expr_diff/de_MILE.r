@@ -10,7 +10,7 @@ args = sys$cmd$parse(
     opt('o', 'outfile', 'results RData', 'de_MILE.RData'),
     opt('p', 'plotfile', 'pdf', 'de_MILE.pdf'),
     arg('sets', 'gene set .RData', arity='*',
-        list.files("../data/genesets", "\\.RData", full.names=TRUE)))
+        list.files("../data/genesets/mouse", "\\.RData", full.names=TRUE)))
 
 dset = io$load(args$eset)
 expr = dset$expr
@@ -30,6 +30,7 @@ res = data.frame(gene_name = rownames(dset$expr)) %>%
 
 res = setNames(res$data, res$term)
 
+args$sets = sub("mouse/", "human/", args$sets)
 sets = io$load(args$sets) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
     lapply(function(x) gset$filter(x, min=5, valid=rownames(expr)))

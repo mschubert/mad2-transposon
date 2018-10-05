@@ -42,7 +42,7 @@ sys$run({
         opt('c', 'cis_gene', 'poisson cis', '../cis_analysis/poisson.RData'), # ignored
         opt('g', 'ext_gene', 'cis assocs RData', '../cis_analysis/ext_gene.RData'),
         opt('s', 'cis_set', 'cis for sets', 'poisson_set.RData'),
-        opt('f', 'sets', 'RData for gene set', '../data/genesets/KEA_2015.RData'),
+        opt('f', 'sets', 'RData for gene set', '../data/genesets/mouse/KEA_2015.RData'),
         opt('o', 'outfile', 'aneuploidy assocs', 'ext_set_derived.RData'),
         opt('p', 'plotfile', 'pdf', 'ext_set_derived.pdf'))
 

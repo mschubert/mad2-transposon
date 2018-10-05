@@ -21,6 +21,7 @@ args = sys$cmd$parse(
     opt('f', 'flank', 'plot flank around gene', '10000'),
     opt('p', 'plotfile', 'PDF to save to', 'Erg.pdf'))
 
+all_genes = strsplit(args$gene, "+", fixed=TRUE)[[1]]
 meta = io$load(args$meta)
 de_ctgs = io$read_table(args$ctgs, header=TRUE)
 rna_ins = io$read_table(args$rna_ins, header=TRUE)
@@ -31,7 +32,7 @@ expr = DESeq2::DESeqDataSetFromMatrix(exons[,6:ncol(exons)],
     DESeq2::counts(normalized=TRUE)
 exons[,6:ncol(exons)] = expr
 exons = exons %>%
-    filter(gene_id == idmap$gene(args$gene, from="external_gene_name",
+    filter(gene_id %in% idmap$gene(all_genes, from="external_gene_name",
         to="ensembl_gene_id", dset="mmusculus_gene_ensembl")) %>%
     mutate(position = 1:dplyr::n() - 1,
            width = abs(start - end),
@@ -59,7 +60,7 @@ txdb = GenomicFeatures::makeTxDbFromGFF(args$gtf, format="gtf")
 grtrack = GeneRegionTrack(txdb, name=args$gene)
 gtrack = GenomeAxisTrack(name="GRCm38.92")
 genes = seq$coords$gene(dset="mmusculus_gene_ensembl", granges=TRUE) # get this out of txdb obj?
-region = genes[genes$external_gene_name == args$gene] %>%
+region = genes[genes$external_gene_name %in% all_genes] %>%
     anchor_5p() %>% stretch(as.integer(args$flank)) %>%
     anchor_3p() %>% stretch(as.integer(args$flank))
 aw = width(region) / 20
@@ -71,7 +72,7 @@ dna_ins = io$load(args$dna_ins) %>%
     as.data.frame() %>%
     mutate(strand = ifelse(strand == "-", -1L, 1L))
 
-rna_smp = rna_ins %>% filter(gene_name == args$gene) %>% pull(sample)
+rna_smp = rna_ins %>% filter(gene_name %in% all_genes) %>% pull(sample)
 use_samples = c(intersect(names(bams), c(rna_smp, dna_ins$sample)),
                 setdiff(names(bams), c(rna_smp, dna_ins$sample)))
 
@@ -101,7 +102,7 @@ for (sample_id in use_samples) {
     tracks = list(gtrack, grtrack)
     sizes = c(1, 2)
 
-    ci_rna = filter(rna_ins, sample==sample_id & gene_name==args$gene)
+    ci_rna = filter(rna_ins, sample==sample_id & gene_name %in% all_genes)
     ci_dna = filter(dna_ins, sample==sample_id)
     chr = unique(c(ci_rna$seqname, ci_dna$seqnames))
     if (nrow(ci_dna) > 0) {

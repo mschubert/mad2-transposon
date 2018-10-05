@@ -35,7 +35,7 @@ rule diff_expr:
         rscript = "de_{eset}.r",
         eset = "eset_{eset}.RData",
         config = "../config.yaml",
-        sets = sets(expand("{sets}.RData", sets=config['genesets']))
+        sets = sets(expand("mouse/{sets}.RData", sets=config['genesets']))
     output:
         result = "de_{eset}.RData",
         plot = "de_{eset}.pdf"
@@ -111,7 +111,7 @@ rule de_ins:
         config = "../config.yaml",
         cis = cis("poisson.RData"),
         net = net("E-GEOD-13159.RData"),
-        sets = sets(expand("{sets}.RData", sets=config['genesets']))
+        sets = sets(expand("mouse/{sets}.RData", sets=config['genesets']))
     output:
         result = "{ins_type}/{ins}.RData",
         plot = "{ins_type}_plots/{ins}.pdf"

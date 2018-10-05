@@ -27,7 +27,7 @@ rule set_overlap:
     input:
         rscript = "gene_overlap.r",
         select = "interesting_sets.yaml",
-        genesets = [genesets(x + ".RData") for x in config['genesets']]
+        genesets = [genesets("mouse" + x + ".RData") for x in config['genesets']]
     output:
         plot = "gene_overlap.pdf"
     shell:
