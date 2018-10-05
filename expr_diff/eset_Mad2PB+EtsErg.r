@@ -15,7 +15,7 @@ idx = colData(eset) %>%
     as.data.frame() %>%
     mutate(aneup0.3 = pmin(aneuploidy, 0.3),
            keep = type %in% c("T-cell", "Other") & !sample %in% c("401t", "403t", "612t", "631s", "477t"),
-           group = factor(DESeq2::counts(eset, normalized=TRUE)["ENSMUSG00000032035",] > 700))
+           group = factor(DESeq2::counts(eset, normalized=TRUE)["Ets1",] > 700))
 levels(idx$group) = c("Erg", "Ets1")
 idx$group = paste(idx$group, idx$tissue, sep=":")
 idx$group[!idx$keep] = NA

@@ -4,6 +4,10 @@ subworkflow rnaseq:
     workdir: "../data/rnaseq"
     snakefile: "../data/rnaseq/Snakefile"
 
+subworkflow mile:
+    workdir: "../data/arrayexpress"
+    snakefile: "../data/arrayexpress/Snakefile"
+
 subworkflow ploidy:
     workdir: "../ploidy_compare"
     snakefile: "../ploidy_compare/Snakefile"
@@ -90,7 +94,8 @@ rule eset_Mad2PBnoCopyCor:
 
 rule eset_MILE:
     input:
-        rscript = "eset_MILE.r"
+        rscript = "eset_MILE.r",
+        mile = mile("E-GEOD-13159.RData")
     output:
         result = "eset_MILE.RData",
         plot = "eset_MILE.pdf"
