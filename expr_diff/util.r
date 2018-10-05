@@ -27,12 +27,20 @@ extract_coef = function(res, coef, type="apeglm") {
 }
 
 plot_volcano = function(res, highlight=NULL) {
-    res %>%
-        mutate(label = gene_name,
-               circle = label %in% highlight,
-               size = log10(baseMean + 1)) %>%
-        plt$p_effect("padj", "log2FoldChange", thresh=0.1) %>%
-        plt$volcano(p=0.1, base.size=5, label_top=30, repel=TRUE)
+    if ("baseMean" %in% colnames(res))
+        df = res %>%
+            mutate(label = gene_name,
+                   circle = label %in% highlight,
+                   size = log10(baseMean + 1)) %>%
+            plt$p_effect("padj", "log2FoldChange", thresh=0.1)
+    else
+        df = res %>%
+            mutate(label = gene_name,
+                   circle = label %in% highlight,
+                   size = mean_expr) %>%
+            plt$p_effect("adj.p", "estimate", thresh=0.1)
+
+    plt$volcano(df, p=0.1, base.size=5, label_top=30, repel=TRUE)
 }
 
 do_wald = function(eset, fml, ex=NULL) {

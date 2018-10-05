@@ -18,7 +18,7 @@ lineage = narray::mask(dset$meta$lineage, along=2) + 0
 type = narray::mask(dset$meta$type) + 0
 aneuploidy = dset$meta$aneuploidy
 
-res = data.frame(gene_name = rownames(dset$expr)) %>%
+res = data.frame(gene_name = rownames(expr), mean_expr = rowMeans(expr)) %>%
     mutate(fit = purrr::map(gene_name, function(g)
         broom::tidy(lm(expr[g,] ~ lineage + type * aneuploidy)))) %>%
     tidyr::unnest() %>%
@@ -35,7 +35,7 @@ sets = io$load(args$sets) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
     lapply(function(x) gset$filter(x, min=5, valid=rownames(expr)))
 
-hl = io$read_yaml(args$config)$highlight_de
+hl = toupper(io$read_yaml(args$config)$highlight_de)
 
 pdf(args$plotfile)
 for (rname in names(res)) {
