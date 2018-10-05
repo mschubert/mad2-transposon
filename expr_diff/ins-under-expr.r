@@ -12,6 +12,7 @@ util = import('./util')
 
 args = sys$cmd$parse(
     opt('e', 'eset', 'gene expression RData', 'eset_Mad2PB.RData'),
+    opt('f', 'config', 'yaml', '../config.yaml'),
     opt('c', 'cis', 'cis RData', '../cis_analysis/poisson.RData'),
     opt('i', 'ins', 'gene name of insert', 'Erg'),
     opt('n', 'network', 'aracne', '../data/networks/E-GEOD-13159.RData'),
@@ -52,6 +53,8 @@ sets = io$load(args$sets) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
     lapply(function(x) gset$filter(x, min=5, valid=rownames(eset)))
 
+hl = io$read_yaml(args$config)$highlight_de
+
 pdf(args$plotfile)
 print(util$plot_pcs(idx, dset$pca, 1, 2, hl=cis$sample))
 
@@ -59,7 +62,7 @@ dviper = vp$diff_viper(dset$vs, net, eset$ins)
 dcor = vp$diff_cor(dset$vs, tf_net, eset$ins)
 print(vp$plot_subnet(dviper, dcor) + ggtitle("MI network"))
 
-print(util$plot_volcano(res) + ggtitle("gene"))
+print(util$plot_volcano(res, hl) + ggtitle("gene"))
 for (name in names(sets))
     print(util$plot_gset(res, sets[[name]]) + ggtitle(name))
 dev.off()

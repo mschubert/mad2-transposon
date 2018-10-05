@@ -16,3 +16,6 @@ genesets:
 
 ins_plots: [ Erg, Ets1, Arid2, Drg1, Crebbp, Xrcc6, Trp53, Eif4enif1, Sfi1,
     Ikzf1, Pten, Suz12, Notch1, Rapgef6, Nf1, Lrba, Stat1, Hs6st3 ]
+
+highlight_de: [ Erg, Ets1, Arid2, Crebbp, Trp53, Eif4enif1, Sox4, Pias1,
+    Ikzf1, Pten, Suz12, Notch1, Rapgef6, Nf1, Lrba, Stat1 ]

@@ -6,7 +6,7 @@ gset = import('data/genesets')
 
 args = sys$cmd$parse(
     opt('e', 'eset', 'gene expression RData', 'eset_Mad2PB+EtsErg.RData'),
-    opt('c', 'cis', 'cis site RData', '../cis_analysis/poisson.RData'), # ignored (for now)
+    opt('f', 'config', 'yaml', '../config.yaml'),
     opt('o', 'outfile', 'results RData', 'de_Mad2PB+EtsErg.RData'),
     opt('p', 'plotfile', 'pdf', 'de_Mad2PB+EtsErg.pdf'),
     arg('sets', 'gene set .RData', arity='*',
@@ -24,10 +24,12 @@ sets = io$load(args$sets) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
     lapply(function(x) gset$filter(x, min=5, valid=rownames(eset)))
 
+hl = io$read_yaml(args$config)$highlight_de
+
 pdf(args$plotfile)
 for (rname in names(res)) {
     message(rname)
-    print(util$plot_volcano(res[[rname]]) + ggtitle(rname))
+    print(util$plot_volcano(res[[rname]], hl) + ggtitle(rname))
     for (sname in names(sets)) {
         title = paste(rname, sname)
         message(title)

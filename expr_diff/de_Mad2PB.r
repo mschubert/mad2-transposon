@@ -10,15 +10,13 @@ util = import('./util')
 
 args = sys$cmd$parse(
     opt('e', 'eset', 'gene expression RData', 'eset_Mad2PB.RData'),
-    opt('c', 'cis', 'cis site RData', '../cis_analysis/poisson.RData'),
+    opt('c', 'config', 'yaml', '../config.yaml'),
     opt('o', 'outfile', 'results RData', 'de_Mad2PB.RData'),
     opt('p', 'plotfile', 'pdf', 'de_Mad2PB.pdf'),
     arg('sets', 'gene set .RData', arity='*',
         list.files("../data/genesets", "\\.RData", full.names=TRUE)))
 
 eset = io$load(args$eset)$eset
-cis = io$load(args$cis)
-cis_genes = cis$result %>% filter(adj.p < 1e-3) %>% pull(external_gene_name)
 
 # fit tissue of origin and pan-aneuploidy
 res = util$do_wald(eset, ~ tissue + type + aneuploidy, ex="tissue|aneuploidy")
@@ -49,10 +47,12 @@ sets = io$load(args$sets) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
     lapply(function(x) gset$filter(x, min=5, valid=rownames(eset)))
 
+hl = io$read_yaml(args$config)$highlight_de
+
 pdf(args$plotfile)
 for (rname in names(res)) {
     message(rname)
-    print(util$plot_volcano(res[[rname]], cis_genes) + ggtitle(rname))
+    print(util$plot_volcano(res[[rname]], hl) + ggtitle(rname))
     for (sname in names(sets)) {
         title = paste(rname, sname)
         message(title)
