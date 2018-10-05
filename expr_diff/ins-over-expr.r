@@ -45,7 +45,7 @@ res = DESeq2::estimateDispersions(eset) %>%
     DESeq2::nbinomLRT(reduced=~ tissue + type + expr, maxit=1000) %>%
     DESeq2::results() %>%
     as.data.frame() %>%
-    tibble::rownames_to_column("gene_name") %>%
+    tibble::rownames_to_column("gene_name")
 
 sets = io$load(args$sets) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
