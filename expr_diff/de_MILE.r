@@ -17,11 +17,12 @@ keep = !is.na(dset$meta$type)
 expr = dset$expr[,keep]
 #lineage = narray::mask(dset$meta$lineage, along=2) + 0
 type = cbind('(Intercept)' = 1, narray::mask(dset$meta$type[keep]))
-aneuploidy = pmin(dset$meta$aneuploidy, 0.25)
+#aneuploidy = pmin(dset$meta$aneuploidy[keep], 0.25)
+aneuploidy = (dset$meta$annot[keep] == "ALL with hyperdiploid karyotype") + 0
 
 res = data.frame(gene_name = rownames(expr), mean_expr = rowMeans(expr)) %>%
     mutate(fit = purrr::map(gene_name, function(g)
-        broom::tidy(lm(expr[g,] ~ type * aneuploidy)))) %>%
+        broom::tidy(lm(expr[g,] ~ type + aneuploidy)))) %>%
     tidyr::unnest() %>%
     filter(term != "(Intercept)") %>%
     group_by(term) %>%
