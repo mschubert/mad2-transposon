@@ -41,7 +41,7 @@ rule diff_expr:
         plot = "de_{eset}.pdf"
     resources:
         mem = 8000,
-        walltime = 120
+        walltime = 480
     shell:
         "Rscript {input.rscript}"
             " --eset {input.eset}"
