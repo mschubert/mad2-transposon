@@ -13,14 +13,15 @@ args = sys$cmd$parse(
         list.files("../data/genesets/mouse", "\\.RData", full.names=TRUE)))
 
 dset = io$load(args$eset)
-expr = dset$expr
-lineage = narray::mask(dset$meta$lineage, along=2) + 0
-type = narray::mask(dset$meta$type) + 0
-aneuploidy = dset$meta$aneuploidy
+keep = !is.na(dset$meta$type)
+expr = dset$expr[,keep]
+#lineage = narray::mask(dset$meta$lineage, along=2) + 0
+type = cbind('(Intercept)' = 1, narray::mask(dset$meta$type[keep]))
+aneuploidy = pmin(dset$meta$aneuploidy, 0.25)
 
 res = data.frame(gene_name = rownames(expr), mean_expr = rowMeans(expr)) %>%
     mutate(fit = purrr::map(gene_name, function(g)
-        broom::tidy(lm(expr[g,] ~ lineage + type * aneuploidy)))) %>%
+        broom::tidy(lm(expr[g,] ~ type * aneuploidy)))) %>%
     tidyr::unnest() %>%
     filter(term != "(Intercept)") %>%
     group_by(term) %>%
