@@ -15,16 +15,27 @@ args = sys$cmd$parse(
 dset = io$load(args$eset)
 keep = !is.na(dset$meta$type)
 expr = dset$expr[,keep]
-#lineage = narray::mask(dset$meta$lineage, along=2) + 0
-type = cbind('(Intercept)' = 1, narray::mask(dset$meta$type[keep]))
-#aneuploidy = pmin(dset$meta$aneuploidy[keep], 0.25)
-aneuploidy = (dset$meta$annot[keep] == "ALL with hyperdiploid karyotype") + 0
+type = cbind(narray::mask(dset$meta$type[keep]),
+     Hyperdip = (dset$meta$annot[keep] == "ALL with hyperdiploid karyotype")) + 0
+type[,"Hyperdip"][type[,"B_like"] == 0] = NA
+aneuploidy = pmin(dset$meta$aneuploidy[keep], 0.25)
 
-res = data.frame(gene_name = rownames(expr), mean_expr = rowMeans(expr)) %>%
-    mutate(fit = purrr::map(gene_name, function(g)
-        broom::tidy(lm(expr[g,] ~ type + aneuploidy)))) %>%
+edf = data.frame(gene_name = rownames(expr), mean_expr = rowMeans(expr), stringsAsFactors=FALSE)
+ttf = expand.grid(gene_name = rownames(expr), term = colnames(type), stringsAsFactors=FALSE)
+both = dplyr::inner_join(edf, ttf)
+assocs_type = both %>%
+    mutate(fit = purrr::map2(gene_name, term, function(g, t)
+        r1 = broom::tidy(lm(expr[g,] ~ type[,t]))))
+assocs_aneup = both %>%
+    filter(term != "Hyperdip") %>%
+    mutate(fit = purrr::map2(gene_name, term, function(g, t) {
+            smps = !is.na(type[,t]) & type[,t] == 1
+            broom::tidy(lm(expr[g,smps] ~ aneuploidy[smps]))
+        }), term = paste0("aneuploidy_in_", term))
+res = dplyr::bind_rows(assocs_type, assocs_aneup) %>%
     tidyr::unnest() %>%
-    filter(term != "(Intercept)") %>%
+    filter(term1 != "(Intercept)") %>%
+    select(-term1) %>%
     group_by(term) %>%
     mutate(adj.p = 2^-abs(statistic)) %>%
     arrange(adj.p) %>%
