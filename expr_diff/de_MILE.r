@@ -68,10 +68,9 @@ for (rname in names(res)) {
         cmp = as.integer(ac == "high")
     } else
         cmp = type[,rname]
-    dviper = viper$diff_viper(expr, net, cmp)
-    dcor = viper$diff_cor(expr, tf_net, cmp)
-    print(viper$plot_subnet(dviper, dcor, highlight=hl) +
-          ggtitle(paste(rname, "aneup_high_vs_low_tertile")))
+    dviper = viper$diff_viper(expr, net, cmp, fdr=0.3) %>% head(100)
+    dcor = viper$diff_cor(expr, tf_net, cmp, fdr=0.3)
+    print(viper$plot_subnet(dviper, dcor, highlight=hl) + ggtitle(rname))
 
     for (sname in names(sets)) {
         title = paste(rname, sname)
