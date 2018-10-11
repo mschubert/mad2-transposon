@@ -21,12 +21,8 @@ type = cbind(narray::mask(dset$meta$type[keep]),
      Hyperdip = (dset$meta$annot[keep] == "ALL with hyperdiploid karyotype")) + 0
 type[,"Hyperdip"][type[,"B_like"] == 0] = NA
 aneuploidy = pmin(dset$meta$aneuploidy[keep], 0.25)
-aneup_tert = dset$meta[keep,] %>% # move this to a column in meta (@eset)?
-    group_by(type) %>%
-    mutate(tert = cut(aneuploidy, breaks=3, labels=FALSE)) %>%
-    pull(tert) %>%
-    factor()
-levels(aneup_tert) = c("low", NA, "high")
+net = io$load(args$network)
+tf_net = filter(net, Target %in% Regulator)
 
 edf = data.frame(gene_name = rownames(expr), mean_expr = rowMeans(expr), stringsAsFactors=FALSE)
 ttf = expand.grid(gene_name = rownames(expr), term = colnames(type), stringsAsFactors=FALSE)
@@ -63,12 +59,17 @@ for (rname in names(res)) {
     message(rname)
     print(util$plot_volcano(res[[rname]], hl) + ggtitle(rname))
 
-    if (grepl("aneuploidy_in_", rname))
-        cmp = aneup_tert[type[,sub("aneuploidy_in_", "", rname)]]
-    else
+    if (grepl("aneuploidy_in_", rname)) {
+        tname = sub("aneuploidy_in_", "", rname)
+        cmp = ifelse(type[,tname], aneuploidy, NA)
+        aq = quantile(cmp, c(0, 0.33, 0.66, 1), na.rm=TRUE)
+        ac = cut(cmp, aq, include.lowest=TRUE)
+        levels(ac) = c("low", NA, "high")
+        cmp = as.integer(ac == "high")
+    } else
         cmp = type[,rname]
-    dviper = viper$diff_viper(expr, net, tmat[,cond])
-    dcor = viper$diff_cor(expr, tf_net, tmat[,cond])
+    dviper = viper$diff_viper(expr, net, cmp)
+    dcor = viper$diff_cor(expr, tf_net, cmp)
     print(viper$plot_subnet(dviper, dcor, highlight=hl) +
           ggtitle(paste(rname, "aneup_high_vs_low_tertile")))
 
