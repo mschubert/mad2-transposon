@@ -11,6 +11,7 @@ util = import('./util')
 args = sys$cmd$parse(
     opt('e', 'eset', 'gene expression RData', 'eset_Mad2PB.RData'),
     opt('c', 'config', 'yaml', '../config.yaml'),
+    opt('n', 'network', 'RData', '../data/networks/E-GEOD-13159.RData'), # ignored
     opt('o', 'outfile', 'results RData', 'de_Mad2PB.RData'),
     opt('p', 'plotfile', 'pdf', 'de_Mad2PB.pdf'),
     arg('sets', 'gene set .RData', arity='*',

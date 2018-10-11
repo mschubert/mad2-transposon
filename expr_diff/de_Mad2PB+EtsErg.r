@@ -7,6 +7,7 @@ gset = import('data/genesets')
 args = sys$cmd$parse(
     opt('e', 'eset', 'gene expression RData', 'eset_Mad2PB+EtsErg.RData'),
     opt('f', 'config', 'yaml', '../config.yaml'),
+    opt('n', 'network', 'RData', '../data/networks/E-GEOD-13159.RData'), # ignored
     opt('o', 'outfile', 'results RData', 'de_Mad2PB+EtsErg.RData'),
     opt('p', 'plotfile', 'pdf', 'de_Mad2PB+EtsErg.pdf'),
     arg('sets', 'gene set .RData', arity='*',

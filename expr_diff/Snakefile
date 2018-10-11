@@ -35,6 +35,7 @@ rule diff_expr:
         rscript = "de_{eset}.r",
         eset = "eset_{eset}.RData",
         config = "../config.yaml",
+        network = net("E-GEOD-13159.RData"),
         sets = sets(expand("mouse/{sets}.RData", sets=config['genesets']))
     output:
         result = "de_{eset}.RData",
@@ -46,6 +47,7 @@ rule diff_expr:
         "Rscript {input.rscript}"
             " --eset {input.eset}"
             " --config {input.config}"
+            " --network {input.network}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"
             " {input.sets}"
@@ -110,7 +112,7 @@ rule de_ins:
         eset = "eset_Mad2PB.RData",
         config = "../config.yaml",
         cis = cis("poisson.RData"),
-        net = net("E-GEOD-13159.RData"),
+        network = net("E-GEOD-13159.RData"),
         sets = sets(expand("mouse/{sets}.RData", sets=config['genesets']))
     output:
         result = "{ins_type}/{ins}.RData",
@@ -124,7 +126,7 @@ rule de_ins:
             " --config {input.config}"
             " --cis {input.cis}"
             " --ins {wildcards.ins}"
-            " --network {input.net}"
+            " --network {input.network}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"
             " {input.sets}"
