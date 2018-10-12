@@ -138,12 +138,20 @@ sys$run({
             pull(external_gene_name) %>%
             idmap$orthologue(from="external_gene_name", to="hgnc_symbol",
                              dset="mmusculus_gene_ensembl")
-    } else {
+    } else if (grepl("E-GEOD", args$expr)) {
         types = Biobase::pData(dset)$FactorValue..LEUKEMIA.CLASS.
         expr = Biobase::exprs(dset)
         rownames(expr) = idmap$gene(rownames(expr), to="hgnc_symbol")
         expr = expr[!is.na(rownames(expr)),]
         highlight = c()
+    } else {
+        # copied from ../diff_expr/de_MILE.r
+        keep = !is.na(dset$meta$type)
+        expr = dset$expr[,keep]
+        types = cbind(narray::mask(dset$meta$type[keep]),
+            Hyperdip = (dset$meta$annot[keep] == "ALL with hyperdiploid karyotype")) + 0
+        types[,"Hyperdip"][types[,"B_like"] == 0] = NA
+#        aneuploidy = pmin(dset$meta$aneuploidy[keep], 0.25)
     }
 
     tmat = narray::mask(types, along=2) + 0

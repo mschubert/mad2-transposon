@@ -10,18 +10,10 @@ args = sys$cmd$parse(
 )
 
 sets = io$load(args$geneset)
-
 dset = io$load(args$expr)
-if (is.list(dset)) {
-    expr = dset$expr
-    rownames(expr) = idmap$gene(rownames(expr), to="mgi_symbol", dset="mmusculus_gene_ensembl")
-    expr = expr[!is.na(rownames(expr)),]
-} else {
-    expr = Biobase::exprs(dset)
-    rownames(expr) = idmap$orthologue(rownames(expr), to="mgi_symbol")
-    expr = expr[!is.na(rownames(expr)),]
-}
+expr = Biobase::exprs(dset)
+rownames(expr) = idmap$orthologue(rownames(expr), to="mgi_symbol")
+expr = expr[!is.na(rownames(expr)),]
 
 scores = GSVA::gsva(expr, sets, parallel.sz=1)
-
 save(scores, file=args$outfile)

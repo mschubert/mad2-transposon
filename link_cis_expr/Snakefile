@@ -10,7 +10,14 @@ subworkflow network:
 
 expr = {
     'mile' : '../data/arrayexpress/E-GEOD-13159.RData',
+    'mile2' : '../expr_diff/eset_MILE.RData',
     'mad2pb' : '../data/rnaseq/assemble.RData'
+}
+
+expr_org = {
+    'mile' : 'human',
+    'mile2' : 'human',
+    'mad2pb' : 'mouse'
 }
 
 rule all:
@@ -27,7 +34,7 @@ rule set_overlap:
     input:
         rscript = "gene_overlap.r",
         select = "interesting_sets.yaml",
-        genesets = [genesets("mouse" + x + ".RData") for x in config['genesets']]
+        genesets = genesets([genesets("mouse/" + x + ".RData") for x in config['genesets']])
     output:
         plot = "gene_overlap.pdf"
     shell:
@@ -38,8 +45,8 @@ rule set_overlap:
 
 rule gsva_set:
     input:
-        rscript = "set_gsva.r",
-        geneset = genesets("{set}.RData"),
+        rscript = "gsva_{expr}.r",
+        geneset = lambda wc: genesets(expr_org[wc.expr] + "/{set}.RData"),
         expr = lambda wc: expr[wc.expr]
     output:
         scores = "gsva_{expr}/{set}.RData"

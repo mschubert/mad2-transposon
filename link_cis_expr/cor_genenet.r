@@ -91,8 +91,7 @@ plot_pcor_table = function(pm, field="aneuploidy") {
                   #pval = metap::two2one(pval, invert=pcor<0),
                   fdr = sprintf("%.2g", p.adjust(pval, method="fdr")))
 
-    gridExtra::grid.arrange(top=paste("Full-rank partial correlations with aneuploidy (two-sided test)",
-                            "For each PRMT, this accounts for all others", sep="\n\n"),
+    gridExtra::grid.arrange(top="Full-rank partial correlations with aneuploidy (two-sided test)",
                             gridExtra::tableGrob(res))
 }
 
@@ -111,10 +110,18 @@ sys$run({
         types = dset$idx$type
         expr = dset$expr[match(c("Ets1", "Erg"), dset$genes),]
         rownames(expr) = c("Ets1", "Erg")
-    } else {
+    } else if (grepl("E-GEOD", args$expr)) {
         types = Biobase::pData(dset)$FactorValue..LEUKEMIA.CLASS.
         expr = Biobase::exprs(dset)[c("ENSG00000134954", "ENSG00000157554"),]
         rownames(expr) = c("ETS1", "ERG")
+    } else {
+        # copied from ../diff_expr/de_MILE.r
+        keep = !is.na(dset$meta$type)
+        expr = dset$expr[,keep]
+        types = cbind(narray::mask(dset$meta$type[keep]),
+            Hyperdip = (dset$meta$annot[keep] == "ALL with hyperdiploid karyotype")) + 0
+        types[,"Hyperdip"][types[,"B_like"] == 0] = NA
+#        aneuploidy = pmin(dset$meta$aneuploidy[keep], 0.25)
     }
 
     select = io$read_yaml(args$select)$expr_sets
