@@ -46,7 +46,7 @@ rule set_overlap:
 rule gsva_set:
     input:
         rscript = "gsva_{expr}.r",
-        geneset = lambda wc: genesets(expr_org[wc.expr] + "/{set}.RData"),
+        geneset = lambda wc: genesets(expr_org[wc.expr] + "/" + wc.set + ".RData"),
         expr = lambda wc: expr[wc.expr]
     output:
         scores = "gsva_{expr}/{set}.RData"
