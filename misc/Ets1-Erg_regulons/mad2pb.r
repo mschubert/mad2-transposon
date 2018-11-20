@@ -31,10 +31,21 @@ regs = c(tfs[c('ETS1_ENCODE', 'ERG_CHEA')], mi[c('ETS1', 'ERG')]) %>%
 names(regs) = c("ETS1_chip", "ERG_chip", "ETS1_mi", "ERG_mi")
 scores = GSVA::gsva(expr, regs)
 idx = cbind(meta, t(scores),
-            Erg_expr=expr["Erg",], Ets1_expr=expr["Ets1",])
+            Erg_expr=expr["Erg",], Ets1_expr=expr["Ets1",],
+            Etv6_expr=expr["Etv6",], Elf1_expr=expr["Elf1",])
 
 pdf(args$plotfile)
 ggplot(idx, aes(x=Erg_expr, y=Ets1_expr)) +
+    geom_point(aes(size=aneuploidy, fill=type), shape=21) +
+    ggrepel::geom_text_repel(aes(label=sample), size=2) +
+    ggtitle("TF expression")
+
+ggplot(idx, aes(x=Etv6_expr, y=Elf1_expr)) +
+    geom_point(aes(size=aneuploidy, fill=type), shape=21) +
+    ggrepel::geom_text_repel(aes(label=sample), size=2) +
+    ggtitle("TF expression")
+
+ggplot(idx, aes(x=Etv6_expr, y=Erg_expr)) +
     geom_point(aes(size=aneuploidy, fill=type), shape=21) +
     ggrepel::geom_text_repel(aes(label=sample), size=2) +
     ggtitle("TF expression")
