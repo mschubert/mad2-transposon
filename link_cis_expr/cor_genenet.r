@@ -120,7 +120,7 @@ sys$run({
     } else {
         # copied from ../diff_expr/de_MILE.r
         keep = !is.na(dset$meta$type)
-        expr = dset$expr[,keep]
+        expr = dset$expr[c("ETS1", "ERG"),keep]
         types = cbind(narray::mask(dset$meta$type[keep]),
             Hyperdip = (dset$meta$annot[keep] == "ALL with hyperdiploid karyotype")) + 0
         types[,"Hyperdip"][types[,"B_like"] == 0] = NA
@@ -131,9 +131,14 @@ sys$run({
     sets = io$load(args$genesets)
     sets = lapply(names(select), function(s) sets[[s]][select[[s]],,drop=FALSE])
 
-    mat = narray::stack(c(sets, list(expr)), along=1)
-    tmat = narray::split(mat, along=2, subsets=types)
-    mat2 = rbind(mat, narray::mask(types, along=1) + 0)
+    mat = narray::stack(c(sets, list(expr)), along=1)[,colnames(expr)]
+    if (is.character(types)) {
+        tmat = narray::split(mat, along=2, subsets=types)
+        mat2 = rbind(mat, narray::mask(types, along=1) + 0)
+    } else {
+        tmat = lapply(colnames(types), function(t) mat[types[,t],])
+        mat2 = rbind(mat, na.omit(t(types)))
+    }
 
     pdf(args$plotfile, 20, 15)
     plot_cor_matrix(t(mat2), text_color=NULL)
