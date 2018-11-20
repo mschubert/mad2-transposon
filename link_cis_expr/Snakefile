@@ -67,6 +67,9 @@ rule cor_genenet:
         genesets = expand("gsva_{{expr}}/{sets}.RData", sets=config['genesets'])
     output:
         plot = "genenet_{expr}.pdf"
+    resources:
+        mem = 10240,
+        walltime = 240
     shell:
         "Rscript {input.rscript}"
             " --select {input.select}"
@@ -81,6 +84,9 @@ rule cor_viper:
         net = network("E-GEOD-13159.RData")
     output:
         plot = "viper_{expr}.pdf"
+    resources:
+        mem = 10240,
+        walltime = 240
     shell:
         "Rscript {input.rscript}"
             " --expr {input.expr}"
