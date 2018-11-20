@@ -7,7 +7,7 @@ sys = import('sys')
 st = import('stats')
 
 plot_cor_matrix = function(mat, title="", text_color="black") {
-#    p.mat = st$cor$test(mat)
+    p.mat = st$cor$test(mat)
     cmat = cor(mat)
 
     col = colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
@@ -15,8 +15,7 @@ plot_cor_matrix = function(mat, title="", text_color="black") {
              order="hclust", mar=c(0,0,2,0), # title cut off otherwise
              addCoef.col = text_color, # add coefficient of correlation
              tl.col="black", tl.srt=45, #text label color and rotation
-#             p.mat = p.mat, sig.level = 0.05, insig = "blank",
-#             diag=FALSE, type="upper"
+             p.mat = p.mat, sig.level = 0.05, insig = "pch", pch.col = "white"
     )
 }
 
@@ -97,6 +96,7 @@ plot_pcor_table = function(pm, field="aneuploidy") {
 
 sys$run({
     args = sys$cmd$parse(
+        opt('m', 'meta', 'sample metadata', '../ploidy_compare/analysis_set.RData'), # only mad2pb
         opt('s', 'select', 'yaml', 'interesting_sets.yaml'),
         opt('e', 'expr', 'expr RData', '../data/rnaseq/assemble.RData'),
         opt('p', 'plotfile', 'pdf', 'genenet_mad2pb.pdf'),
@@ -110,6 +110,9 @@ sys$run({
         types = dset$idx$type
         expr = dset$expr[match(c("Ets1", "Erg"), dset$genes),]
         rownames(expr) = c("Ets1", "Erg")
+        meta = io$load(args$meta)
+        aneup0.3 = pmin(meta$aneuploidy[match(colnames(expr), meta$sample)], 0.3)
+        expr = rbind(expr, aneup0.3)
     } else if (grepl("E-GEOD", args$expr)) {
         types = Biobase::pData(dset)$FactorValue..LEUKEMIA.CLASS.
         expr = Biobase::exprs(dset)[c("ENSG00000134954", "ENSG00000157554"),]
