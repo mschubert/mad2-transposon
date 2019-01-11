@@ -54,12 +54,15 @@ corrplot::corrplot(corr)
 print(p1)
 print(p2)
 print(p3)
-other = both %>% filter(type == "Other")
+other = both %>%
+    mutate(Erg = expr$vs["Erg",]) %>%
+    filter(type == "Other")
 lmt = lm(`STAT1_20625510_ChIP-Seq_HELA_Human` ~ aneuploidy, data=other) %>%
     broom::tidy() %>% filter(term == "aneuploidy") # need more pts for wilcox
 ggplot(other, aes(x=`STAT1_20625510_ChIP-Seq_HELA_Human` > 0, y=aneuploidy)) +
     geom_boxplot() +
-    ggbeeswarm::geom_quasirandom(size=5) +
+    ggbeeswarm::geom_quasirandom(aes(size=Erg)) +
+    ggrepel::geom_text_repel(aes(label=sample), position=ggbeeswarm::position_quasirandom()) +
     labs(title = "Other Stat1 activity with aneuploidy",
          subtitle = paste("lm p =", round(lmt$p.value, 4)))
 print(p4)
