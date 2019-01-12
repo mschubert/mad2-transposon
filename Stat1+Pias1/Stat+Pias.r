@@ -1,4 +1,5 @@
 io = import('io')
+st = import('stats')
 plt = import('plot')
 enr = import('tools/enrichr')
 
@@ -8,10 +9,10 @@ genes = c("Stat1", "Pias1", "Mb21d1", "Ifng", "Ifngr1")
 
 chea = enr$genes("ChEA_2016")
 sets = c("STAT1_20625510_ChIP-Seq_HELA_Human",
-         "STAT1_17558387_ChIP-Seq_HELA_Human")#,
+         "STAT1_17558387_ChIP-Seq_HELA_Human")
 gsva = GSVA::gsva(expr$vs, chea[sets])
 
-scores = rbind(expr$vs[genes,], scores)
+scores = rbind(expr$vs[genes,], gsva)
 
 # expression changes with insertions (in different subtypes)
 cis = io$load("../cis_analysis/poisson.RData")$samples %>%
@@ -54,17 +55,17 @@ corrplot::corrplot(corr)
 print(p1)
 print(p2)
 print(p3)
-other = both %>%
-    mutate(Erg = expr$vs["Erg",]) %>%
-    filter(type == "Other")
-lmt = lm(`STAT1_20625510_ChIP-Seq_HELA_Human` ~ aneuploidy, data=other) %>%
-    broom::tidy() %>% filter(term == "aneuploidy") # need more pts for wilcox
+other = both %>% mutate(Erg = expr$vs["Erg",])
+# lmt = st$lm(`STAT1_20625510_ChIP-Seq_HELA_Human` ~ aneuploidy,
+#             subsets=other$type, data=other) %>% tbl_df() %>%
+#     broom::tidy()
+# print(lmt)
 ggplot(other, aes(x=`STAT1_20625510_ChIP-Seq_HELA_Human` > 0, y=aneuploidy)) +
     geom_boxplot() +
-    ggbeeswarm::geom_quasirandom(aes(size=Erg)) +
+    ggbeeswarm::geom_quasirandom(aes(size=Erg, shape=ins)) +
     ggrepel::geom_text_repel(aes(label=sample), position=ggbeeswarm::position_quasirandom()) +
-    labs(title = "Other Stat1 activity with aneuploidy",
-         subtitle = paste("lm p =", round(lmt$p.value, 4)))
+    facet_wrap(~type) +
+    labs(title = "Stat1 activity with aneuploidy")
 print(p4)
 print(p5)
 dev.off()
