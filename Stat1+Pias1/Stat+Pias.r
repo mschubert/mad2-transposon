@@ -62,9 +62,9 @@ other = both %>% mutate(Erg = expr$vs["Erg",])
 # print(lmt)
 ggplot(other, aes(x=`STAT1_20625510_ChIP-Seq_HELA_Human` > 0, y=aneuploidy)) +
     geom_boxplot() +
-    ggbeeswarm::geom_quasirandom(aes(size=Erg, shape=ins)) +
+    ggbeeswarm::geom_quasirandom(aes(size=Erg, shape=ins, color=type)) +
     ggrepel::geom_text_repel(aes(label=sample), position=ggbeeswarm::position_quasirandom()) +
-    facet_wrap(~type) +
+    facet_wrap(~type, nrow=1, scales="free_y") +
     labs(title = "Stat1 activity with aneuploidy")
 print(p4)
 print(p5)
