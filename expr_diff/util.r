@@ -60,7 +60,6 @@ do_wald = function(eset, fml, ex=NULL) {
 do_lrt = function(eset, fml, red) {
     design(eset) = fml
     DESeq2::estimateDispersions(eset) %>%
-        DESeq2::nbinomWaldTest(maxit=1000) %>%
         DESeq2::nbinomLRT(reduced=red, maxit=1000) %>%
         DESeq2::results() %>%
         as.data.frame() %>%
