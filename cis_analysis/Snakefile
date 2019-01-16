@@ -66,6 +66,7 @@ rule bionet:
         cis = "poisson.RData",
         aneup = "ext_gene.RData"
     output:
+        result = "bionet.RData",
         plot = "bionet.pdf"
     shell:
         "Rscript {input.rscript}"

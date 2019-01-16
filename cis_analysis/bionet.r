@@ -45,12 +45,7 @@ plot_net = function(net, node_aes, ...) {
 plot_net_overlay = function(net, ov) {
     if (igraph::vcount(net) == 0)
         return(patchwork::plot_spacer())
-    net %>%
-        as_tbl_graph() %>%
-        activate(nodes) %>%
-        mutate(p.value = ov$p.value[match(name, toupper(ov$external_gene_name))],
-               statistic = ov$statistic[match(name, toupper(ov$external_gene_name))],
-               adj.p = p.adjust(p.value, method="fdr")) %>%
+    get_node_stats(net, ov) %>%
         plot_net(aes(size=n_smp, fill=statistic, stroke=p.value<0.05,
                      color=p.value<0.05), shape=21) +
             scale_fill_gradient2(low="red", mid="white", high="blue", midpoint=0) +
@@ -58,10 +53,25 @@ plot_net_overlay = function(net, ov) {
                                values=c("white", "black"))
 }
 
+#' Return the node statistics as data.frame
+#'
+#' @param net  ggraph-compatible network object
+#' @param ov  data.frame with fields: external_gene_name, statistic
+#' @return  data.frame with association statistics
+get_node_stats = function(net, ov) {
+    net %>%
+        as_tbl_graph() %>%
+        activate(nodes) %>%
+        mutate(p.value = ov$p.value[match(name, toupper(ov$external_gene_name))],
+               statistic = ov$statistic[match(name, toupper(ov$external_gene_name))],
+               adj.p = p.adjust(p.value, method="fdr")) 
+}
+
 sys$run({
     args = sys$cmd$parse(
         opt('c', 'cis', 'gene-level poisson', '../cis_analysis/poisson.RData'),
         opt('a', 'aneup', 'aneup assocs', 'ext_gene.RData'),
+        opt('o', 'outfile', 'network data', 'bionet.RData'),
         opt('p', 'plotfile', 'pdf', 'bionet.pdf'))
 
     aneup = io$load(args$aneup)
@@ -79,6 +89,8 @@ sys$run({
         bionet(net, mutate(a, name=toupper(external_gene_name), adj.p = NA, n_smp=size),
                thresh=0.2, var="p.value")
     })
+    assocs = mapply(get_node_stats, net=ext_nets, ov=aneup)
+    save(assocs, file=args$outfile)
 
     pdf(args$plotfile)
     print(plot_net(cis_net, aes(size=n_smp)))
