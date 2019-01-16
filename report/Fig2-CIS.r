@@ -64,7 +64,9 @@ p1 = ggplot(cis_samples, aes(x=sample, y=external_gene_name)) +
     scale_fill_manual(values=c("maroon4", "navy", "springgreen4")) +
     theme(axis.text.x = element_text(angle=90, vjust=0.5),
           legend.position = "left",
-          legend.justification = "right")
+          legend.justification = "right") +
+    labs(x = "Sample",
+         y = "Transposon-inserted gene")
 
 p11 = mutate(aneup, sample=factor(sample, smplvl)) %>%
     filter(!is.na(sample)) %>%
@@ -76,7 +78,8 @@ p11 = mutate(aneup, sample=factor(sample, smplvl)) %>%
           axis.ticks.x = element_blank(),
           axis.line.x = element_blank(),
           legend.position = "left",
-          legend.justification = "right")
+          legend.justification = "right") +
+    labs(y = "Aneuploidy")
 
 p12 = ggplot(cis_stats, aes(x=external_gene_name, y=-log10(adj.p))) +
     geom_bar(stat="identity") +
@@ -86,9 +89,10 @@ p12 = ggplot(cis_stats, aes(x=external_gene_name, y=-log10(adj.p))) +
     theme(axis.title.y = element_blank(),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          axis.line.y = element_blank())
+          axis.line.y = element_blank()) +
+    labs(y = "-log FDR")
 
-p11 + plot_spacer() + p1 + p12 + plot_layout(widths=c(5,1), heights=c(1,5))
+panelb = p11 + plot_spacer() + p1 + p12 + plot_layout(widths=c(5,1), heights=c(1,5))
 
 p2 = ggplot(types, aes(x=forcats::fct_reorder(external_gene_name, statistic), y=statistic)) +
     geom_hline(yintercept=0, color="grey", linetype="dashed") +
@@ -96,11 +100,19 @@ p2 = ggplot(types, aes(x=forcats::fct_reorder(external_gene_name, statistic), y=
     geom_text(aes(label=external_gene_name, y=statistic/2)) +
     coord_flip() +
     facet_wrap(~ subset, scales="free_y") +
-    theme(axis.text.y = element_blank(),
+    theme(axis.title.y = element_blank(),
+          axis.text.y = element_blank(),
           axis.line = element_blank(),
           axis.ticks.y = element_blank()) +
     guides(fill = FALSE) +
-    labs(y = "Wald statistic",
-         x = "Gene")
+    labs(y = "Wald statistic")
 
+panelc = p2
+panela = plot_spacer()
 
+pdf("Fig2-CIS.pdf", 14, 12)
+{
+{ panelc + plot_spacer() + plot_layout(widths=c(1,2)) } /
+{ panelb }
+} + plot_layout(heights=c(1,3), ncol=1, guides="collect")
+dev.off()
