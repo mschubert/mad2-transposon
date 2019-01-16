@@ -48,12 +48,16 @@ cis_stats = cis_result %>%
     mutate(external_gene_name = factor(external_gene_name, levels=genelvl)) %>%
     filter(!is.na(external_gene_name))
 
+lvl = setNames(c("Myeloid", "T-ALL", "B-like", "Aneuploidy"),
+               c("Myeloid", "T-cell", "Other", "aneuploidy"))
 types = bind_rows(ext) %>%
-    filter(subset %in% c("Myeloid", "T-cell", "Other")) %>%
-    filter(toupper(external_gene_name) %in% bionet) %>%
+    filter(subset %in% names(lvl),
+           toupper(external_gene_name) %in% bionet) %>%
     arrange(p.value) %>%
     group_by(subset) %>%
     top_n(4, -p.value)
+types$subset = unname(lvl[types$subset])
+types$subset = factor(types$subset, levels=unname(lvl))
 
 p1 = ggplot(cis_samples, aes(x=sample, y=external_gene_name)) +
     geom_tile(aes(fill=ins_type, alpha=gene_read_frac)) +
