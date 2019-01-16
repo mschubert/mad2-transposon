@@ -58,22 +58,31 @@ types = bind_rows(ext) %>%
 p1 = ggplot(cis_samples, aes(x=sample, y=external_gene_name)) +
     geom_tile(aes(fill=ins_type, alpha=gene_read_frac)) +
     scale_fill_manual(values=c("maroon4", "navy", "springgreen4")) +
-    theme(axis.text.x = element_text(angle=90, vjust=0.5))
+    theme(axis.text.x = element_text(angle=90, vjust=0.5),
+          legend.position = "left",
+          legend.justification = "right")
 
 p11 = mutate(aneup, sample=factor(sample, smplvl)) %>%
     filter(!is.na(sample)) %>%
     ggplot(aes(x=sample, y=aneuploidy, fill=type)) +
     geom_bar(stat="identity") +
+    geom_hline(yintercept=0.2, color="grey", linetype="dotted") +
     theme(axis.title.x = element_blank(),
           axis.text.x = element_blank(),
           axis.ticks.x = element_blank(),
-          axis.line.x = element_blank())
+          axis.line.x = element_blank(),
+          legend.position = "left",
+          legend.justification = "right")
 
 p12 = ggplot(cis_stats, aes(x=external_gene_name, y=-log10(adj.p))) +
     geom_bar(stat="identity") +
     scale_x_discrete(position="top") +
     coord_flip() +
-    theme(axis.title.y = element_blank())
+    geom_hline(yintercept=3, color="grey", linetype="dotted") +
+    theme(axis.title.y = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks.y = element_blank(),
+          axis.line.y = element_blank())
 
 p11 + plot_spacer() + p1 + p12 + plot_layout(widths=c(5,1), heights=c(1,5))
 
