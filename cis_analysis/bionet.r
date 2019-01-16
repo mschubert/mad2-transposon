@@ -89,7 +89,7 @@ sys$run({
         bionet(net, mutate(a, name=toupper(external_gene_name), adj.p = NA, n_smp=size),
                thresh=0.2, var="p.value")
     })
-    assocs = mapply(get_node_stats, net=ext_nets, ov=aneup)
+    assocs = mapply(get_node_stats, net=ext_nets, ov=aneup, SIMPLIFY=FALSE)
     save(assocs, file=args$outfile)
 
     pdf(args$plotfile)
