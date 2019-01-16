@@ -64,7 +64,7 @@ get_node_stats = function(net, ov) {
         activate(nodes) %>%
         mutate(p.value = ov$p.value[match(name, toupper(ov$external_gene_name))],
                statistic = ov$statistic[match(name, toupper(ov$external_gene_name))],
-               adj.p = p.adjust(p.value, method="fdr")) 
+               adj.p = p.adjust(p.value, method="fdr"))
 }
 
 sys$run({
@@ -89,8 +89,7 @@ sys$run({
         bionet(net, mutate(a, name=toupper(external_gene_name), adj.p = NA, n_smp=size),
                thresh=0.2, var="p.value")
     })
-    assocs = mapply(get_node_stats, net=ext_nets, ov=aneup, SIMPLIFY=FALSE)
-    save(assocs, file=args$outfile)
+    save(cis_net, file=args$outfile)
 
     pdf(args$plotfile)
     print(plot_net(cis_net, aes(size=n_smp)))
