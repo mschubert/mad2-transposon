@@ -11,7 +11,7 @@ args = sys$cmd$parse(
     opt('o', 'outfile', 'results RData', 'eset_Mad2PB+multiCIS.RData'),
     opt('p', 'plotfile', 'pdf', 'eset_Mad2PB+multiCIS.pdf'))
 
-inc_ins = c("Ets1", "Erg", "Stat1", "Pias1", "Mb21d1", "Ifng", "Ifngr1",
+inc_ins = c("Ets1", "Erg", "Stat1", "Pias1", "Mb21d1", "Ifngr1",
             "Ikzf1", "Trp53", "Rapgef6", "Pten", "Foxn3", "Crebbp",
             "Rpl5", "Cbx5", "Sp3", "Xrcc6", "Notch1")
 
@@ -26,11 +26,12 @@ meta = SummarizedExperiment::colData(dset$eset) %>%
     as.data.frame() %>%
     mutate(aneup0.2 = pmin(aneuploidy, 0.2))
 keep = meta$sample %in% rownames(cis)
-meta = cbind(meta[keep,], cis[meta$sample[keep],])
+cis = cis[meta$sample[keep],]
+idx = cbind(meta[keep,], cis)
 
 vs = dset$vs[,keep]
 eset = dset$eset[,keep]
-eset@colData = DataFrame(meta)
+eset@colData = DataFrame(idx)
 
 pdf(args$plotfile)
 pca = prcomp(t(vs[apply(vs, 1, var) > 0,]), center=TRUE, scale=FALSE)
@@ -39,4 +40,4 @@ print(util$plot_pcs(idx, pca, 3, 4))
 print(util$plot_pcs(idx, pca, 5, 6))
 dev.off()
 
-save(eset, vs, pca, file=args$outfile)
+save(eset, vs, pca, cis, inc_ins, file=args$outfile)
