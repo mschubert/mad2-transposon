@@ -26,7 +26,8 @@ subworkflow net:
 
 rule all:
     input:
-        expand("de_{eset}.pdf", eset=['Mad2PB', 'Mad2PB+EtsErg', 'Mad2PB+noCopyCor', 'MILE']),
+        expand("de_{eset}.pdf", eset=['Mad2PB', 'Mad2PB+EtsErg', 'Mad2PB+noCopyCor',
+            'Mad2PB+multiCIS', 'MILE']),
         expand("{ins_type}_plots/{ins}.pdf", ins=config['ins_plots'],
                 ins_type=['ins', 'ins+aneup', 'ins-over-expr', 'ins-under-expr'])
 
@@ -63,6 +64,21 @@ rule eset_Mad2PBEtsErg:
     shell:
         "Rscript {input.rscript}"
             " --eset {input.eset}"
+            " --outfile {output.result}"
+            " --plotfile {output.plot}"
+
+rule eset_Mad2PBmultiCIS:
+    input:
+        rscript = "eset_Mad2PB+multiCIS.r",
+        eset = "eset_Mad2PB.RData",
+        cis = cis("poisson.RData")
+    output:
+        result = "eset_Mad2PB+multiCIS.RData",
+        plot = "eset_Mad2PB+multiCIS.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --eset {input.eset}"
+            " --cis {input.cis}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"
 
