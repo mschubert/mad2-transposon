@@ -67,6 +67,7 @@ diff_viper = function(expr, net, condition, nperm=1000, ledge=FALSE, shadow=FALS
     if (shadow) {
         shd = viper::shadow(mrs)$shadow
         # add shadow col to re
+        stop("not implemented")
     }
     re
 }
@@ -75,7 +76,8 @@ diff_viper = function(expr, net, condition, nperm=1000, ledge=FALSE, shadow=FALS
 #'
 #' @param ...
 #' @return
-sample_viper = function() {
+sample_viper = function(...) {
+    stop("not implemented")
 }
 
 #' Plot a network of different activity, expression, and correlation
