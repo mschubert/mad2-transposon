@@ -1,0 +1,41 @@
+configfile: "../config.yaml"
+
+subworkflow genesets:
+    workdir: "../data/genesets"
+    snakefile: "../data/genesets/Snakefile"
+
+subworkflow network:
+    workdir: "../data/networks"
+    snakefile: "../data/networks/Snakefile"
+
+expr = {
+    'mile' : '../data/arrayexpress/E-GEOD-13159.RData',
+    'mile2' : '../expr_diff/eset_MILE.RData',
+    'mad2pb' : '../data/rnaseq/assemble.RData'
+}
+
+expr_org = {
+    'mile' : 'human',
+    'mile2' : 'human',
+    'mad2pb' : 'mouse'
+}
+
+rule all:
+    input:
+        expand("gsva_{expr}/{set}.RData", expr=expr.keys(), set=config['genesets'])
+
+rule gsva_set:
+    input:
+        rscript = "gsva_{expr}.r",
+        geneset = lambda wc: genesets(expr_org[wc.expr] + "/" + wc.set + ".RData"),
+        expr = lambda wc: expr[wc.expr]
+    output:
+        scores = "gsva_{expr}/{set}.RData"
+    resources:
+        mem = 10240,
+        walltime = 120
+    shell:
+        "Rscript {input.rscript}"
+            " --expr {input.expr}"
+            " --geneset {input.geneset}"
+            " --outfile {output.scores}"
