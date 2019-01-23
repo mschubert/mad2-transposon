@@ -59,7 +59,7 @@ plot_bootstrapped_pcor = function(mat, fdr=0.2, n=100, show_edge_if=10, node_siz
         mat = mat[sample(seq_len(nrow(mat)), replace=TRUE),]
         pm = pcor(mat, fdr=fdr)
     }
-    g = replicate(100, do_bs(mat), simplify=FALSE) %>%
+    g = replicate(n, do_bs(mat), simplify=FALSE) %>%
         dplyr::bind_rows() %>%
         dplyr::filter(! (node1 %in% excl | node2 %in% excl)) %>%
         group_by(node1, node2) %>%
