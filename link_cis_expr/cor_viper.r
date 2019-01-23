@@ -130,7 +130,6 @@ sys$run({
     tf_net = filter(net, Target %in% Regulator)
 
     if (grepl("rnaseq/assemble.RData", args$expr)) {
-        types = dset$idx$type
         expr = dset$expr
         rownames(expr) = idmap$orthologue(rownames(expr),
             from="ensembl_gene_id", to="hgnc_symbol", dset="mmusculus_gene_ensembl")
@@ -140,23 +139,24 @@ sys$run({
             pull(external_gene_name) %>%
             idmap$orthologue(from="external_gene_name", to="hgnc_symbol",
                              dset="mmusculus_gene_ensembl")
+        tmat = narray::mask(dset$idx$type, along=2) + 0
     } else if (grepl("E-GEOD", args$expr)) {
         types = Biobase::pData(dset)$FactorValue..LEUKEMIA.CLASS.
         expr = Biobase::exprs(dset)
         rownames(expr) = idmap$gene(rownames(expr), to="hgnc_symbol")
         expr = expr[!is.na(rownames(expr)),]
         highlight = c()
+        tmat = narray::mask(types, along=2) + 0
     } else {
         # copied from ../diff_expr/de_MILE.r
         keep = !is.na(dset$meta$type)
         expr = dset$expr[,keep]
-        types = cbind(narray::mask(dset$meta$type[keep]),
+        tmat = cbind(narray::mask(dset$meta$type[keep]),
             Hyperdip = (dset$meta$annot[keep] == "ALL with hyperdiploid karyotype")) + 0
-        types[,"Hyperdip"][types[,"B_like"] == 0] = NA
+        tmat[,"Hyperdip"][tmat[,"B_like"] == 0] = NA
 #        aneuploidy = pmin(dset$meta$aneuploidy[keep], 0.25)
     }
 
-    tmat = narray::mask(types, along=2) + 0
     if (grepl("rnaseq/assemble.RData", args$expr)) {
         meta = io$load(args$meta)
         meta = meta[match(colnames(expr), meta$sample),]

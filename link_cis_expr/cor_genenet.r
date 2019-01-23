@@ -101,7 +101,7 @@ sys$run({
         opt('e', 'expr', 'expr RData', '../data/rnaseq/assemble.RData'),
         opt('p', 'plotfile', 'pdf', 'genenet_mad2pb.pdf'),
         arg('genesets', 'RData files', arity='*',
-            list.files("gsva_mad2pb", "\\.RData$", full.names=TRUE))
+            list.files("../expr_sets/gsva_mad2pb", "\\.RData$", full.names=TRUE))
     )
 
     dset = io$load(args$expr)
@@ -135,9 +135,11 @@ sys$run({
     if (is.character(types)) {
         tmat = narray::split(mat, along=2, subsets=types)
         mat2 = rbind(mat, narray::mask(types, along=1) + 0)
-    } else {
-        tmat = lapply(colnames(types), function(t) mat[types[,t],])
-        mat2 = rbind(mat, na.omit(t(types)))
+    } else { # mile2
+        tmat = sapply(colnames(types), function(t) {
+            mat[,!is.na(types[,t]) & types[,t] == 1]
+        }, simplify=FALSE)
+        mat2 = rbind(mat, t(types[,1:3]))
     }
 
     pdf(args$plotfile, 20, 15)
