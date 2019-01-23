@@ -1,10 +1,17 @@
+configfile: "../../config.yaml"
+
 subworkflow aex:
     workdir: "../arrayexpress"
     snakefile: "../arrayexpress/Snakefile"
 
+subworkflow gsets:
+    workdir: "../genesets"
+    snakefile: "../genesets/Snakefile"
+
 rule all:
     input:
-        "E-GEOD-13159.RData"
+        "E-GEOD-13159.RData",
+        expand("set_fet/{sets}.RData", sets=config['genesets'])
 
 rule aracne:
     input:
@@ -15,5 +22,20 @@ rule aracne:
     resources:
         mem = 10240,
         walltime = 720
+    wildcard_constraints:
+        accession = "^E.*"
     shell:
         "Rscript {input.rscript} --infile {input.expr} --outfile {output.data}"
+
+rule set_fet:
+    input:
+        rscript = "set_fet.r",
+        net = "E-GEOD-13159.RData",
+        sets = gsets("human/{sets}.RData")
+    output:
+        data = "set_fet/{sets}.RData"
+    shell:
+        "Rscript {input.rscript}"
+            " --network {input.net}"
+            " --setfile {input.sets}"
+            " --outfile {output.data}"
