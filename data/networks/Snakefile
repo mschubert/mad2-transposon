@@ -35,7 +35,7 @@ rule set_fet:
     output:
         data = "set_fet/{sets}.RData"
     resources:
-        walltime = 240
+        walltime = 480
     shell:
         "Rscript {input.rscript}"
             " --network {input.net}"
