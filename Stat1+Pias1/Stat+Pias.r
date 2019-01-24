@@ -5,7 +5,7 @@ enr = import('tools/enrichr')
 
 # response signatures: Stat1 ChIP (enrichr), Ifn response
 expr = io$load("../expr_diff/eset_Mad2PB.RData")
-genes = c("Stat1", "Pias1", "Mb21d1", "Ifng", "Ifngr1")
+genes = c("Stat1", "Pias1", "Mb21d1", "Ifng", "Ifngr1", "Trp53", "Wrap53")
 
 chea = enr$genes("ChEA_2016")
 sets = c("STAT1_20625510_ChIP-Seq_HELA_Human",
@@ -48,6 +48,12 @@ p4 = ggplot(both, aes(x=Stat1, y=`STAT1_17558387_ChIP-Seq_HELA_Human`)) +
 p5 = ggplot(both, aes(x=Mb21d1, y=`STAT1_20625510_ChIP-Seq_HELA_Human`)) +
     geom_point(aes(size=aneuploidy, color=type, shape=ins)) +
     geom_text_repel(aes(label=sample))
+p6 = ggplot(both, aes(x=Trp53, y=`STAT1_20625510_ChIP-Seq_HELA_Human`)) +
+    geom_point(aes(size=aneuploidy, color=type, shape=ins)) +
+    geom_text_repel(aes(label=sample))
+p7 = ggplot(both, aes(x=Wrap53, y=`STAT1_20625510_ChIP-Seq_HELA_Human`)) +
+    geom_point(aes(size=aneuploidy, color=type, shape=ins)) +
+    geom_text_repel(aes(label=sample))
 
 pdf("Stat+Pias.pdf", 12, 10)
 print(p)
@@ -68,4 +74,6 @@ ggplot(other, aes(x=`STAT1_20625510_ChIP-Seq_HELA_Human` > 0, y=aneuploidy)) +
     labs(title = "Stat1 activity with aneuploidy")
 print(p4)
 print(p5)
+print(p6)
+print(p7)
 dev.off()
