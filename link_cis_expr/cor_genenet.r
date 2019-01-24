@@ -142,7 +142,18 @@ sys$run({
         mat2 = rbind(mat, t(types[,1:3]))
     }
 
+    ecmp = lapply(tmat, reshape2::melt) %>%
+        dplyr::bind_rows(.id="type") %>%
+        dplyr::rename(set=Var1, sample=Var2, expr=value) %>%
+        group_by(set) %>%
+        mutate(z_expr = scale(expr)) %>%
+        ungroup()
+
     pdf(args$plotfile, 20, 15)
+    p = ggplot(ecmp, aes(x=z_expr, y=set)) +
+        ggridges::geom_density_ridges(aes(fill=type), alpha=0.95)
+    print(p)
+
     plot_cor_matrix(t(mat2), text_color=NULL)
     pcor(t(mat)) %>% plot_pcor_net(node_size=4, edge_size=1)
     plot_bootstrapped_pcor(t(mat), node_size=4)
