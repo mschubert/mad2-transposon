@@ -3,15 +3,17 @@ io = import('io')
 sys = import('sys')
 
 args = sys$cmd$parse(
-#    opt('m', 'meta', 'sample metadata', '../ploidy_compare/analysis_set.RData'), # only mad2pb
-#    opt('e', 'expr', 'expr RData', '../data/rnaseq/assemble.RData'),
+    opt('d', 'dset', 'expr RData', '../expr_diff/eset_Mad2PB.RData'),
     opt('h', 'highlight', 'yaml', 'interesting.yaml'),
     opt('o', 'outfile', 'RData', 'hl_mad2pb.RData'),
     arg('genesets', 'RData files', arity='*',
         list.files("../expr_sets/gsva_mad2pb", "\\.RData$", full.names=TRUE))
 )
 
-dset = io$load(args$expr)
+dset = io$load(args$dset)
+highlight = io$read_yaml(args$highlight)$expr_sets
+sets = io$load(args$genesets)
+sets = lapply(names(highlight), function(s) sets[[s]][highlight[[s]],,drop=FALSE])
 
 if (grepl("rnaseq/assemble.RData", args$expr)) {
     types = dset$idx$type
@@ -34,10 +36,6 @@ if (grepl("rnaseq/assemble.RData", args$expr)) {
 #        aneuploidy = pmin(dset$meta$aneuploidy[keep], 0.25)
 }
 
-highlight = io$read_yaml(args$highlight)$expr_sets
-sets = io$load(args$genesets)
-sets = lapply(names(highlight), function(s) sets[[s]][highlight[[s]],,drop=FALSE])
-
 mat = narray::stack(c(sets, list(expr)), along=1)[,colnames(expr)]
 if (is.character(types)) {
     tmat = narray::split(mat, along=2, subsets=types)
@@ -49,4 +47,4 @@ if (is.character(types)) {
     mat2 = rbind(mat, t(types[,1:3]))
 }
 
-save(mat, file=args$outfile)
+save(sets, groups, file=args$outfile)

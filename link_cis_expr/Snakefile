@@ -20,22 +20,8 @@ expr = {
 
 rule all:
     input:
-        "gene_overlap.pdf",
         expand("genenet_{expr}.pdf", expr=expr.keys()),
         expand("viper_{expr}.pdf", expr=expr.keys())
-
-rule set_overlap:
-    input:
-        rscript = "gene_overlap.r",
-        select = "interesting_sets.yaml",
-        genesets = genesets([genesets("mouse/" + x + ".RData") for x in config['genesets']])
-    output:
-        plot = "gene_overlap.pdf"
-    shell:
-        "Rscript {input.rscript}"
-            " --select {input.select}"
-            " --plotfile {output.plot}"
-            " {input.genesets}"
 
 rule cor_genenet:
     input:

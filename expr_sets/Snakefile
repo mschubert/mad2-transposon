@@ -21,7 +21,8 @@ dset_org = {
 rule all:
     input:
         expand("gsva_{dset}/{set}.RData", dset=dset.keys(), set=config['genesets']),
-        expand("hl_{dset}.RData", dset=dset.keys())
+        expand("hl_{dset}.RData", dset=dset.keys()),
+        "highlight_overlap.pdf"
 
 rule highlight:
     input:
@@ -35,6 +36,19 @@ rule highlight:
             " --highlight {input.highlight}"
             " --outfile {output.outfile}"
             " {input.sets}"
+
+rule set_overlap:
+    input:
+        rscript = "highlight_overlap.r",
+        highlight = "highlight.yaml",
+        genesets = genesets([genesets("mouse/" + x + ".RData") for x in config['genesets']])
+    output:
+        plot = "highlight_overlap.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --highlight {input.select}"
+            " --plotfile {output.plot}"
+            " {input.genesets}"
 
 rule gsva_set:
     input:

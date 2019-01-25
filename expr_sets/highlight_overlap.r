@@ -4,13 +4,13 @@ sys = import('sys')
 plt = import('plot')
 
 args = sys$cmd$parse(
-    opt('s', 'select', 'yaml which sets to use', './interesting_sets.yaml'),
+    opt('h', 'highlight', 'yaml which sets to use', 'highlight.yaml'),
     opt('p', 'plotfile', 'pdf', 'gene_overlap.pdf'),
     arg('genesets', 'RData files', arity='*',
         list.files("../data/genesets", "\\.RData$", full.names=TRUE))
 )
 
-select = io$read_yaml(args$select)$expr_sets
+select = io$read_yaml(args$highlight)$expr_sets
 sets = io$load(args$genesets)
 sets = lapply(names(select), function(s) sets[[s]][select[[s]]]) %>%
     unlist(recursive=FALSE, use.names=TRUE)
