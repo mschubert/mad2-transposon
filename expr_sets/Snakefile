@@ -46,7 +46,7 @@ rule set_overlap:
         plot = "highlight_overlap.pdf"
     shell:
         "Rscript {input.rscript}"
-            " --highlight {input.select}"
+            " --highlight {input.highlight}"
             " --plotfile {output.plot}"
             " {input.genesets}"
 
