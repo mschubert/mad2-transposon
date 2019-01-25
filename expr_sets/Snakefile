@@ -1,12 +1,16 @@
 configfile: "../config.yaml"
 
+subworkflow expr:
+    workdir: "../expr_diff"
+    snakefile: "../expr_diff/Snakefile"
+
 subworkflow genesets:
     workdir: "../data/genesets"
     snakefile: "../data/genesets/Snakefile"
 
 dset = {
-    'mile' : '../expr_diff/eset_MILE.RData',
-    'mad2pb' : '../data/rnaseq/assemble.RData'
+    'mile' : 'eset_MILE.RData',
+    'mad2pb' : 'eset_Mad2PB.RData'
 }
 
 dset_org = {
@@ -22,14 +26,12 @@ rule all:
 rule highlight:
     input:
         rscript = "highlight.r",
-        meta = lambda wc: dset[wc.dset],
         highlight = "highlight.yaml",
         sets = expand("gsva_{{dset}}/{set}.RData", set=config['genesets'])
     output:
         outfile = "hl_{dset}.RData"
     shell:
         "Rscript {input.rscript}"
-            " --meta {input.meta}"
             " --highlight {input.highlight}"
             " --outfile {output.outfile}"
             " {input.sets}"
@@ -38,7 +40,7 @@ rule gsva_set:
     input:
         rscript = "gsva_{dset}.r",
         geneset = lambda wc: genesets(dset_org[wc.dset] + "/" + wc.set + ".RData"),
-        dset = lambda wc: dset[wc.dset]
+        dset = lambda wc: expr(dset[wc.dset])
     output:
         scores = "gsva_{dset}/{set}.RData"
     resources:
