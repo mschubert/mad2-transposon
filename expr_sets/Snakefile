@@ -5,14 +5,12 @@ subworkflow genesets:
     snakefile: "../data/genesets/Snakefile"
 
 dset = {
-    'mile' : '../data/arrayexpress/E-GEOD-13159.RData',
-    'mile2' : '../expr_diff/eset_MILE.RData',
+    'mile' : '../expr_diff/eset_MILE.RData',
     'mad2pb' : '../data/rnaseq/assemble.RData'
 }
 
 dset_org = {
     'mile' : 'human',
-    'mile2' : 'human',
     'mad2pb' : 'mouse'
 }
 

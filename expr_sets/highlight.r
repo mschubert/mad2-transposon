@@ -3,9 +3,10 @@ io = import('io')
 sys = import('sys')
 
 args = sys$cmd$parse(
-    opt('m', 'meta', 'sample metadata', '../ploidy_compare/analysis_set.RData'), # only mad2pb
-    opt('e', 'expr', 'expr RData', '../data/rnaseq/assemble.RData'),
-    opt('s', 'select', 'yaml', 'interesting_sets.yaml'),
+#    opt('m', 'meta', 'sample metadata', '../ploidy_compare/analysis_set.RData'), # only mad2pb
+#    opt('e', 'expr', 'expr RData', '../data/rnaseq/assemble.RData'),
+    opt('h', 'highlight', 'yaml', 'interesting.yaml'),
+    opt('o', 'outfile', 'RData', 'hl_mad2pb.RData'),
     arg('genesets', 'RData files', arity='*',
         list.files("../expr_sets/gsva_mad2pb", "\\.RData$", full.names=TRUE))
 )
@@ -33,9 +34,9 @@ if (grepl("rnaseq/assemble.RData", args$expr)) {
 #        aneuploidy = pmin(dset$meta$aneuploidy[keep], 0.25)
 }
 
-select = io$read_yaml(args$select)$expr_sets
+highlight = io$read_yaml(args$highlight)$expr_sets
 sets = io$load(args$genesets)
-sets = lapply(names(select), function(s) sets[[s]][select[[s]],,drop=FALSE])
+sets = lapply(names(highlight), function(s) sets[[s]][highlight[[s]],,drop=FALSE])
 
 mat = narray::stack(c(sets, list(expr)), along=1)[,colnames(expr)]
 if (is.character(types)) {
@@ -48,11 +49,4 @@ if (is.character(types)) {
     mat2 = rbind(mat, t(types[,1:3]))
 }
 
-ecmp = lapply(tmat, reshape2::melt) %>%
-    dplyr::bind_rows(.id="type") %>%
-    dplyr::rename(set=Var1, sample=Var2, expr=value) %>%
-    group_by(set) %>%
-    mutate(z_expr = scale(expr)) %>%
-    ungroup()
-
-save(mat, mat2, ecmp, tmat, file=args$outfile)
+save(mat, file=args$outfile)
