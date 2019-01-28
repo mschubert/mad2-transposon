@@ -20,34 +20,31 @@ expr = {
 
 rule all:
     input:
-        expand("genenet_{expr}.pdf", expr=expr.keys()),
-        expand("viper_{expr}.pdf", expr=expr.keys())
+        expand("genenet-{kind}_{expr}.pdf", kind=['genes', 'sets'],
+                expr=['mad2pb', 'mile']),
+        expand("viper-{expr}.pdf", expr=expr.keys())
 
-rule cor_genenet:
+rule genenet:
     input:
-        rscript = "cor_genenet.r",
-        select = "interesting_sets.yaml",
-        expr = lambda wc: expr[wc.expr],
-        genesets = expand("../expr_sets/gsva_{{expr}}/{sets}.RData", sets=config['genesets'])
+        rscript = "genenet.r",
+        expr = gsva("{kind}_{expr}.RData")
     output:
-        plot = "genenet_{expr}.pdf"
+        plot = "genenet-{kind}_{expr}.pdf"
     resources:
         mem = 10240,
         walltime = 240
     shell:
         "Rscript {input.rscript}"
-            " --select {input.select}"
             " --expr {input.expr}"
             " --plotfile {output.plot}"
-            " {input.genesets}"
 
-rule cor_viper:
+rule viper:
     input:
-        rscript = "cor_viper.r",
+        rscript = "viper.r",
         expr = lambda wc: expr[wc.expr],
         net = network("E-GEOD-13159.RData")
     output:
-        plot = "viper_{expr}.pdf"
+        plot = "viper-{expr}.pdf"
     resources:
         mem = 10240,
         walltime = 240
