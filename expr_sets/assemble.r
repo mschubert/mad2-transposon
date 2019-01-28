@@ -7,17 +7,31 @@ sys = import('sys')
 
 args = sys$cmd$parse(
     opt('d', 'dset', 'expr RData', '../expr_diff/eset_Mad2PB.RData'),
-    opt('h', 'highlight', 'yaml', 'highlight.yaml'),
-    opt('o', 'outfile', 'RData', 'hl_mad2pb.RData'),
+    opt('h', 'highlight', 'yaml', 'sets.yaml'),
+    opt('o', 'outfile', 'RData', 'sets_mad2pb.RData'),
     arg('genesets', 'set expr RData files', arity='*',
         list.files("gsva_mad2pb", "\\.RData$", full.names=TRUE))
 )
 
 dset = io$load(args$dset)
-highlight = io$read_yaml(args$highlight)$expr_sets
-sets = io$load(args$genesets)[names(highlight)]
-expr = lapply(names(sets), function(s) sets[[s]][highlight[[s]],,drop=FALSE]) %>%
-    narray::stack(along=1)
+highlight = io$read_yaml(args$highlight)
+
+switch(args$highlight,
+    "sets.yaml" = {
+        use = highlight$expr_sets
+        sets = io$load(args$genesets)[names(use)]
+        expr = lapply(names(sets), function(s) sets[[s]][use[[s]],,drop=FALSE]) %>%
+            narray::stack(along=1)
+    },
+    "genes.yaml" = {
+        if (grepl("MILE", args$dset)) # mouse -> human symbols
+            highlight$genes = toupper(highlight$genes)
+        expr = dset$vs[highlight$genes,]
+    },
+    {
+        stop("need to add highlight handler for ", args$highlight)
+    }
+)
 
 switch(basename(args$dset),
     "eset_Mad2PB.RData" = {
