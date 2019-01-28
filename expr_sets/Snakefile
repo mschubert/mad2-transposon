@@ -27,12 +27,14 @@ rule all:
 rule highlight:
     input:
         rscript = "highlight.r",
+        dset = lambda wc: expr(dset[wc.dset]),
         highlight = "highlight.yaml",
         sets = expand("gsva_{{dset}}/{set}.RData", set=config['genesets'])
     output:
         outfile = "hl_{dset}.RData"
     shell:
         "Rscript {input.rscript}"
+            " --dset {input.dset}"
             " --highlight {input.highlight}"
             " --outfile {output.outfile}"
             " {input.sets}"
