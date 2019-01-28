@@ -20,7 +20,7 @@ dset_org = {
 
 rule all:
     input:
-        expand("{kind}_{dset}.RData", kind=['genes', 'sets'], dset=dset.keys()),
+        expand("{kind}_{dset}.RData", kind=['genes', 'sets', 'both'], dset=dset.keys()),
         "set_overlap.pdf"
 
 rule assemble:
@@ -39,6 +39,19 @@ rule assemble:
             " --outfile {output.outfile}"
             " --plotfile {output.plotfile}"
             " {input.sets}"
+
+rule merge:
+    input:
+        rscript = "assemble_merge.r",
+        genes = "genes_{dset}.RData",
+        sets = "sets_{dset}.RData"
+    output:
+        outfile = "both_{dset}.RData"
+    shell:
+        "Rscript {input.rscript}"
+            " --genes {input.genes}"
+            " --sets {input.sets}"
+            " --outfile {output.outfile}"
 
 rule set_overlap:
     input:
