@@ -96,23 +96,24 @@ plot_pcor_table = function(pm, field="aneuploidy") {
 
 sys$run({
     args = sys$cmd$parse(
-        opt('e', 'expr', 'expr RData', '../data/rnaseq/assemble.RData'),
-        opt('p', 'plotfile', 'pdf', 'genenet_mad2pb.pdf')
+        opt('e', 'expr', 'expr RData', '../expr_sets/genes_mile.RData'),
+        opt('p', 'plotfile', 'pdf', 'genenet-genes_mile.pdf')
     )
 
     dset = io$load(args$expr)
-    tmat = sapply(colnames(types), function(t) {
-        mat[,!is.na(types[,t]) & types[,t] == 1]
+    mat = dset$expr
+    tmat = sapply(colnames(dset$groups), function(t) {
+        dset$expr[,!is.na(dset$groups[,t]) & dset$groups[,t] == 1]
     }, simplify=FALSE)
-    mat2 = rbind(mat, t(types[,1:3]))
+    mat2 = rbind(mat, t(dset$groups[,1:3]))
 
     pdf(args$plotfile, 20, 15)
     plot_cor_matrix(t(mat2), text_color=NULL)
     pcor(t(mat)) %>% plot_pcor_net(node_size=4, edge_size=1)
-    plot_bootstrapped_pcor(t(mat), node_size=4)
+    try(plot_bootstrapped_pcor(t(mat), node_size=4))
 
     pcor(t(mat2)) %>% plot_pcor_net(node_size=4, edge_size=1)
-    plot_bootstrapped_pcor(t(mat2), node_size=4)
+    try(plot_bootstrapped_pcor(t(mat2), node_size=4))
 
     for (i in seq_along(tmat)) {
         name = names(tmat)[i]
