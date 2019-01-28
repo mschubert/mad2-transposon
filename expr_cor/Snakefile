@@ -44,7 +44,7 @@ rule viper:
         expr = lambda wc: expr[wc.expr],
         net = network("E-GEOD-13159.RData")
     output:
-        plot = "viper-{expr}.pdf"
+        plotfile = "viper-{expr}.pdf"
     resources:
         mem = 10240,
         walltime = 240
@@ -52,4 +52,4 @@ rule viper:
         "Rscript {input.rscript}"
             " --expr {input.expr}"
             " --network {input.net}"
-            " --plotfile {output.plot}"
+            " --plotfile {output.plotfile}"
