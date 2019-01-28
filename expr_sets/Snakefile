@@ -30,12 +30,14 @@ rule assemble:
         highlight = lambda wc: wc.kind + ".yaml",
         sets = expand("gsva_{{dset}}/{set}.RData", set=config['genesets'])
     output:
-        outfile = "{kind}_{dset}.RData"
+        outfile = "{kind}_{dset}.RData",
+        plotfile = "{kind}_{dset}.pdf"
     shell:
         "Rscript {input.rscript}"
             " --dset {input.dset}"
             " --highlight {input.highlight}"
             " --outfile {output.outfile}"
+            " --plotfile {output.plotfile}"
             " {input.sets}"
 
 rule set_overlap:

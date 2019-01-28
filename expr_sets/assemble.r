@@ -1,14 +1,14 @@
 library(dplyr)
+library(cowplot)
 io = import('io')
 sys = import('sys')
-
-#TODO: add expr levels for each hl_<set> here?
-#TODO: add hl genes? (and combination genes+sets?)
+idmap = import('process/idmap')
 
 args = sys$cmd$parse(
     opt('d', 'dset', 'expr RData', '../expr_diff/eset_Mad2PB.RData'),
     opt('h', 'highlight', 'yaml', 'sets.yaml'),
     opt('o', 'outfile', 'RData', 'sets_mad2pb.RData'),
+    opt('p', 'plotfile', 'pdf', 'sets_mad2pb.pdf'),
     arg('genesets', 'set expr RData files', arity='*',
         list.files("gsva_mad2pb", "\\.RData$", full.names=TRUE))
 )
@@ -24,9 +24,13 @@ switch(args$highlight,
             narray::stack(along=1)
     },
     "genes.yaml" = {
-        if (grepl("MILE", args$dset)) # mouse -> human symbols
-            highlight$genes = toupper(highlight$genes)
-        expr = dset$vs[highlight$genes,]
+        if (grepl("MILE", args$dset)) {
+            highlight$genes = idmap$orthologue(highlight$genes, from="external_gene_name",
+                    to="hgnc_symbol", dset="mmusculus_gene_ensembl") %>%
+                unname() %>% na.omit()
+            expr = dset$expr[intersect(highlight$genes, rownames(dset$expr)),]
+        } else
+            expr = dset$vs[highlight$genes,]
     },
     {
         stop("need to add highlight handler for ", args$highlight)
@@ -53,6 +57,23 @@ switch(basename(args$dset),
 )
 
 stopifnot(rownames(groups) == colnames(expr))
+
+tmat = sapply(colnames(groups), function(g) {
+    expr[,!is.na(groups[,g]) & groups[,g] == 1]
+}, simplify=FALSE)
+
+ecmp = lapply(tmat, reshape2::melt) %>%
+    dplyr::bind_rows(.id="type") %>%
+    dplyr::rename(set=Var1, sample=Var2, expr=value) %>%
+    group_by(set) %>%
+    mutate(z_expr = scale(expr)) %>%
+    ungroup()
+
+pdf(args$plotfile, 20, 15)
+ggplot(ecmp, aes(x=z_expr, y=set)) +
+    ggridges::geom_density_ridges(aes(fill=type), alpha=0.95)
+dev.off()
+
 save(expr, groups, file=args$outfile)
 
 #if (grepl("rnaseq/assemble.RData", args$expr)) {
