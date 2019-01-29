@@ -9,8 +9,8 @@ subworkflow genesets:
     snakefile: "../data/genesets/Snakefile"
 
 dset = {
-    'mile' : 'eset_MILE.RData',
-    'mad2pb' : 'eset_Mad2PB.RData'
+    'mile' : expr('eset_MILE.RData'),
+    'mad2pb' : expr('eset_Mad2PB.RData')
 }
 
 dset_org = {
@@ -26,7 +26,7 @@ rule all:
 rule assemble:
     input:
         rscript = "assemble.r",
-        dset = lambda wc: expr(dset[wc.dset]),
+        dset = lambda wc: dset[wc.dset],
         highlight = lambda wc: wc.kind + ".yaml",
         sets = expand("gsva_{{dset}}/{set}.RData", set=config['genesets'])
     output:
@@ -70,7 +70,7 @@ rule gsva_set:
     input:
         rscript = "gsva_{dset}.r",
         geneset = lambda wc: genesets(dset_org[wc.dset] + "/" + wc.set + ".RData"),
-        dset = lambda wc: expr(dset[wc.dset])
+        dset = lambda wc: dset[wc.dset]
     output:
         scores = "gsva_{dset}/{set}.RData"
     resources:
