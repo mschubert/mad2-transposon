@@ -124,6 +124,7 @@ sys$run({
         opt('n', 'network', 'aracne', '../data/networks/E-GEOD-13159.RData'),
         opt('c', 'cis', 'common insertion .RData', '../cis_analysis/poisson.RData'),
         opt('f', 'fdr', 'CIS fdr for highlight', '0.001'),
+        opt('o', 'outfile', '.RData', 'viper_mad2pb.RData'),
         opt('p', 'plotfile', 'pdf', 'viper_mad2pb.pdf')
     )
 
@@ -169,11 +170,16 @@ sys$run({
         tmat = cbind(tmat, mask)
     }
 
+    cs = colnames(tmat)
+    sviper = sample_viper(expr, net)
+    dviper = sapply(cs, function(c) diff_viper(expr, net, tmat[,c]), simplify=FALSE)
+    dcor = sapply(cs, function(c) diff_cor(expr, tf_net, tmat[,c]), simplify=FALSE)
+    save(sviper, dviper, dcor, file=args$outfile)
+
     pdf(args$plotfile)
-    for (cond in colnames(tmat)) {
-        dviper = diff_viper(expr, net, tmat[,cond])
-        dcor = diff_cor(expr, tf_net, tmat[,cond])
-        print(plot_subnet(dviper, dcor, highlight=highlight) + ggtitle(cond))
+    for (cond in cs) {
+        p = plot_subnet(dviper[[cond]], dcor[[cond]], highlight=highlight)
+        print(p + ggtitle(cond))
     }
     dev.off()
 })

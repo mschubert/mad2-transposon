@@ -13,15 +13,14 @@ subworkflow gsva:
     snakefile: "../expr_sets/Snakefile"
 
 expr = {
-    'mile' : '../data/arrayexpress/E-GEOD-13159.RData',
-    'mile2' : '../expr_diff/eset_MILE.RData',
+    'mile' : '../expr_diff/eset_MILE.RData',
     'mad2pb' : '../data/rnaseq/assemble.RData'
 }
 
 rule all:
     input:
         expand("genenet-{kind}_{expr}.pdf", kind=['genes', 'sets', 'both'],
-                expr=['mad2pb', 'mile']),
+                expr=expr.keys()),
         expand("viper-{expr}.pdf", expr=expr.keys())
 
 rule genenet:
@@ -44,6 +43,7 @@ rule viper:
         expr = lambda wc: expr[wc.expr],
         net = network("E-GEOD-13159.RData")
     output:
+        outfile = "viper-{expr}.RData",
         plotfile = "viper-{expr}.pdf"
     resources:
         mem = 10240,
@@ -52,4 +52,5 @@ rule viper:
         "Rscript {input.rscript}"
             " --expr {input.expr}"
             " --network {input.net}"
+            " --outfile {output.outfile}"
             " --plotfile {output.plotfile}"
