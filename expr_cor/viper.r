@@ -128,24 +128,23 @@ sys$run({
     dset = io$load(args$expr)
     net = io$load(args$network)
     tf_net = filter(net, Target %in% Regulator)
+    highlight = io$load(args$cis)$result %>%
+        filter(adj.p < as.numeric(args$fdr)) %>%
+        pull(external_gene_name) %>%
+        idmap$orthologue(from="external_gene_name", to="hgnc_symbol",
+                         dset="mmusculus_gene_ensembl")
 
     if (grepl("rnaseq/assemble.RData", args$expr)) {
         expr = dset$expr
         rownames(expr) = idmap$orthologue(rownames(expr),
             from="ensembl_gene_id", to="hgnc_symbol", dset="mmusculus_gene_ensembl")
         expr = expr[!is.na(rownames(expr)),]
-        highlight = io$load(args$cis)$result %>%
-            filter(adj.p < as.numeric(args$fdr)) %>%
-            pull(external_gene_name) %>%
-            idmap$orthologue(from="external_gene_name", to="hgnc_symbol",
-                             dset="mmusculus_gene_ensembl")
         tmat = narray::mask(dset$idx$type, along=2) + 0
     } else if (grepl("E-GEOD", args$expr)) {
         types = Biobase::pData(dset)$FactorValue..LEUKEMIA.CLASS.
         expr = Biobase::exprs(dset)
         rownames(expr) = idmap$gene(rownames(expr), to="hgnc_symbol")
         expr = expr[!is.na(rownames(expr)),]
-        highlight = c()
         tmat = narray::mask(types, along=2) + 0
     } else {
         # copied from ../diff_expr/de_MILE.r
