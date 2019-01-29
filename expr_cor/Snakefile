@@ -19,7 +19,7 @@ expr = {
 
 rule all:
     input:
-        expand("genenet-{kind}_{expr}.pdf", kind=['genes', 'sets', 'both'],
+        expand("genenet-{kind}_{expr}.pdf", kind=['genes', 'sets', 'both', 'tfs'],
                 expr=expr.keys()),
         expand("viper-{expr}.pdf", expr=expr.keys())
 

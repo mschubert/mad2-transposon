@@ -8,6 +8,10 @@ subworkflow genesets:
     workdir: "../data/genesets"
     snakefile: "../data/genesets/Snakefile"
 
+subworkflow viper:
+    workdir: "../expr_cor"
+    snakefile: "../expr_cor/Snakefile"
+
 dset = {
     'mile' : expr('eset_MILE.RData'),
     'mad2pb' : expr('eset_Mad2PB.RData')
@@ -20,7 +24,7 @@ dset_org = {
 
 rule all:
     input:
-        expand("{kind}_{dset}.RData", kind=['genes', 'sets', 'both'], dset=dset.keys()),
+        expand("{kind}_{dset}.RData", kind=['genes', 'sets', 'both', 'tfs'], dset=dset.keys()),
         "set_overlap.pdf"
 
 rule assemble:
@@ -28,6 +32,7 @@ rule assemble:
         rscript = "assemble.r",
         dset = lambda wc: dset[wc.dset],
         highlight = lambda wc: wc.kind + ".yaml",
+        viper = viper("viper-{dset}.RData"),
         sets = expand("gsva_{{dset}}/{set}.RData", set=config['genesets'])
     output:
         outfile = "{kind}_{dset}.RData",
@@ -38,6 +43,7 @@ rule assemble:
             " --highlight {input.highlight}"
             " --outfile {output.outfile}"
             " --plotfile {output.plotfile}"
+            " --viper {input.viper}"
             " {input.sets}"
 
 rule merge:

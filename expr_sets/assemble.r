@@ -9,7 +9,8 @@ args = sys$cmd$parse(
     opt('h', 'highlight', 'yaml', 'sets.yaml'),
     opt('o', 'outfile', 'RData', 'sets_mad2pb.RData'),
     opt('p', 'plotfile', 'pdf', 'sets_mad2pb.pdf'),
-    arg('genesets', 'set expr RData files', arity='*',
+    opt('v', 'viper', '.RData', '../expr_cor/viper-mad2pb.RData'), # only tfs.yaml
+    arg('genesets', 'set expr RData files', arity='*', # only sets.yaml
         list.files("gsva_mad2pb", "\\.RData$", full.names=TRUE))
 )
 
@@ -32,6 +33,13 @@ switch(args$highlight,
         } else
             expr = dset$vs[highlight$genes,]
     },
+    "tfs.yaml" = {
+        if (grepl("MILE", args$dset)) {
+            #TODO:
+        } else {
+            #TODO:
+        }
+    }
     {
         stop("need to add highlight handler for ", args$highlight)
     }
@@ -68,6 +76,8 @@ ecmp = lapply(tmat, reshape2::melt) %>%
     group_by(set) %>%
     mutate(z_expr = scale(expr)) %>%
     ungroup()
+
+#TODO: <expr> vs samples plot; hclust y & aneup x
 
 pdf(args$plotfile, 20, 15)
 ggplot(ecmp, aes(x=z_expr, y=set)) +
