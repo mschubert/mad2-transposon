@@ -74,10 +74,12 @@ diff_viper = function(expr, net, condition, nperm=1000, ledge=FALSE, shadow=FALS
 
 #' Sample-wise VIPER: TF activities per sample
 #'
-#' @param ...
-#' @return
-sample_viper = function(...) {
-    stop("not implemented")
+#' @param expr  Gene expression matrix [genes x samples]
+#' @param net  Coexpression network [igraph object]
+#' @return  matrix of inferred TF activity values
+sample_viper = function(expr, net) {
+    regulon = aracne$to_regulon(net)
+    viper::viper(expr, regulon)
 }
 
 #' Plot a network of different activity, expression, and correlation
