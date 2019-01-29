@@ -34,12 +34,8 @@ switch(args$highlight,
             expr = dset$vs[highlight$genes,]
     },
     "tfs.yaml" = {
-        if (grepl("MILE", args$dset)) {
-            #TODO:
-        } else {
-            #TODO:
-        }
-    }
+        expr = io$load(args$viper)$sviper[highlight$tfs,]
+    },
     {
         stop("need to add highlight handler for ", args$highlight)
     }
