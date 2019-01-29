@@ -3,6 +3,7 @@ genesets:
     - GO_Biological_Process_2018
     - GO_Cellular_Component_2018
     - GO_Molecular_Function_2018
+    - ChEA_2016
     - ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X
     - Reactome_2016
     - KEGG_2016
