@@ -2,7 +2,7 @@ io = import('io')
 st = import('stats')
 plt = import('plot')
 enr = import('tools/enrichr')
-util = import('../link_cis_expr/cor_genenet') #TODO: add genenet for each data set [needs common fmt]
+util = import('../expr_cor/genenet') #TODO: add genenet for each data set [needs common fmt]
 
 #TODO:
 # cor pan + subtypes -> 4x1

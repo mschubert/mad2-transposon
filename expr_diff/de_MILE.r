@@ -3,7 +3,7 @@ io = import('io')
 sys = import('sys')
 util = import('./util')
 gset = import('data/genesets')
-viper = import('../link_cis_expr/cor_viper')
+viper = import('../expr_cor/viper')
 
 args = sys$cmd$parse(
     opt('e', 'eset', 'gene expression RData', 'eset_MILE.RData'),
