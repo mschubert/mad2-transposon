@@ -19,16 +19,16 @@ expr = {
 
 rule all:
     input:
-        expand("genenet-{kind}_{expr}.pdf", kind=['genes', 'sets', 'both', 'tfs'],
-                expr=expr.keys()),
+        expand("{rscript}-{kind}_{expr}.pdf", rscript=['diffcor', 'genenet'],
+                kind=['genes', 'sets', 'both', 'tfs'], expr=expr.keys()),
         expand("viper-{expr}.pdf", expr=expr.keys())
 
 rule genenet:
     input:
-        rscript = "genenet.r",
+        rscript = "{rscript}.r",
         expr = gsva("{kind}_{expr}.RData")
     output:
-        plot = "genenet-{kind}_{expr}.pdf"
+        plot = "{rscript}-{kind}_{expr}.pdf"
     resources:
         mem = 10240,
         walltime = 240
