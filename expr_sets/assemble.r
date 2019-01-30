@@ -44,16 +44,17 @@ switch(args$highlight,
 switch(basename(args$dset),
     "eset_Mad2PB.RData" = {
         meta = as.data.frame(SummarizedExperiment::colData(dset$eset))
+        expr = expr[,meta$sample]
         groups = as.matrix(meta[c("Tcell", "Myeloid", "Other")])
     },
     "eset_MILE.RData" = {
         # copied from ../diff_expr/de_MILE.r
-        keep = !is.na(dset$meta$type)
-        expr = expr[,keep]
-        groups = cbind(narray::mask(dset$meta$type[keep]),
-            Hyperdip = (dset$meta$annot[keep] == "ALL with hyperdiploid karyotype")) + 0
+        meta = dset$meta[!is.na(dset$meta$type),]
+        expr = expr[,meta$id]
+        groups = cbind(narray::mask(meta$type),
+            Hyperdip = (meta$annot == "ALL with hyperdiploid karyotype")) + 0
         groups[,"Hyperdip"][groups[,"B_like"] == 0] = NA
-    #        aneuploidy = pmin(dset$meta$aneuploidy[keep], 0.25)
+#        aneuploidy = pmin(dset$meta$aneuploidy[keep], 0.25)
     },
     {
         stop("need to add data set handler for ", args$dset)

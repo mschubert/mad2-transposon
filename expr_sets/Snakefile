@@ -13,8 +13,8 @@ subworkflow viper:
     snakefile: "../expr_cor/Snakefile"
 
 dset = {
-    'mile' : expr('eset_MILE.RData'),
-    'mad2pb' : expr('eset_Mad2PB.RData')
+    'mile' : 'eset_MILE.RData',
+    'mad2pb' : 'eset_Mad2PB.RData'
 }
 
 dset_org = {
@@ -30,7 +30,7 @@ rule all:
 rule assemble:
     input:
         rscript = "assemble.r",
-        dset = lambda wc: dset[wc.dset],
+        dset = lambda wc: expr(dset[wc.dset]),
         highlight = lambda wc: wc.kind + ".yaml",
         viper = viper("viper-{dset}.RData"),
         sets = expand("gsva_{{dset}}/{set}.RData", set=config['genesets'])
@@ -76,7 +76,7 @@ rule gsva_set:
     input:
         rscript = "gsva_{dset}.r",
         geneset = lambda wc: genesets(dset_org[wc.dset] + "/" + wc.set + ".RData"),
-        dset = lambda wc: dset[wc.dset]
+        dset = lambda wc: expr(dset[wc.dset])
     output:
         scores = "gsva_{dset}/{set}.RData"
     resources:
