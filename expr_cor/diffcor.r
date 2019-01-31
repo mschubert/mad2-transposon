@@ -36,15 +36,20 @@ cor_diff_2d = function(mlist) {
         summarize(sumcor = sum(cor)) %>%
         plt$cluster(sumcor ~ Var1 + Var2)
     both$Var1 = factor(both$Var1, levels=levels(ord$Var1))
-    both$Var2 = factor(both$Var2, levels=levels(ord$Var2))
+    both$Var2 = factor(both$Var2, levels=rev(levels(ord$Var2)))
+
+    tsize = round(1200 / (length(unique(both$type1)) *
+        length(unique(both$Var1)) + max(nchar(levels(both$Var1)))), 1)
+
     ggplot(both, aes(x=Var1, y=Var2)) +
         facet_grid(type1 ~ type2) +
         geom_tile(aes(size=abs(cor), fill=cor)) + #, alpha=abs(cor))) +
 #        ggforce::geom_circle(aes(x0=Var1, y0=Var2, r=1)) +
         scale_fill_gradient2(low="red", mid="white", high="blue") +
         coord_fixed() +
-        geom_text(aes(label=label)) +
-        theme(axis.text.x = element_text(angle=90, hjust=1))
+        geom_text(aes(label=label), size=tsize/3) +
+        theme(axis.text = element_text(size=tsize),
+              axis.text.x = element_text(angle=90, hjust=1))
 }
 
 args = sys$cmd$parse(
