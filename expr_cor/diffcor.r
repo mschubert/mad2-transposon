@@ -23,7 +23,14 @@ cor_diff_2d = function(mlist) {
         tidyr::unnest() %>%
         dplyr::rename(cor = delta_cor)
 
-    both = dplyr::bind_rows(cors, diffs)
+    both = dplyr::bind_rows(cors, diffs) %>%
+        mutate(label = -log10(p.value),
+               label = ifelse(is.infinite(label), 0, label)) %>%
+        group_by(type1, type2) %>%
+        mutate(rank = rank(-label),
+               label = ifelse(rank <= 10, label, NA)) %>%
+        ungroup() %>%
+        mutate(label = floor(label))
     ord = both %>%
         group_by(Var1, Var2) %>%
         summarize(sumcor = sum(cor)) %>%
@@ -36,6 +43,7 @@ cor_diff_2d = function(mlist) {
 #        ggforce::geom_circle(aes(x0=Var1, y0=Var2, r=1)) +
         scale_fill_gradient2(low="red", mid="white", high="blue") +
         coord_fixed() +
+        geom_text(aes(label=label)) +
         theme(axis.text.x = element_text(angle=90, hjust=1))
 }
 
