@@ -10,6 +10,14 @@ expr_sets:
     ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X:
         - ATF3_ENCODE
         - KAT2A_ENCODE
+    ChEA_2016:
+        - JARID1A_20064375_ChIP-Seq_MESCs_Mouse
+        - ETS1_20019798_ChIP-Seq_JURKAT_Human
+        - STAT1_20625510_ChIP-Seq_HELA_Human
+        - STAT3_20064451_ChIP-Seq_CD4+T_Mouse
+        - STAT3_23295773_ChIP-Seq_U87_Human
+        - STAT6_20620947_ChIP-Seq_CD4_POS_T_Human
+        - KDM5B_21448134_ChIP-Seq_MESCs_Mouse
     GO_Biological_Process_2018:
         - protein import into mitochondrial inner membrane (GO:0045039)
         - oligosaccharide-lipid intermediate biosynthetic process (GO:0006490)
