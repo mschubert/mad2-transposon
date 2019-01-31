@@ -16,6 +16,7 @@ tfs:
     - STAT5B
     - JUNB
     - IRF1
+    - IRF3
     - IRF9
     - ZHX2
     - DACH1
