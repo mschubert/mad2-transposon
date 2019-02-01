@@ -64,5 +64,5 @@ tmat = sapply(colnames(dset$groups), function(t) {
 }, simplify=FALSE)
 
 pdf(16, 14, file=args$plotfile)
-cor_diff_2d(tmat)
+cor_diff_2d(tmat) + ggtitle(sub("\\.RData", "", basename(args$expr)))
 dev.off()

@@ -78,7 +78,8 @@ ecmp = lapply(tmat, reshape2::melt) %>%
 
 pdf(args$plotfile, 20, 15)
 ggplot(ecmp, aes(x=z_expr, y=set)) +
-    ggridges::geom_density_ridges(aes(fill=type), alpha=0.95)
+    ggridges::geom_density_ridges(aes(fill=type), alpha=0.95) +
+    ggtitle(sub("\\.RData", "", args$outfile))
 dev.off()
 
 save(expr, groups, file=args$outfile)
