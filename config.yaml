@@ -24,4 +24,4 @@ highlight_de: [ Erg, Ets1, Arid2, Crebbp, Trp53, Eif4enif1, Sox4, Pias1,
 # these are yaml files in expr_sets/* listing which genes, sets, viper TFs,
 # etc to highlight via expr_cor/{diffcor,genenet}
 # yamls need to be present in expr_sets and be referenced here for inclusion
-expr_sets-highlight: ['genes', 'sets', 'both', 'tfs', 'stat']
+expr_sets-highlight: [genes, sets, tfs, stat]
