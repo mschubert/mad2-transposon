@@ -24,7 +24,8 @@ dset_org = {
 
 rule all:
     input:
-        expand("{kind}_{dset}.RData", kind=['genes', 'sets', 'both', 'tfs'], dset=dset.keys()),
+        expand("{kind}_{dset}.RData", dset=dset.keys(),
+                kind=config['expr_sets-highlight']),
         "set_overlap.pdf"
 
 rule assemble:
@@ -37,6 +38,8 @@ rule assemble:
     output:
         outfile = "{kind}_{dset}.RData",
         plotfile = "{kind}_{dset}.pdf"
+    wildcard_constraints:
+        highlight = ".*(^_merge)\\.yaml"
     shell:
         "Rscript {input.rscript}"
             " --dset {input.dset}"
@@ -48,15 +51,20 @@ rule assemble:
 
 rule merge:
     input:
-        rscript = "assemble_merge.r",
+        rscript = "merge.r",
         genes = "genes_{dset}.RData",
-        sets = "sets_{dset}.RData"
+        sets = "sets_{dset}.RData",
+        tfs = "tfs_{dset}.RData",
+        merge = "{merge}_merge.yaml"
     output:
-        outfile = "both_{dset}.RData"
+        outfile = "{merge}_{dset}.RData"
+    wildcard_constraints:
+        highlight = ".*_merge\\.yaml"
     shell:
         "Rscript {input.rscript}"
             " --genes {input.genes}"
             " --sets {input.sets}"
+            " --tfs {input.tfs}"
             " --outfile {output.outfile}"
 
 rule set_overlap:

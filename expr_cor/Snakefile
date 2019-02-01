@@ -20,7 +20,7 @@ expr = {
 rule all:
     input:
         expand("{rscript}-{kind}_{expr}.pdf", rscript=['diffcor', 'genenet'],
-                kind=['genes', 'sets', 'both', 'tfs'], expr=expr.keys()),
+                kind=config['expr_sets-highlight'], expr=expr.keys()),
         expand("viper-{expr}.pdf", expr=expr.keys())
 
 rule genenet:
