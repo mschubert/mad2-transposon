@@ -46,15 +46,17 @@ switch(basename(args$dset),
         meta = as.data.frame(SummarizedExperiment::colData(dset$eset))
         expr = expr[,meta$sample]
         groups = as.matrix(meta[c("Tcell", "Myeloid", "Other")])
+        aneuploidy = meta$aneuploidy
     },
     "eset_MILE.RData" = {
         # copied from ../diff_expr/de_MILE.r
         meta = dset$meta[!is.na(dset$meta$type),]
+        meta$sample = meta$id
         expr = expr[,meta$id]
         groups = cbind(narray::mask(meta$type),
             Hyperdip = (meta$annot == "ALL with hyperdiploid karyotype")) + 0
         groups[,"Hyperdip"][groups[,"B_like"] == 0] = NA
-#        aneuploidy = pmin(dset$meta$aneuploidy[keep], 0.25)
+        aneuploidy = meta$aneuploidy
     },
     {
         stop("need to add data set handler for ", args$dset)
@@ -67,22 +69,32 @@ tmat = sapply(colnames(groups), function(g) {
     expr[,!is.na(groups[,g]) & groups[,g] == 1]
 }, simplify=FALSE)
 
+aneup = data.frame(sample=meta$sample, aneup=aneuploidy)
+if (nrow(aneup) > 100)
+    aneup$aneup = NA_integer_ # discrete value to continuous scale otherwise
+
 ecmp = lapply(tmat, reshape2::melt) %>%
     dplyr::bind_rows(.id="type") %>%
     dplyr::rename(set=Var1, sample=Var2, expr=value) %>%
     group_by(set) %>%
     mutate(z_expr = scale(expr)) %>%
-    ungroup()
+    ungroup() %>%
+    left_join(aneup)
 
 #TODO: <expr> vs samples plot; hclust y & aneup x
 
 pdf(args$plotfile, 20, 15)
-ggplot(ecmp, aes(x=z_expr, y=set)) +
-    ggridges::geom_density_ridges(aes(fill=type), alpha=0.95) +
+ggplot(ecmp, aes(x=z_expr, y=set, fill=type)) +
+    ggridges::geom_density_ridges(alpha=0.95) +
+    geom_point(aes(shape=type, y=as.integer(set)+0.5, size=aneup), alpha=0.5,
+               position = position_jitter(width=0.01, height=0.1)) +
+    scale_size_continuous(range=c(0.5, 4)) +
+    scale_shape_manual(values=c(21, 22, 23, 24)) +
     ggtitle(sub("\\.RData", "", args$outfile))
+
 dev.off()
 
-save(expr, groups, file=args$outfile)
+save(expr, groups, aneuploidy, file=args$outfile)
 
 #if (grepl("rnaseq/assemble.RData", args$expr)) {
 #    types = dset$idx$type
