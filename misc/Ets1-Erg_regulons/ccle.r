@@ -21,7 +21,7 @@ idx = data.frame(cell_line = meta$`Cell line primary name`,
                  ERG_expr = expr["ERG",],
                  ETS1_expr = expr["ETS1",])
 
-pdf(args$plotfile)
+pdf(args$plotfile, 15, 10)
 ggplot(idx, aes(x=ERG_expr, y=ETS1_expr)) +
     geom_hline(yintercept=3.5, linetype="dashed") +
     geom_vline(xintercept=3.5, linetype="dashed") +
