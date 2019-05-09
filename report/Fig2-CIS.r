@@ -64,8 +64,10 @@ types$subset = factor(types$subset, levels=unname(lvl))
 
 p1 = ggplot(cis_samples, aes(x=sample, y=external_gene_name)) +
     geom_tile(aes(fill=ins_type, alpha=gene_read_frac)) +
-    scale_fill_manual(values=c("maroon4", "navy", "springgreen4")) +
+    scale_fill_manual(values=c("maroon4", "navy", "springgreen4"), na.translate=FALSE) +
     scale_alpha(range=c(0.25,1), breaks=c(0.25, 0.5, 0.75, 1)) +
+    guides(fill=guide_legend(title="Insert type"),
+           alpha=guide_legend(title="Relative abundance")) +
     theme(axis.text.x = element_text(angle=90, vjust=0.5),
           legend.position = "left",
           legend.justification = "right") +
@@ -83,6 +85,7 @@ p11 = mutate(aneup, sample=factor(sample, smplvl)) %>%
           axis.line.x = element_blank(),
           legend.position = "left",
           legend.justification = "right") +
+    guides(fill=guide_legend(title="Cancer type")) +
     labs(y = "Aneuploidy")
 
 p12 = ggplot(cis_stats, aes(x=external_gene_name, y=-log10(adj.p))) +
