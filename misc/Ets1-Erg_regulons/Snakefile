@@ -1,6 +1,6 @@
 rule all:
     input:
-        expand("Ets1+Erg_{set}.pdf", set=['gdsc', 'mad2pb', 'mile'])
+        expand("Ets1+Erg_{set}.pdf", set=['gdsc', 'mad2pb', 'mile', 'gdsc-PRAD'])
 
 rule plot:
     input:

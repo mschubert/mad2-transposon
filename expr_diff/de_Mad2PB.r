@@ -15,7 +15,7 @@ args = sys$cmd$parse(
     opt('o', 'outfile', 'results RData', 'de_Mad2PB.RData'),
     opt('p', 'plotfile', 'pdf', 'de_Mad2PB.pdf'),
     arg('sets', 'gene set .RData', arity='*',
-        list.files("../data/genesets", "\\.RData", full.names=TRUE)))
+        list.files("../data/genesets/mouse", "\\.RData", full.names=TRUE)))
 
 eset = io$load(args$eset)$eset
 
