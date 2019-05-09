@@ -5,7 +5,9 @@ library(patchwork)
 io = import('io')
 
 aneup = io$load("../ploidy_compare/analysis_set.RData") %>%
-    select(sample, type, aneuploidy)
+    select(sample, type, aneuploidy) %>%
+    mutate(type = factor(type))
+levels(aneup$type)[levels(aneup$type) == "Other"] = "B-like"
 ext = io$load("../cis_analysis/ext_gene.RData")
 bionet = io$load("../cis_analysis/bionet.RData") %>%
     pull(name)
