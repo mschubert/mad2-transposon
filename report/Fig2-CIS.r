@@ -29,6 +29,9 @@ cis_samples = cis$samples %>%
            total_reads = sum(reads),
            gene_read_frac = reads / total_reads) %>%
     ungroup() %>%
+    group_by(external_gene_name) %>%
+    mutate(gene_read_frac = gene_read_frac / max(gene_read_frac)) %>%
+    ungroup() %>%
     left_join(rna_ins) %>%
     mutate(rna_ins = ifelse(is.na(rna_ins), 0, 1),
         ins_type = case_when(
@@ -62,6 +65,7 @@ types$subset = factor(types$subset, levels=unname(lvl))
 p1 = ggplot(cis_samples, aes(x=sample, y=external_gene_name)) +
     geom_tile(aes(fill=ins_type, alpha=gene_read_frac)) +
     scale_fill_manual(values=c("maroon4", "navy", "springgreen4")) +
+    scale_alpha(range=c(0.25,1), breaks=c(0.25, 0.5, 0.75, 1)) +
     theme(axis.text.x = element_text(angle=90, vjust=0.5),
           legend.position = "left",
           legend.justification = "right") +
