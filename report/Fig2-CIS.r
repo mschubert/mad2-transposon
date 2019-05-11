@@ -33,9 +33,9 @@ cis_samples = cis$samples %>%
            total_reads = sum(reads),
            gene_read_frac = reads / total_reads) %>%
     ungroup() %>%
-    group_by(external_gene_name) %>%
-    mutate(gene_read_frac = gene_read_frac / max(gene_read_frac)) %>%
-    ungroup() %>%
+#    group_by(external_gene_name) %>%
+#    mutate(gene_read_frac = gene_read_frac / max(gene_read_frac)) %>%
+#    ungroup() %>%
     left_join(rna_ins) %>%
     mutate(has_ins = ifelse(rna_ins | n_ins != 0, TRUE, NA),
         rna_ins = ifelse(is.na(rna_ins), 0, 1),
@@ -71,9 +71,9 @@ p1 = ggplot(cis_samples, aes(x=sample, y=external_gene_name)) +
     geom_tile(aes(fill=ins_type, alpha=gene_read_frac, color=has_ins)) +
     scale_fill_manual(values=c("maroon4", "navy", "springgreen4"), na.translate=FALSE) +
     scale_color_manual(values="#565656ff") +
-    guides(color = element_blank(), #TODO:
+    guides(#color = element_blank(), #TODO:
            fill = guide_legend(title="Insert type"),
-           alpha = guide_legend(title="Relative abundance")) +
+           alpha = guide_legend(title="Read fraction")) +
     theme(axis.text.x = element_text(angle=90, vjust=0.5),
           legend.position = "left",
           legend.justification = "right") +
