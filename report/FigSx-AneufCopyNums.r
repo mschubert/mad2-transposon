@@ -14,13 +14,8 @@ asm = GenomeInfoDb::seqinfo(m1[[1]]$segments)
 adj_segs = io$load("../data/wgs/30cellseq.RData")$segments
 gr = split(adj_segs, adj_segs$sample) 
 
-#FIXME: this needs go work for seq$aneuploidy
-#aneups = anp$aneuploidy(adj_segs, assembly=asm, sample="sample")
-aneups = adj_segs %>%
-    filter(seqnames != "X") %>%
-    group_by(sample) %>%
-    summarize(aneup = weighted.mean(abs(2-ploidy), w=width)) %>%
-    arrange(aneup) %>%
+aneups = seq$aneuploidy(adj_segs, assembly=asm, sample="sample") %>%
+    arrange(aneuploidy) %>%
     filter(sample %in% c(aset$sample, mrg$subset)) %>%
     mutate(sample = factor(sample, levels=sample))
 

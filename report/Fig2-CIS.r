@@ -4,7 +4,6 @@ library(cowplot)
 library(patchwork)
 io = import('io')
 idmap = import('process/idmap')
-orth = import('process/idmap/orthologue') #FIXME: this should work via idmap
 
 aneup = io$load("../ploidy_compare/analysis_set.RData") %>%
     select(sample, type, aneuploidy) %>%
@@ -12,18 +11,26 @@ aneup = io$load("../ploidy_compare/analysis_set.RData") %>%
 levels(aneup$type)[levels(aneup$type) == "Other"] = "B-like"
 ext = io$load("../cis_analysis/ext_gene.RData")
 bionet = io$load("../cis_analysis/bionet.RData") %>%
-    pull(name)
+    pull(name) %>%
+    c("TP53") #FIXME:
+in_bionet = function(gname) {
+    re = idmap$orthologue(gname,
+        from="external_gene_name",
+        to="hsapiens_homolog_associated_gene_name",
+        dset="mmusculus_gene_ensembl")
+    ! is.na(re) & re %in% bionet
+}
 
 rna_ins = io$read_table("../data/rnaseq_imfusion/insertions.txt", header=TRUE) %>%
     select(sample, external_gene_name=gene_name) %>%
-    filter(toupper(external_gene_name) %in% bionet) %>%
+    filter(in_bionet(external_gene_name)) %>%
     distinct() %>%
     mutate(rna_ins = 1)
 
 cis = io$load("../cis_analysis/poisson_gene.RData")
 cis_result = cis$result %>%
     ungroup() %>% # TODO: don't saved grouped
-    filter(toupper(external_gene_name) %in% c(bionet, "TRP53"), #FIXME:
+    filter(in_bionet(external_gene_name),
            adj.p < 1e-3)
 cis_samples = cis$samples %>%
     filter(external_gene_name %in% cis_result$external_gene_name) %>%
@@ -33,9 +40,6 @@ cis_samples = cis$samples %>%
            total_reads = sum(reads),
            gene_read_frac = reads / total_reads) %>%
     ungroup() %>%
-#    group_by(external_gene_name) %>%
-#    mutate(gene_read_frac = gene_read_frac / max(gene_read_frac)) %>%
-#    ungroup() %>%
     left_join(rna_ins) %>%
     mutate(has_ins = ifelse(rna_ins | n_ins != 0, TRUE, NA),
         rna_ins = ifelse(is.na(rna_ins), 0, 1),
@@ -71,7 +75,7 @@ p1 = ggplot(cis_samples, aes(x=sample, y=external_gene_name)) +
     geom_tile(aes(fill=ins_type, alpha=gene_read_frac, color=has_ins)) +
     scale_fill_manual(values=c("maroon4", "navy", "springgreen4"), na.translate=FALSE) +
     scale_color_manual(values="#565656ff") +
-    guides(#color = element_blank(), #TODO:
+    guides(color = FALSE,
            fill = guide_legend(title="Insert type"),
            alpha = guide_legend(title="Read fraction")) +
     theme(axis.text.x = element_text(angle=90, vjust=0.5),
