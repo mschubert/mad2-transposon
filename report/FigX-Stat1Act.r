@@ -130,7 +130,7 @@ cors2 = cors %>%
 levels(cors2$subs) = c("Apoptotic process\n(GO:0006915)",
                        "Regulation of complement\nactivation (GO:0030449)")
 p2 = ggplot(cors2, aes(x=STAT1_cor, y=expr, color=type)) +
-    geom_point(aes(size=aneuploidy)) +
+    geom_point(aes(size=aneuploidy), alpha=0.8) +
     geom_smooth(method='lm', color="black", se=FALSE) +
     geom_smooth(method='lm', aes(color=type), se=FALSE) +
     coord_fixed() +
