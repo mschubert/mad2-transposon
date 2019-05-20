@@ -27,7 +27,7 @@ rna_ins = io$read_table("../data/rnaseq_imfusion/insertions.txt", header=TRUE) %
     distinct() %>%
     mutate(rna_ins = 1)
 
-cis = io$load("../cis_analysis/poisson_gene.RData")
+cis = io$load("../cis_analysis/poisson.RData")
 cis_result = cis$result %>%
     ungroup() %>% # TODO: don't saved grouped
     filter(in_bionet(external_gene_name),
