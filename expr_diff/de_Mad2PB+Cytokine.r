@@ -17,7 +17,9 @@ args = sys$cmd$parse(
     arg('sets', 'gene set .RData', arity='*',
         list.files("../data/genesets/mouse", "\\.RData", full.names=TRUE)))
 
-hl = c('Ccl5', 'Cxcl10', 'Ifna1', 'Ifnb1', 'Tnf', 'Il6', 'Ccl20', 'Cxcl1', 'Ccl2', 'Il2', 'Ifng')
+hl = c('Ccl5', 'Cxcl10', 'Ifna1', 'Ifnb1', 'Tnf', 'Il6', 'Ccl20', 'Cxcl1', 'Ccl2', 'Il2', 'Ifng',
+    'Ccr2', 'Ccr5', 'Cxcr3', 'Ifnar1', 'Ifnar2', 'Tlr3', 'Tlr4', 'Tlr7', 'Tlr8', 'Tlr9',
+    'Il10ra', 'Il6ra', 'Ccr1', 'Ccr4', 'Tnfrsf1a', 'Tradd', 'Cxcr2', 'Ifngr1', 'Ifngr2')
 
 gset = io$load(grep("HALLMARK", args$sets, value=TRUE))
 gset = unlist(gset[c('HALLMARK_INTERFERON_GAMMA_RESPONSE',
