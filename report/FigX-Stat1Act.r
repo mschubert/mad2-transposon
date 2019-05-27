@@ -20,12 +20,14 @@ cc = data.frame(
 encc = io$load("../data/genesets/mouse/ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X.RData")
 chea = io$load("../data/genesets/mouse/ChEA_2016.RData")
 go = io$load("../data/genesets/mouse/GO_Biological_Process_2018.RData")
+hm = io$load("../data/genesets/mouse/CH.HALLMARK.RData")
 mile = io$load("../data/genesets/mouse/MILE_regulons.RData")
 sets = c(go["regulation of complement activation (GO:0030449)"],
          chea["STAT1_20625510_ChIP-Seq_HELA_Human"],
          chea["STAT1_17558387_ChIP-Seq_HELA_Human"],
          encc["STAT3_CHEA"],
          encc["STAT3_ENCODE"],
+         hm["HALLMARK_INTERFERON_GAMMA_RESPONSE"],
          STAT1_complement = list(intersect(
             go[["regulation of complement activation (GO:0030449)"]],
             chea[["STAT1_17558387_ChIP-Seq_HELA_Human"]])),
@@ -81,7 +83,7 @@ p2 = ggplot(b2, aes(x=status, y=aneuploidy, color=type)) +
 # + <> aneup
 # pt size: stat1 expr?
 cors = both %>% 
-    tidyr::gather("subs", "expr", STAT1_complement:STAT1_apop)
+    tidyr::gather("subs", "expr", HALLMARK_INTERFERON_GAMMA_RESPONSE:STAT1_apop)
 #    tidyr::gather("subs", "expr", aneuploidy, STAT1_complement:STAT1_apop)
 ggplot(cors, aes(x=Stat1_act, y=aneuploidy)) +
     geom_boxplot() +
@@ -125,10 +127,10 @@ p1 = ggplot(cors, aes(x=STAT1_cor, y=aneuploidy)) +
     labs(x = "Stat1 activity (inferred)",
          y = "Aneuploidy")
 cors2 = cors %>%
-    filter(subs != "STAT1_mhc") %>%
+#    filter(subs != "STAT1_mhc") %>%
     mutate(subs = factor(subs))
-levels(cors2$subs) = c("Apoptotic process\n(GO:0006915)",
-                       "Regulation of complement\nactivation (GO:0030449)")
+#levels(cors2$subs) = c("Apoptotic process\n(GO:0006915)",
+#                       "Regulation of complement\nactivation (GO:0030449)")
 p2 = ggplot(cors2, aes(x=STAT1_cor, y=expr, color=type)) +
     geom_point(aes(size=aneuploidy), alpha=0.8) +
     geom_smooth(method='lm', color="black", se=FALSE) +
