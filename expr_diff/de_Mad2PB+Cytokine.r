@@ -19,13 +19,17 @@ args = sys$cmd$parse(
 
 hl = c('Ccl5', 'Cxcl10', 'Ifna1', 'Ifnb1', 'Tnf', 'Il6', 'Ccl20', 'Cxcl1', 'Ccl2', 'Il2', 'Ifng',
     'Ccr2', 'Ccr5', 'Cxcr3', 'Ifnar1', 'Ifnar2', 'Tlr3', 'Tlr4', 'Tlr7', 'Tlr8', 'Tlr9',
-    'Il10ra', 'Il6ra', 'Ccr1', 'Ccr4', 'Tnfrsf1a', 'Tradd', 'Cxcr2', 'Ifngr1', 'Ifngr2')
+    'Il10ra', 'Il6ra', 'Ccr1', 'Ccr4', 'Tnfrsf1a', 'Tradd', 'Cxcr2', 'Ifngr1', 'Ifngr2',
+    'Samd9l', 'Isg15', 'Ifi27l2a', 'Ifit1', 'Oas1a', 'Oas1b', 'Isg54', 'Isg56')
 
 gset = io$load(grep("HALLMARK", args$sets, value=TRUE))
 gset = unlist(gset[c('HALLMARK_INTERFERON_GAMMA_RESPONSE',
               'HALLMARK_INFLAMMATORY_RESPONSE', 'HALLMARK_TNFA_SIGNALING_VIA_NFKB')])
+gset = c(gset, hl)
 eset = io$load(args$eset)$eset
 eset = eset[intersect(gset, rownames(eset)),]
+
+warning("Not in eset: ", paste(hl[!hl %in% rownames(eset)], collapse=", "))
 
 # fit tissue of origin and pan-aneuploidy
 res = util$do_wald(eset, ~ tissue + type + aneuploidy, ex="tissue|aneuploidy")
