@@ -67,7 +67,8 @@ do_lrt = function(eset, fml, red) {
         arrange(padj, pvalue)
 }
 
-plot_gset = function(res, sets, highlight=NULL) {
+plot_gset = function(res, sets, highlight=NULL, fdr=0.1, base.size=0.1,
+                     label_top=30, repel=TRUE) {
     test_one = function(set_name) {
         fdata = mutate(cur, in_set = gene_name %in% sets[[set_name]])
         mod = try(lm(stat ~ in_set, data=fdata))
@@ -87,8 +88,9 @@ plot_gset = function(res, sets, highlight=NULL) {
         mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
         arrange(adj.p, p.value)
     p = result %>%
-        plt$p_effect("adj.p", thresh=0.1) %>%
-        plt$volcano(p=0.1, base.size=0.1, label_top=30, repel=TRUE, text.size=2)
+        plt$p_effect("adj.p", thresh=fdr) %>%
+        plt$volcano(p=fdr, base.size=base.size, label_top=label_top,
+                    repel=repel, text.size=2)
 
     built = try(ggplot_build(p))
     if (class(built) == "try-error")
