@@ -19,9 +19,10 @@ plot_cor_matrix(t(mat2), text_color=NULL)
 plot_cor_matrix(t(mat), text_color=NULL)
 
 pcor(t(mat)) %>% plot_pcor_net(node_size=4, edge_size=2.5)
+#pcor(t(mat2)) %>% plot_pcor_net(node_size=4, edge_size=2.5)
 plot_bootstrapped_pcor(t(mat), node_size=4)
-pcor(t(mat2)) %>% plot_pcor_net(node_size=4, edge_size=2.5)
-plot_bootstrapped_pcor(t(mat2), node_size=4)
+plot_bootstrapped_pcor(t(mat2), node_size=4, excl=colnames(groups),
+    title="bootstrap adjusted for cohorts (but nodes not shown)")
 
 for (i in seq_along(tmat)) {
     name = names(tmat)[i]
