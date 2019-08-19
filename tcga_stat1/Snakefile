@@ -1,0 +1,34 @@
+rule all:
+    input:
+        "genenet.pdf"
+
+rule genenet:
+    input:
+        rscript = "genenet.r",
+        infile = "scores.rds"
+    output:
+        plotfile = "genenet.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --infile {input.infile}"
+            " --plotfile {output.plotfile}"
+
+rule scores:
+    input:
+        rscript = "scores.r",
+        infile = "sets.rds"
+    output:
+        outfile = "scores.rds"
+    shell:
+        "Rscript {input.rscript}"
+            " --infile {input.infile}"
+            " --outfile {output.outfile}"
+
+rule sets:
+    input:
+        rscript = "sets.r"
+    output:
+        outfile = "sets.rds"
+    shell:
+        "Rscript {input.rscript}"
+            " --outfile {output.outfile}"
