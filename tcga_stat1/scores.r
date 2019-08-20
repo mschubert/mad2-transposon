@@ -21,10 +21,9 @@ gsva_tcga = function(cohort, genes, sets) {
     scores = rbind(genes, gsva)
 }
 
-sets = readRDS(args$infile)
-genes = c("STAT1", "PIAS1", "IFNG", "IL1B", "IFITM1",
-          "CGAS", "TBK1", "IRF2", "IRF3", "TP53")
-# don't have: "IFNA", "IFNB", "OAS1", "ISG54"
+dset = readRDS(args$infile)
+sets = dset$sets
+genes = dset$genes
 
 cohorts = c("BRCA", "LUAD", "COAD", "PRAD", "SKCM")
 gsva = lapply(cohorts, gsva_tcga, sets=sets, genes=genes)
@@ -45,6 +44,7 @@ immune = readxl::read_xlsx("1-s2.0-S1074761318301213-mmc2.xlsx") %>%
               Lymphocytes = as.numeric(Lymphocytes),
               Lymph_Infiltration = as.numeric(`Lymphocyte Infiltration Signature Score`),
               Leuko_Fraction = as.numeric(`Leukocyte Fraction`),
+              Macrophages = as.numeric(`Macrophage Regulation`),
               NK_activated = as.numeric(`NK Cells Activated`),
               NK_total = NK_activated + as.numeric(`NK Cells Resting`))
 
