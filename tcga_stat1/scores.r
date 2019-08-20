@@ -4,10 +4,11 @@ idmap = import('process/idmap')
 sys = import('sys')
 
 args = sys$cmd$parse(
-    opt('i', 'infile', 'rds', 'sets.rds'),
-    opt('o', 'outfile', 'rds', 'scores.rds'))
+    opt('i', 'infile', 'rds', 'sets/stat1TGs.rds'),
+    opt('o', 'outfile', 'rds', 'scores/stat1TGs.rds'))
 
 gsva_tcga = function(cohort, genes, sets) {
+    message(cohort)
     expr = tcga$rna_seq(cohort, trans="raw")
     keep = rowMeans(expr, na.rm=TRUE) >= 10
     expr = tcga$rna_seq(cohort, trans="vst")
@@ -15,8 +16,11 @@ gsva_tcga = function(cohort, genes, sets) {
     expr = expr[keep | rownames(expr) %in% genes,]
     expr = expr[!is.na(rownames(expr)) & rownames(expr) != "",]
 
-    genes = expr[genes,,drop=FALSE]
-    expr = expr[rownames(expr) != "STAT1",]
+    genes = expr[intersect(rownames(expr), genes),,drop=FALSE]
+    if (length(sets) == 0)
+        return(genes)
+
+    expr = expr[! rownames(expr) %in% genes,]
     gsva = GSVA::gsva(expr, sets, parallel.sz=1)
     scores = rbind(genes, gsva)
 }
