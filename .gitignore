@@ -25,6 +25,7 @@ cache
 *-Ex.R
 # Data files
 *.CEL
+*.rds
 *.ro
 *.ro.gz
 *.ro.zip

@@ -1,0 +1,34 @@
+rule all:
+    input:
+        expand("genenet_{sets}.pdf", sets=['inflammation', 'stat1TGs'])
+
+rule genenet:
+    input:
+        rscript = "genenet.r",
+        infile = "scores/{sets}.rds"
+    output:
+        plotfile = "genenet_{sets}.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --infile {input.infile}"
+            " --plotfile {output.plotfile}"
+
+rule scores:
+    input:
+        rscript = "scores.r",
+        infile = "sets/{sets}.rds"
+    output:
+        outfile = "scores/{sets}.rds"
+    shell:
+        "Rscript {input.rscript}"
+            " --infile {input.infile}"
+            " --outfile {output.outfile}"
+
+rule sets:
+    input:
+        rscript = "sets_{sets}.r"
+    output:
+        outfile = "sets/{sets}.rds"
+    shell:
+        "Rscript {input.rscript}"
+            " --outfile {output.outfile}"
