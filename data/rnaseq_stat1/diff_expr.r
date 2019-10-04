@@ -43,8 +43,6 @@ over_wt = function(genotype, time, treatment) {
 res$rev24_stat1_over_wt = over_wt(c("wt", "stat1"), "24", "rev")
 res$rev48_stat1_over_wt = over_wt(c("wt", "stat1"), "48", "rev")
 
-#TODO: gene sets
-
 hl = c("CCL2", "CCL5", "IL6", "IFNG", "STAT1", "CGAS", "IFNA", "IFNB",
        "TNF", "IL6", "IL2", "CCL20", "CXCL1")
 
@@ -54,3 +52,5 @@ for (rname in names(res)) {
     print(util$plot_volcano(res[[rname]], hl) + ggtitle(rname))
 }
 dev.off()
+
+saveRDS(res, file=args$outfile)

@@ -1,9 +1,12 @@
 configfile: "../../config.yaml"
 
+subworkflow sets:
+    workdir: "../genesets"
+    snakefile: "../genesets/Snakefile"
+
 rule all:
     input:
-        "dset.rds",
-        "diff_expr.pdf"
+        expand("sets/{sets}.pdf", sets=config['genesets'])
 
 rule dset:
     input:
@@ -31,4 +34,17 @@ rule de_genes:
         "Rscript {input.rscript}"
             " --dset {input.dset}"
             " --outfile {output.outfile}"
+            " --plotfile {output.plotfile}"
+
+rule de_sets:
+    input:
+        rscript = "de_sets.r",
+        diff_expr = "diff_expr.rds",
+        setfile = lambda wc: sets("human/{sets}.RData")
+    output:
+        plotfile = "sets/{sets}.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --diff_expr {input.diff_expr}"
+            " --setfile {input.setfile}"
             " --plotfile {output.plotfile}"
