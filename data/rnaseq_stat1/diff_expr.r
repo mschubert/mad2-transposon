@@ -27,7 +27,13 @@ res$wt_rev48_over_dmso = over_dmso("wt", "48", "rev")
 res$stat1_rev24_over_dmso = over_dmso("stat1", "24", "rev")
 res$stat1_rev48_over_dmso = over_dmso("stat1", "48", "rev")
 
-#res$cgas_rev24_over_dmso = over_dmso("cgas", "24", "rev") # no genes, rep 2 is too far out
+# rep 1+2 too different, only DE genes if replicate is regressed out
+cgas_over_dmso = function(genotype, time, treatment) {
+    cur = eset[,eset$time %in% time & eset$genotype == genotype & eset$treatment %in% c(treatment, "dmso")]
+    colData(cur) = droplevels(colData(cur))
+    res = util$do_wald(cur, ~ replicate + treatment, ex="treatment")
+}
+res$cgas_rev24_over_dmso = cgas_over_dmso("cgas", "24", "rev")
 
 over_wt = function(genotype, time, treatment) {
     cur = eset[,eset$time %in% time & eset$genotype %in% genotype & eset$treatment %in% treatment]
