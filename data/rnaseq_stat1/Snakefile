@@ -1,0 +1,34 @@
+configfile: "../../config.yaml"
+
+rule all:
+    input:
+        "dset.rds",
+        "diff_expr.pdf"
+
+rule dset:
+    input:
+        rscript = "dset.r",
+        yaml = "BT549_Stat1.yaml",
+        expr = "count_matrix_known_barcodes_STL_and_USS_genes.txt"
+    output:
+        outfile = "dset.rds",
+        plotfile = "dset.pdf"
+    shell:
+        "Rscript {intput.rscript}"
+            " --yaml {input.yaml}"
+            " --expr {input.expr}"
+            " --outfile {output.outfile}"
+            " --plotfile {output.plotfile}"
+
+rule de_genes:
+    input:
+        rscript = "diff_expr.r",
+        dset = "dset.rds"
+    output:
+        outfile = "diff_expr.rds",
+        plotfile = "diff_expr.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --dset {input.dset}"
+            " --outfile {output.outfile}"
+            " --plotfile {output.plotfile}"
