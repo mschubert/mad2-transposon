@@ -45,7 +45,8 @@ res$rev48_stat1_over_wt = over_wt(c("wt", "stat1"), "48", "rev")
 
 #TODO: gene sets
 
-hl = c()
+hl = c("CCL2", "CCL5", "IL6", "IFNG", "STAT1", "CGAS", "IFNA", "IFNB",
+       "TNF", "IL6", "IL2", "CCL20", "CXCL1")
 
 pdf(args$plotfile)
 for (rname in names(res)) {
