@@ -1,9 +1,9 @@
 library(dplyr)
 sys = import('sys')
-util = import('../../expr_diff/util')
+util = import('../expr_diff/util')
 
 args = sys$cmd$parse(
-    opt('d', 'dset', 'rds', 'dset.rds'),
+    opt('d', 'dset', 'rds', '../data/rnaseq_stat1/dset.rds'),
     opt('o', 'outfile', 'rds', 'diff_expr.rds'),
     opt('p', 'plotfile', 'pdf', 'diff_expr.pdf'))
 
