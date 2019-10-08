@@ -10,7 +10,8 @@ idmap = import('process/idmap')
 # response signatures: Stat1 ChIP (enrichr), Ifn response
 expr = io$load("../expr_diff/eset_Mad2PB.RData")
 #genes = c("Stat1", "Pias1", "Mb21d1", "Ifng", "Ifngr1", "Trp53", "Wrap53")
-cis_genes = c("Stat1", "Pias1", "Ifng", "Trp53")
+cis_genes = c("Stat1", "Pias1", "Ifng", "Trp53", "Nfkb1", "Nfkbib", "Nfkbiz",
+              "Nfkbil1", "Nfkbia", "Tbk1", "Mb21d1", "Notch1", "Xrcc6", "Pten")
 expr_genes = c(cis_genes, "Ets1", "Erg", "Stat3")
 ee = io$load("../expr_diff/eset_Mad2PB.RData")$vs
 stat1 = ee["Stat1",]
@@ -91,19 +92,6 @@ cors = both %>%
     tidyr::gather("subs", "expr", STAT1_complement:STAT1_apop) %>%
     dplyr::rename(IFNg_response = HALLMARK_INTERFERON_GAMMA_RESPONSE)
 #    tidyr::gather("subs", "expr", aneuploidy, STAT1_complement:STAT1_apop)
-ggplot(cors, aes(x=Stat1_act, y=aneuploidy)) +
-    geom_boxplot() +
-    geom_point(aes(shape=ins))
-ggplot(cors %>% filter(type=="Other"), aes(x=Stat1_act, y=aneuploidy)) +
-    geom_boxplot() +
-    geom_point(aes(shape=ins))
-ggplot(cors, aes(x=STAT1_cor, y=expr, color=type)) +
-    geom_point(aes(shape=ins)) +
-    geom_smooth(method='lm', color="black") +
-    geom_smooth(method='lm', aes(color=type), se=FALSE) +
-#    ggrepel::geom_text_repel(aes(label=sample), size=4) +
-    facet_wrap(~ subs)
-
 
 stats = split(cors, cors$subs) %>%
     lapply(function(x) broom::tidy(lm(expr ~ STAT1_cor, data=x))) %>%
@@ -125,7 +113,7 @@ stats4 = broom::tidy(lm(aneuploidy ~ STAT1_cor, data=filter(cors, type=="Other")
     select(-term)
 
 both$ins[both$ins == "none"] = NA
-cors$High_Erg = cors$Erg > 6 & cors$Ets1 < 10
+cors$High_Erg = cors$Erg > 6 & cors$Ets1 < 10 & cors$type == "Other"
 p1 = ggplot(cors, aes(x=STAT1_cor, y=aneuploidy)) +
     geom_vline(xintercept=0, linetype="dashed") +
     geom_boxplot(aes(group=Stat1_act), outlier.shape=NA, color="grey", varwidth=TRUE) +
