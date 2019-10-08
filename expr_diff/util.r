@@ -82,14 +82,17 @@ test_gset = function(res, set) {
         mutate(size = sum(fdata$in_set, na.rm=TRUE))
 }
 
-plot_gset = function(res, sets, highlight=NULL, fdr=0.1, base.size=0.1,
-                     label_top=30, repel=TRUE) {
-    result = lapply(sets, test_gset, res=res, simplify=FALSE) %>%
+test_gsets = function(res, sets) {
+    result = lapply(sets, test_gset, res=res) %>%
         setNames(names(sets)) %>%
         dplyr::bind_rows(.id="label") %>%
         mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
         arrange(adj.p, p.value)
-    p = result %>%
+}
+
+plot_gset = function(res, sets, highlight=NULL, fdr=0.1, base.size=0.1,
+                     label_top=30, repel=TRUE) {
+    p = test_gsets(res, sets) %>%
         plt$p_effect("adj.p", thresh=fdr) %>%
         plt$volcano(p=fdr, base.size=base.size, label_top=label_top,
                     repel=repel, text.size=2)

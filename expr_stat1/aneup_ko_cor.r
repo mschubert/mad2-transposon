@@ -3,7 +3,6 @@ io = import('io')
 sys = import('sys')
 idmap = import('process/idmap')
 gset = import('data/genesets')
-util = import('../expr_diff/util')
 
 merge_one = function(subs) {
     both = list(stat1=stat1[[subs]], aneup=aneup) %>%
