@@ -1,10 +1,14 @@
 library(dplyr)
+library(ggplot2)
 io = import('io')
 sys = import('sys')
 idmap = import('process/idmap')
 gset = import('data/genesets')
 
-merge_one = function(subs) {
+colors = setNames(c("#a50f15", "#006d2c", "#045a8d", "#cccccc", "#8a8a8a"),
+                  c("compensated", "hyper-dereg", "inconsistent", "no change", "only 1 dset"))
+
+merge_one = function(subs, wald=1.5) {
     both = list(stat1=stat1[[subs]], aneup=aneup) %>%
         bind_rows(.id="dset") %>%
         transmute(dset = dset,
@@ -12,6 +16,14 @@ merge_one = function(subs) {
                   padj = padj,
                   stat = log2FoldChange / lfcSE) %>%
         tidyr::pivot_wider(names_from="dset", values_from=c("stat", "padj")) %>%
+        mutate(type = case_when(
+                is.na(stat_stat1) | is.na(stat_aneup) ~ "only 1 dset",
+                abs(stat_stat1) < wald | abs(stat_aneup) < wald ~ "no change",
+                stat_stat1 < 0 & stat_aneup < 0 ~ "compensated",
+                stat_stat1 > 0 & stat_aneup > 0 ~ "hyper-dereg",
+                TRUE ~ "inconsistent"
+            ),
+            type = factor(type, levels=names(colors))) %>%
         na.omit()
 }
 
@@ -21,7 +33,10 @@ plot_one = function(merged) {
         filter(padj_stat1 < 0.1 | padj_aneup < 0.1)
     ggplot(merged, aes(x=stat_stat1, y=stat_aneup)) +
         geom_point(color="grey") +
-        ggrepel::geom_text_repel(aes(label=label), size=3) +
+        scale_color_manual(values=colors) +
+        ggrepel::geom_label_repel(aes(label=label, color=type), size=3,
+                                  na.rm=TRUE, segment.alpha=0.3, fill="#ffffffc0",
+                                  label.padding=0.1, max.iter=1e4, min.segment.length=0) +
         geom_hline(yintercept=0, linetype="dashed", size=2, alpha=0.3) +
         geom_vline(xintercept=0, linetype="dashed", size=2, alpha=0.3)
 }
@@ -37,7 +52,7 @@ aneup$gene_name = toupper(aneup$gene_name)
 #aneup$gene_name = idmap$orthologue(aneup$gene_name, dset="mmusculus_gene_ensembl",
 #                                   from="mgi_symbol", to="hgnc_symbol")
 
-pdf(args$plotfile, 10, 8)
+pdf(args$plotfile, 16, 14)
 plot_one(merge_one("rev24_cgas_over_wt")) + ggtitle("rev24_cgas_over_wt")
 plot_one(merge_one("rev24_stat1_over_wt")) + ggtitle("rev24_stat1_over_wt")
 plot_one(merge_one("rev48_stat1_over_wt")) + ggtitle("rev48_stat1_over_wt")
