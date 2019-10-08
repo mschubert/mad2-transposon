@@ -40,6 +40,7 @@ over_wt = function(genotype, time, treatment) {
     colData(cur) = droplevels(colData(cur))
     res = util$do_wald(cur, ~ genotype, ex="genotype")
 }
+res$rev24_cgas_over_wt = over_wt(c("wt", "cgas"), "24", "rev")
 res$rev24_stat1_over_wt = over_wt(c("wt", "stat1"), "24", "rev")
 res$rev48_stat1_over_wt = over_wt(c("wt", "stat1"), "48", "rev")
 
