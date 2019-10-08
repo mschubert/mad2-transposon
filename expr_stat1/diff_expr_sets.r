@@ -14,6 +14,8 @@ sets = io$load(args$setfile) %>%
     gset$filter(min=5, valid=res[[1]]$gene_name)
 
 pdf(args$plotfile)
-for (rname in names(res))
+for (rname in names(res)) {
+    message(rname)
     print(util$plot_gset(res[[rname]], sets) + ggtitle(rname))
+}
 dev.off()
