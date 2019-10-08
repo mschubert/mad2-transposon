@@ -22,26 +22,41 @@ chea = io$load("../data/genesets/mouse/ChEA_2016.RData")
 go = io$load("../data/genesets/mouse/GO_Biological_Process_2018.RData")
 hm = io$load("../data/genesets/mouse/CH.HALLMARK.RData")
 mile = io$load("../data/genesets/mouse/MILE_regulons.RData")
-sets = c(go["regulation of complement activation (GO:0030449)"],
-         chea["STAT1_20625510_ChIP-Seq_HELA_Human"],
-         chea["STAT1_17558387_ChIP-Seq_HELA_Human"],
-         encc["STAT3_CHEA"],
-         encc["STAT3_ENCODE"],
-         hm["HALLMARK_INTERFERON_GAMMA_RESPONSE"],
-         STAT1_complement = list(intersect(
-            go[["regulation of complement activation (GO:0030449)"]],
-            chea[["STAT1_17558387_ChIP-Seq_HELA_Human"]])),
-         STAT1_mhc = list(intersect(
-            go[["antigen receptor-mediated signaling pathway (GO:0050851)"]],
-            chea[["STAT1_17558387_ChIP-Seq_HELA_Human"]])),
-         STAT1_apop = list(intersect(
-            go[["apoptotic process (GO:0006915)"]],
-            chea[["STAT1_17558387_ChIP-Seq_HELA_Human"]])),
-         STAT1_cor = list(intersect(
+
+sets=c(chea[c("STAT1_17558387_ChIP-Seq_HELA_Human",
+              "STAT3_23295773_ChIP-Seq_U87_Human")],
+       hm["HALLMARK_INTERFERON_GAMMA_RESPONSE"])
+sets = list(
+    IFNg_Stat1 = intersect(sets[[1]], sets[[3]]),
+    IFNg_Stat3 = intersect(sets[[2]], sets[[3]]),
+    IFNg_other = setdiff(sets[[3]], c(sets[[1]], sets[[2]])),
+         STAT1_cor = setdiff(intersect(
             head(cc$gene, 1000),
-            chea[["STAT1_17558387_ChIP-Seq_HELA_Human"]]))
+            chea[["STAT1_17558387_ChIP-Seq_HELA_Human"]]), sets[[3]])
 )
-# + MHC, IFN(g), apop(?) -> do GO enrichment, then choose (or: clust?)
+
+#sets = c(go["regulation of complement activation (GO:0030449)"],
+#         chea["STAT1_20625510_ChIP-Seq_HELA_Human"],
+#         chea["STAT1_17558387_ChIP-Seq_HELA_Human"],
+#         encc["STAT3_CHEA"],
+#         encc["STAT3_ENCODE"],
+#         hm["HALLMARK_INTERFERON_GAMMA_RESPONSE"],
+#         STAT1_complement = list(intersect(
+#            go[["regulation of complement activation (GO:0030449)"]],
+#            chea[["STAT1_17558387_ChIP-Seq_HELA_Human"]])),
+#         STAT1_mhc = list(intersect(
+#            go[["antigen receptor-mediated signaling pathway (GO:0050851)"]],
+#            chea[["STAT1_17558387_ChIP-Seq_HELA_Human"]])),
+#         STAT1_apop = list(intersect(
+#            go[["apoptotic process (GO:0006915)"]],
+#            chea[["STAT1_17558387_ChIP-Seq_HELA_Human"]])),
+#         STAT1_cor = list(intersect(
+#            head(cc$gene, 1000),
+#            chea[["STAT1_17558387_ChIP-Seq_HELA_Human"]]))
+#)
+#sets$HALLMARK_INTERFERON_GAMMA_RESPONSE = setdiff(sets$HALLMARK_INTERFERON_GAMMA_RESPONSE,
+#                                                  chea[["STAT1_17558387_ChIP-Seq_HELA_Human"]])
+## + MHC, IFN(g), apop(?) -> do GO enrichment, then choose (or: clust?)
 gsva = GSVA::gsva(expr$vs, sets)
 scores = rbind(expr$vs[genes,], gsva)
 
@@ -56,48 +71,39 @@ annot$ins[match(names(cis), annot$sample)] = cis
 annot$ins = relevel(factor(annot$ins), "none")
 
 both = cbind(annot, t(scores)) %>%
-    filter(type != "unknown") %>%
-    mutate(Stat1_act = STAT1_cor > 0)
+    filter(type != "unknown")
 
-p = ggplot(both, aes(x=Stat1, y=STAT1_cor)) +
-    geom_point(aes(size=aneuploidy, color=type, shape=ins)) +
-    geom_text_repel(aes(label=sample)) +
-    geom_hline(yintercept=0, linetype="dashed")
+cors = both %>% 
+    tidyr::gather("subs", "expr", IFNg_Stat1:IFNg_other)
 
-x = t.test(both %>% filter(type=="Other", Stat1_act) %>% pull(aneuploidy),
-           both %>% filter(type=="Other", !Stat1_act) %>% pull(aneuploidy)) %>% broom::tidy()
+cors2 = cors %>%
+#    filter(subs != "STAT1_mhc") %>%
+    mutate(subs = factor(subs))
+#levels(cors2$subs) = c("Apoptotic process\n(GO:0006915)",
+#                       "Regulation of complement\nactivation (GO:0030449)")
+p2 = ggplot(cors2, aes(x=STAT1_cor, y=expr, color=type)) +
+    geom_point(aes(size=aneuploidy), alpha=0.8) +
+    geom_smooth(method='lm', color="black", se=FALSE) +
+    geom_smooth(method='lm', aes(color=type), se=FALSE) +
+    coord_fixed() +
+    facet_wrap(~ subs) +
+    guides(color = guide_legend(title="Cancer type"),
+           size = guide_legend(title="Aneuploidy")) +
+    labs(x = "Stat1 activity (inferred)",
+         y = "GO signature score")
 
-b2 = both %>%
-    mutate(status = case_when(
-        type == "T-cell" & !Stat1_act ~ "-",
-        type == "Myeloid" & Stat1_act ~ "+",
-        type == "Other" & Stat1_act ~ "+",
-        type == "Other" & !Stat1_act ~ "-"
-    ), status = factor(status, levels=c("+", "-"))) %>% filter(!is.na(status))
-p2 = ggplot(b2, aes(x=status, y=aneuploidy, color=type)) +
-    geom_boxplot() +
-    ggbeeswarm::geom_quasirandom(aes(shape=ins), size=5) +
-    facet_wrap(~ type, scales="free_x", nrow=1)
+
+
+
+
+
+
+
 
 # add cor plots for stat1 act <> stat1 subsets (complement, mhc, apop)
 # + <> aneup
 # pt size: stat1 expr?
-cors = both %>% 
-    tidyr::gather("subs", "expr", HALLMARK_INTERFERON_GAMMA_RESPONSE:STAT1_apop)
 #    tidyr::gather("subs", "expr", aneuploidy, STAT1_complement:STAT1_apop)
-ggplot(cors, aes(x=Stat1_act, y=aneuploidy)) +
-    geom_boxplot() +
-    geom_point(aes(shape=ins))
-ggplot(cors %>% filter(type=="Other"), aes(x=Stat1_act, y=aneuploidy)) +
-    geom_boxplot() +
-    geom_point(aes(shape=ins))
-ggplot(cors, aes(x=STAT1_cor, y=expr, color=type)) +
-    geom_point(aes(shape=ins)) +
-    geom_smooth(method='lm', color="black") +
-    geom_smooth(method='lm', aes(color=type), se=FALSE) +
-#    ggrepel::geom_text_repel(aes(label=sample), size=4) +
-    facet_wrap(~ subs)
-
 
 stats = split(cors, cors$subs) %>%
     lapply(function(x) broom::tidy(lm(expr ~ STAT1_cor, data=x))) %>%
@@ -143,7 +149,7 @@ p2 = ggplot(cors2, aes(x=STAT1_cor, y=expr, color=type)) +
          y = "GO signature score")
 
 library(gridExtra)
-pdf("FigX-Stat1Act.pdf", 10, 8)
+pdf("stat1_compare_stat346.pdf", 10, 8)
 print(p1)
 print(p2)
 grid.arrange(grid::textGrob("Aneuploidy Stat1 low vs high, all types"), tableGrob(stats3))
