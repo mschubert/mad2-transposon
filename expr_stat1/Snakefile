@@ -10,7 +10,8 @@ subworkflow sets:
 
 rule all:
     input:
-        expand("diff_expr/{sets}.pdf", sets=config['genesets'])
+        expand("diff_expr/{sets}.pdf", sets=config['genesets']),
+        "stat1ko_diff_inflamm_resp.pdf"
 
 rule de_genes:
     input:
@@ -35,5 +36,18 @@ rule de_sets:
     shell:
         "Rscript {input.rscript}"
             " --diff_expr {input.diff_expr}"
+            " --setfile {input.setfile}"
+            " --plotfile {output.plotfile}"
+
+rule stat1ko_inflamm:
+    input:
+        rscript = "stat1ko_diff_inflamm_resp.r",
+        de_gene = "diff_expr.rds",
+        setfile = sets("human/CH.HALLMARK.RData")
+    output:
+        plotfile = "stat1ko_diff_inflamm_resp.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --diff_expr {input.de_gene}"
             " --setfile {input.setfile}"
             " --plotfile {output.plotfile}"

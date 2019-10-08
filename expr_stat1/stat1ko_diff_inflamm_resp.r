@@ -7,7 +7,7 @@ util = import('../expr_diff/util')
 args = sys$cmd$parse(
     opt('d', 'diff_expr', 'rds', 'diff_expr.rds'),
     opt('s', 'setfile', 'RData', '../data/genesets/human/CH.HALLMARK.RData'),
-    opt('p', 'plotfile', 'pdf', 'stat1_diff_inflamm_resp.pdf'))
+    opt('p', 'plotfile', 'pdf', 'stat1ko_diff_inflamm_resp.pdf'))
 
 res = readRDS(args$diff_expr)[c("wt_rev48_over_dmso", "stat1_rev48_over_dmso")]
 sets = io$load(args$setfile)
