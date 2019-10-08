@@ -34,14 +34,13 @@ plot_one = function(merged) {
                bottom10 = rank(-rank(stat_stat1) - rank(stat_aneup)) <= 10,
                inc10 = rank(-abs(rank(stat_stat1) - rank(stat_aneup))) <= 10,
                label = ifelse((top10 | bottom10 | inc10) & padj_stat1 < 0.1 &
-                              padj_aneup < 0.1, gene_name, NA)) %>%
-        filter(padj_stat1 < 0.1 | padj_aneup < 0.1)
+                              padj_aneup < 0.1, gene_name, NA))
     ggplot(merged, aes(x=stat_stat1, y=stat_aneup)) +
-        geom_point(color="grey") +
+        geom_point(aes(color=type)) +
         scale_color_manual(values=colors) +
         ggrepel::geom_label_repel(aes(label=label, color=type), size=3,
                                   na.rm=TRUE, segment.alpha=0.3, fill="#ffffffc0",
-                                  label.padding=0.1, max.iter=1e4, min.segment.length=0) +
+                                  label.padding=0.1, max.iter=5e4, min.segment.length=0) +
         geom_hline(yintercept=0, linetype="dashed", size=2, alpha=0.3) +
         geom_vline(xintercept=0, linetype="dashed", size=2, alpha=0.3)
 }
