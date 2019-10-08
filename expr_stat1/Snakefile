@@ -2,16 +2,23 @@ configfile: "../config.yaml"
 
 subworkflow stat_ko:
     workdir: "../data/rnaseq_stat1"
-    snakefile: "../data/rnaseq_stat1"
+    snakefile: "../data/rnaseq_stat1/Snakefile"
 
 subworkflow sets:
     workdir: "../data/genesets"
     snakefile: "../data/genesets/Snakefile"
 
+subworkflow expr_diff:
+    workdir: "../expr_diff"
+    snakefile: "../expr_diff/Snakefile"
+
 rule all:
     input:
         expand("diff_expr/{sets}.pdf", sets=config['genesets']),
-        "stat1ko_diff_inflamm_resp.pdf"
+        "aneup_ko_cor.pdf",
+        expand("aneup_ko_cor/{sets}.pdf", sets=config['genesets']),
+        "stat1ko_diff_inflamm_resp.pdf",
+        "stat1_tf_activity.pdf"
 
 rule de_genes:
     input:
@@ -28,7 +35,7 @@ rule de_genes:
 
 rule de_sets:
     input:
-        rscript = "de_sets.r",
+        rscript = "diff_expr_sets.r",
         diff_expr = "diff_expr.rds",
         setfile = lambda wc: sets("human/{sets}.RData")
     output:
@@ -37,6 +44,36 @@ rule de_sets:
         "Rscript {input.rscript}"
             " --diff_expr {input.diff_expr}"
             " --setfile {input.setfile}"
+            " --plotfile {output.plotfile}"
+
+rule cor_genes:
+    input:
+        rscript = "aneup_ko_cor.r",
+        diff_expr = "diff_expr.rds",
+        diff_aneup = expr_diff("de_Mad2PB.RData")
+    output:
+        plotfile = "aneup_ko_cor.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --diff_expr {input.diff_expr}"
+            " --diff_aneup {input.diff_aneup}"
+            " --plotfile {output.plotfile}"
+
+rule cor_sets:
+    input:
+        rscript = "aneup_ko_cor_sets.r",
+        diff_expr = "diff_expr.rds",
+        diff_aneup = expr_diff("de_Mad2PB.RData"),
+        set_human = lambda wc: sets("human/{sets}.RData"),
+        set_mouse = lambda wc: sets("mouse/{sets}.RData")
+    output:
+        plotfile = "aneup_ko_cor/{sets}.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --diff_expr {input.diff_expr}"
+            " --diff_aneup {input.diff_aneup}"
+            " --set_human {input.set_human}"
+            " --set_mouse {input.set_mouse}"
             " --plotfile {output.plotfile}"
 
 rule stat1ko_inflamm:
