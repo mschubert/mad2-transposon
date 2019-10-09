@@ -33,8 +33,12 @@ plot_one = function(merged) {
         mutate(top10 = rank(rank(stat_stat1) + rank(stat_aneup)) <= 10,
                bottom10 = rank(-rank(stat_stat1) - rank(stat_aneup)) <= 10,
                inc10 = rank(-abs(rank(stat_stat1) - rank(stat_aneup))) <= 10,
-               label = ifelse((top10 | bottom10 | inc10) & padj_stat1 < 0.1 &
-                              padj_aneup < 0.1, gene_name, NA))
+               top5stat = rank(stat_stat1) <= 5,
+               btm5stat = rank(-stat_stat1) <= 5,
+               top5aneup = rank(stat_aneup) <= 5,
+               btm5aneup = rank(-stat_aneup) <=5,
+               label = ifelse((top10 | bottom10 | inc10 | top5stat | btm5stat | top5aneup | btm5aneup) &
+                              (padj_stat1 < 0.1 | padj_aneup < 0.1), gene_name, NA))
     ggplot(merged, aes(x=stat_stat1, y=stat_aneup)) +
         geom_point(aes(color=type)) +
         scale_color_manual(values=colors) +
