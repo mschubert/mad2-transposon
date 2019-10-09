@@ -65,6 +65,7 @@ aneup = io$load(args$diff_aneup)$aneuploidy %>%
     util$test_gsets(set=sets_mouse)
 
 pdf(args$plotfile, 16, 14)
+plot_one(merge_one("wt_ifn2_over_dmso")) + ggtitle("wt_ifn2_over_dmso")
 plot_one(merge_one("rev24_cgas_over_wt")) + ggtitle("rev24_cgas_over_wt")
 plot_one(merge_one("rev24_stat1_over_wt")) + ggtitle("rev24_stat1_over_wt")
 plot_one(merge_one("rev48_stat1_over_wt")) + ggtitle("rev48_stat1_over_wt")
