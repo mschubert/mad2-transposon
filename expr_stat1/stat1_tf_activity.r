@@ -12,7 +12,7 @@ expr = io$load("../expr_diff/eset_Mad2PB.RData")
 #genes = c("Stat1", "Pias1", "Mb21d1", "Ifng", "Ifngr1", "Trp53", "Wrap53")
 cis_genes = c("Stat1", "Pias1", "Ifng", "Trp53", "Nfkb1", "Nfkbib", "Nfkbiz",
               "Nfkbil1", "Nfkbia", "Tbk1", "Mb21d1", "Notch1", "Xrcc6", "Pten",
-              "Tlr11", "Tlr4", "Tlr13")
+              "Tlr11", "Tlr4", "Tlr13", "Rel", "Reln")
 expr_genes = c(cis_genes, "Ets1", "Erg", "Stat3")
 ee = io$load("../expr_diff/eset_Mad2PB.RData")$vs
 stat1 = ee["Stat1",]
