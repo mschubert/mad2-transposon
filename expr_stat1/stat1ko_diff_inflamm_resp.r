@@ -9,7 +9,7 @@ args = sys$cmd$parse(
     opt('s', 'setfile', 'RData', '../data/genesets/human/CH.HALLMARK.RData'),
     opt('p', 'plotfile', 'pdf', 'stat1ko_diff_inflamm_resp.pdf'))
 
-res = readRDS(args$diff_expr)[c("wt_rev48_over_dmso", "stat1_rev48_over_dmso")]
+res = readRDS(args$diff_expr)
 sets = io$load(args$setfile)
 sets = sets[grepl("INTERFERON|NFKB", names(sets))]
 
@@ -24,6 +24,6 @@ p = ggplot(assocs, aes(x=sname, y=statistic)) +
     coord_flip() +
     facet_wrap(~ rname, ncol=1)
 
-pdf(args$plotfile, 8, 4)
+pdf(args$plotfile, 8, 12)
 print(p)
 dev.off()
