@@ -1,6 +1,7 @@
 library(dplyr)
 library(ggplot2)
-library(patchwork)
+library(GenomicRanges)
+library(ggbio)
 sys = import('sys')
 
 args = sys$cmd$parse(
@@ -22,11 +23,8 @@ colnames(dset) = make.names(colnames(dset))
 dset$type.of.mitosis = relevel(factor(dset$type.of.mitosis), "normal")
 
 # plot read-like stacks of mitotic timing
-library(GenomicRanges)
-library(ggbio)
 gr = makeGRangesFromDataFrame(dset, keep.extra.columns=TRUE, seqnames.field="cell_line",
     start.field="real.time..min.", end.field="mitotic_exit")
-#ggbio::plotStackedOverview(gr)
 
 p = autoplot(gr, aes(fill=type.of.mitosis)) +
     facet_wrap(~ seqnames, ncol=1) +
@@ -39,7 +37,6 @@ p2 = ggplot(dset, aes(x=real.time..min., fill=type.of.mitosis)) +
     facet_wrap(~ cell_line, ncol=1) +
     ggridges::geom_density_ridges(aes(y=type.of.mitosis, height=..count..),
                                   alpha=0.5, stat="binline", bins=15, scale=4) +
-#    geom_density(alpha=0.3) +
     scale_fill_manual(values=setNames(cols, levels(dset$type.of.mitosis))) +
     scale_x_continuous("hours", breaks=c(0:10)*600, labels=c(0:10)*600/60, limits=c(7,78)*60) +
     geom_vline(xintercept=c(24,48,72)*60, linetype="dashed") +
