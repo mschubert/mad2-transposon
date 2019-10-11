@@ -1,8 +1,9 @@
 # test for insertion differences with aneuploidy
 # plot the result as a volcano (dna, rna separate)/heatmap (both dna+rna)
 library(dplyr)
-library(cowplot)
+library(ggplot2)
 library(patchwork)
+theme_set(cowplot::theme_cowplot())
 io = import('io')
 sys = import('sys')
 

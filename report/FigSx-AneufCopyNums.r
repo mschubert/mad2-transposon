@@ -1,5 +1,6 @@
 library(dplyr)
-library(cowplot)
+library(ggplot2)
+theme_set(cowplot::theme_cowplot())
 io = import('io')
 seq = import('seq')
 anp = import('seq/aneuploidy')

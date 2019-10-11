@@ -39,4 +39,6 @@ sets = c(go["regulation of complement activation (GO:0030449)"],
             chea[["STAT1_17558387_ChIP-Seq_HELA_Human"]]))
 )
 
+genes = c(genes, sets$STAT1_mhc)
+
 saveRDS(list(sets=sets, genes=genes), file=args$outfile)

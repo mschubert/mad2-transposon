@@ -1,7 +1,8 @@
 library(dplyr)
 library(tidygraph)
-library(cowplot)
+library(ggplot2)
 library(patchwork)
+theme_set(cowplot::theme_cowplot())
 io = import('io')
 idmap = import('process/idmap')
 

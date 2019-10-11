@@ -1,8 +1,8 @@
 library(dplyr)
 library(ggplot2)
+theme_set(cowplot::theme_cowplot())
 plt = import('plot')
 sys = import('sys')
-theme_set(cowplot::theme_cowplot())
 
 args = sys$cmd$parse(
     opt('i', 'infile', 'xlsx with results', 'PR-080-TES_RESULTS REPORT.xlsx'),

@@ -1,4 +1,5 @@
-library(cowplot)
+library(ggplot2)
+theme_set(cowplot::theme_cowplot())
 gdsc = import('data/gdsc')
 
 keep = gdsc$tissues(c("LAML", "DLBC", "LCML", "ALL"))

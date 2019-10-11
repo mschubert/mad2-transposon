@@ -1,5 +1,6 @@
-library(cowplot)
+library(ggplot2)
 library(ggrepel)
+theme_set(cowplot::theme_cowplot())
 io = import('io')
 df = import('data_frame')
 idmap = import('process/idmap')

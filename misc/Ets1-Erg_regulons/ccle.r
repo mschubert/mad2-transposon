@@ -1,5 +1,6 @@
-library(cowplot)
+library(ggplot2)
 library(dplyr)
+theme_set(cowplot::theme_cowplot())
 io = import('io')
 ccle = import('data/ccle')
 plt = import('plot')
