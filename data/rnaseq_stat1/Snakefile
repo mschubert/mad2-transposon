@@ -17,7 +17,7 @@ rule dset:
         outfile = "dset.rds",
         plotfile = "dset.pdf"
     shell:
-        "Rscript {intput.rscript}"
+        "Rscript {input.rscript}"
             " --yaml {input.yaml}"
             " --expr {input.expr}"
             " --outfile {output.outfile}"
