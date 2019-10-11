@@ -6,7 +6,7 @@ import yaml
 import os.path
 
 def load_yaml(fname):
-    sset = yaml.load(open(fname))
+    sset = yaml.safe_load(open(fname))
     sset['samples'] = { k:[os.path.join(sset['directory'], vi) for vi in v]
             for k,v in sset['samples'].items() }
     return sset

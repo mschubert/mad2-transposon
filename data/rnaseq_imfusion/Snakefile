@@ -4,7 +4,7 @@ import yaml
 import os.path
 
 def load_yaml(fname):
-    sset = yaml.load(open(fname))
+    sset = yaml.safe_load(open(fname))
     samples = { k:[os.path.join(os.path.dirname(fname), sset['directory'], vi)
         for vi in v] for k,v in sset['samples'].items() }
     return samples
