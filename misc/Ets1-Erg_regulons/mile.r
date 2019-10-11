@@ -1,4 +1,4 @@
-library(ggplo2)
+library(ggplot2)
 library(dplyr)
 theme_set(cowplot::theme_cowplot())
 io = import('io')

@@ -1,6 +1,6 @@
 library(dplyr)
 library(corrplot)
-library(ggplo2)
+library(ggplot2)
 library(ggraph)
 theme_set(cowplot::theme_cowplot())
 io = import('io')
