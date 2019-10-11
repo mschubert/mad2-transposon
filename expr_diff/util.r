@@ -67,34 +67,34 @@ do_lrt = function(eset, fml, red) {
         arrange(padj, pvalue)
 }
 
-plot_gset = function(res, sets, highlight=NULL, fdr=0.1, base.size=0.1,
-                     label_top=30, repel=TRUE) {
-    test_one = function(set_name) {
-        fdata = mutate(cur, in_set = gene_name %in% sets[[set_name]])
-        mod = try(lm(stat ~ in_set, data=fdata))
-        if (class(mod) == "try-error")
-            return()
-        broom::tidy(mod) %>%
-            filter(term == "in_setTRUE") %>%
-            select(-term) %>%
-            mutate(size = sum(fdata$in_set, na.rm=TRUE))
-    }
+test_gset = function(res, set) {
     if ("log2FoldChange" %in% colnames(res))
         cur = res %>% mutate(stat = log2FoldChange / lfcSE)
     else
         cur = res %>% mutate(stat = statistic)
-    result = sapply(names(sets), test_one, simplify=FALSE) %>%
+    fdata = mutate(cur, in_set = gene_name %in% set)
+    mod = try(lm(stat ~ in_set, data=fdata))
+    if (class(mod) == "try-error")
+        return()
+    broom::tidy(mod) %>%
+        filter(term == "in_setTRUE") %>%
+        select(-term) %>%
+        mutate(size = sum(fdata$in_set, na.rm=TRUE))
+}
+
+test_gsets = function(res, sets) {
+    result = lapply(sets, test_gset, res=res) %>%
+        setNames(names(sets)) %>%
         dplyr::bind_rows(.id="label") %>%
         mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
         arrange(adj.p, p.value)
-    p = result %>%
+}
+
+plot_gset = function(res, sets, highlight=NULL, fdr=0.1, base.size=0.1,
+                     label_top=30, repel=TRUE) {
+    p = test_gsets(res, sets) %>%
         plt$p_effect("adj.p", thresh=fdr) %>%
         plt$volcano(p=fdr, base.size=base.size, label_top=label_top,
                     repel=repel, text.size=2)
-
-    built = try(ggplot_build(p))
-    if (class(built) == "try-error")
-        plt$error(as.character(built))
-    else
-        p
+    plt$try(p)
 }

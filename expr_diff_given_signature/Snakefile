@@ -1,0 +1,49 @@
+configfile: "../config.yaml"
+
+subworkflow sets:
+    workdir: "../data/genesets"
+    snakefile: "../data/genesets/Snakefile"
+
+subworkflow expr_diff:
+    workdir: "../expr_diff"
+    snakefile: "../expr_diff/Snakefile"
+
+subworkflow expr_stat1:
+    workdir: "../expr_stat1"
+    snakefile: "../expr_stat1/Snakefile"
+
+infiles = {
+    'EtsErg' : expr_diff('de_Mad2PB+EtsErg.RData'),
+    'myc' : sets('mouse/CH.HALLMARK.RData'),
+    'statKO' : expr_stat1('diff_expr.rds')
+}
+
+rule all:
+    input:
+        expand("de_{sig}.pdf", sig=infiles.keys())
+
+rule sigs:
+    input:
+        rscript = "sig_{sig}.r",
+        infile = lambda wc: infiles[wc.sig]
+    output:
+        outfile = "sig_{sig}.rds"
+    shell:
+        "Rscript {input.rscript}"
+            " --infile {input.infile}"
+            " --outfile {output.outfile}"
+
+rule de:
+    input:
+        rscript = "de_given_sig.r",
+        sigfile = "sig_{sig}.rds",
+        expr = expr_diff("eset_Mad2PB.RData"),
+        sets = sets(expand("mouse/{sets}.RData", sets=config['genesets']))
+    output:
+        plotfile = "de_{sig}.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --sigfile {input.sigfile}"
+            " --expr {input.expr}"
+            " --plotfile {output.plotfile}"
+            " {input.sets}"
