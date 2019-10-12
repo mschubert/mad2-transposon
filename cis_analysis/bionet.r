@@ -17,7 +17,9 @@ bionet = function(g, assocs, thresh=0.05, var="adj.p") {
     scores = setNames(pull(g, !! rlang::sym(var)), pull(g, name))
     scores[is.na(scores)] = 1
     scores = pmax(-log10(scores) + log10(thresh), 0)
-    as_tbl_graph(runFastHeinz(g, scores))
+    as_tbl_graph(runFastHeinz(g, scores)) %>%
+        activate(edges) %>%
+        filter(from != to)
 }
 
 #' Plot a network
@@ -69,7 +71,7 @@ get_node_stats = function(net, ov) {
 
 sys$run({
     args = sys$cmd$parse(
-        opt('c', 'cis', 'gene-level poisson', '../cis_analysis/poisson.RData'),
+        opt('c', 'cis', 'gene-level poisson', 'poisson.RData'),
         opt('a', 'aneup', 'aneup assocs', 'ext_gene.RData'),
         opt('o', 'outfile', 'network data', 'bionet.RData'),
         opt('p', 'plotfile', 'pdf', 'bionet.pdf'))
@@ -78,8 +80,7 @@ sys$run({
     cis = io$load(args$cis)$result %>%
         mutate(name = toupper(external_gene_name))
 
-    net = interactome %>%
-        igraph::igraph.from.graphNEL() %>%
+    net = igraph::igraph.from.graphNEL(interactome) %>%
         as_tbl_graph() %>%
         activate(nodes) %>%
         select(name = geneSymbol)
