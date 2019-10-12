@@ -21,8 +21,8 @@ test_set = function(set_name) {
 args = sys$cmd$parse(
     opt('i', 'infile', 'gene-level poisson', '../cis_analysis/poisson.RData'),
     opt('s', 'sets', 'gene set file', '../data/genesets/mouse/KEA_2015.RData'),
-    opt('o', 'outfile', 'save results .RData', 'poisson_set.RData'),
-    opt('p', 'plotfile', 'pdf', 'poisson_set.pdf'))
+    opt('o', 'outfile', 'save results .RData', 'poisson_set/KEA_2015.RData'),
+    opt('p', 'plotfile', 'pdf', 'poisson_set/KEA_2015.pdf'))
 
 assocs = io$load(args$infile)
 n_smp = nrow(assocs$sample_rates)

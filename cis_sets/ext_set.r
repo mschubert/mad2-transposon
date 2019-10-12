@@ -67,7 +67,6 @@ sys$run({
         opt('m', 'meta', 'meta+aneuploidy', '../ploidy_compare/analysis_set.RData'),
         opt('c', 'cis_gene', 'poisson cis', '../cis_analysis/poisson.RData'),
         opt('g', 'ext_gene', 'cis assocs RData', '../cis_analysis/ext_gene.RData'), # ignored
-        opt('s', 'cis_set', 'cis for sets', 'poisson_set/GO_Biological_Process_2018.RData'), # ignored
         opt('f', 'sets', 'genes per set', '../data/genesets/mouse/GO_Biological_Process_2018.RData'),
         opt('o', 'outfile', 'aneuploidy assocs', 'ext_set/GO_Biological_Process_2018.RData'),
         opt('p', 'plotfile', 'pdf', 'ext_set/GO_Biological_Process_2018.pdf'))
@@ -77,11 +76,6 @@ sys$run({
     dset = io$load(args$cis_gene)
     sets = io$load(args$sets) %>%
         gset$filter(min=5, valid=dset$result$external_gene_name)
-#    cis_sets = io$load(args$cis_set)$result %>%
-#        filter(abs(estimate) > 2 & adj.p < 0.01) %>%
-#        pull(set)
-#    sets = sets[cis_sets]
-
     aset = dset$samples %>%
         select(-n_ins) %>%
         mutate(reads=TRUE) %>%
