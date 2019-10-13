@@ -69,27 +69,49 @@ get_node_stats = function(net, ov) {
                adj.p = p.adjust(p.value, method="fdr"))
 }
 
+#' Convert mouse symbols to human
+#'
+#' @param df  data.frame of mouse associations
+#' @return  data.frame with mapped human symbols
+mouse_to_human = function(df) {
+    #FIXME: actual symbol mapping
+    df %>%
+        mutate(name = toupper(external_gene_name),
+               name = ifelse(name == "TRP53", "TP53", name))
+}
+
 sys$run({
     args = sys$cmd$parse(
         opt('c', 'cis', 'gene-level poisson', 'poisson.RData'),
         opt('a', 'aneup', 'aneup assocs', 'ext_gene.RData'),
-        opt('o', 'outfile', 'network data', 'bionet.RData'),
-        opt('p', 'plotfile', 'pdf', 'bionet.pdf'))
+        opt('i', 'interactome', 'DLBCL|omnipath', 'DLBCL'),
+        opt('o', 'outfile', 'network data', 'bionet_DLBCL.RData'),
+        opt('p', 'plotfile', 'pdf', 'bionet_DLBCL.pdf'))
 
-    aneup = io$load(args$aneup)
+    aneup = io$load(args$aneup) %>%
+        lapply(mouse_to_human) %>%
+        lapply(function(a) mutate(a, adj.p=NA, n_smp=size))
     cis = io$load(args$cis)$result %>%
-        mutate(name = toupper(external_gene_name))
+        mouse_to_human()
 
-    net = igraph::igraph.from.graphNEL(interactome) %>%
-        as_tbl_graph() %>%
-        activate(nodes) %>%
-        select(name = geneSymbol)
+    if (args$interactome == "DLBCL") {
+        net = igraph::igraph.from.graphNEL(interactome) %>%
+            as_tbl_graph() %>%
+            activate(nodes) %>%
+            select(name = geneSymbol)
+        fdr = 0.01
+    } else if (args$interactome == "omnipath") {
+        net = OmnipathR::import_AllInteractions() %>%
+            OmnipathR::interaction_graph() %>%
+            as_tbl_graph() %>%
+            activate(edges) %>%
+            select(-dip_url, -sources, -references) # ggraph issue #214
+        fdr = 1e-3
+    } else
+        stop("invalid interactome")
 
-    cis_net = bionet(net, cis, 0.01, "adj.p")
-    ext_nets = lapply(aneup, function(a) {
-        bionet(net, mutate(a, name=toupper(external_gene_name), adj.p = NA, n_smp=size),
-               thresh=0.2, var="p.value")
-    })
+    cis_net = bionet(net, cis, fdr, "adj.p")
+    ext_nets = lapply(aneup, bionet, g=net, thresh=0.2, var="p.value")
     save(cis_net, file=args$outfile)
 
     pdf(args$plotfile)

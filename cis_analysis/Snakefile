@@ -14,7 +14,8 @@ subworkflow imfusion:
 
 rule all:
     input:
-        "plot_tiles.pdf", "poisson.pdf", "ext_gene.pdf", "bionet.pdf",
+        "plot_tiles.pdf", "poisson.pdf", "ext_gene.pdf",
+        expand("bionet_{int}.pdf", int=['DLBCL', 'omnipath']),
         expand("ins/{ins}.pdf", ins=config['ins_plots'])
 
 rule plot_ins:
@@ -66,13 +67,15 @@ rule bionet:
         cis = "poisson.RData",
         aneup = "ext_gene.RData"
     output:
-        result = "bionet.RData",
-        plot = "bionet.pdf"
+        outfile = "bionet_{interactome}.RData",
+        plotfile = "bionet_{interactome}.pdf"
     shell:
         "Rscript {input.rscript}"
             " --cis {input.cis}"
             " --aneup {input.aneup}"
-            " --plotfile {output.plot}"
+            " --interactome {wildcards.interactome}"
+            " --outfile {output.outfile}"
+            " --plotfile {output.plotfile}"
 
 rule ext_assocs:
     input:
