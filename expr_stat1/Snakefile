@@ -17,8 +17,8 @@ rule all:
         expand("diff_expr/{sets}.pdf", sets=config['genesets']),
         "aneup_ko_cor.pdf",
         expand("aneup_ko_cor/{sets}.pdf", sets=config['genesets']),
-        "stat1ko_diff_inflamm_resp.pdf",
-        "stat1_tf_activity.pdf"
+        "stat1ko_diff_inflamm_resp.pdf"#,
+#        "stat1_tf_activity.pdf"
 
 rule de_genes:
     input:
