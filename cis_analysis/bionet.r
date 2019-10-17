@@ -5,6 +5,7 @@ library(tidygraph)
 data(interactome)
 io = import('io')
 sys = import('sys')
+idmap = import('process/idmap')
 
 #' Return BioNet Steiner Tree subnetwork
 #'
@@ -69,17 +70,6 @@ get_node_stats = function(net, ov) {
                adj.p = p.adjust(p.value, method="fdr"))
 }
 
-#' Convert mouse symbols to human
-#'
-#' @param df  data.frame of mouse associations
-#' @return  data.frame with mapped human symbols
-mouse_to_human = function(df) {
-    #FIXME: actual symbol mapping
-    df %>%
-        mutate(name = toupper(external_gene_name),
-               name = ifelse(name == "TRP53", "TP53", name))
-}
-
 sys$run({
     args = sys$cmd$parse(
         opt('c', 'cis', 'gene-level poisson', 'poisson.RData'),
@@ -89,10 +79,13 @@ sys$run({
         opt('p', 'plotfile', 'pdf', 'bionet_DLBCL.pdf'))
 
     aneup = io$load(args$aneup) %>%
-        lapply(mouse_to_human) %>%
-        lapply(function(a) mutate(a, adj.p=NA, n_smp=size))
+        lapply(function(df) {
+            df %>% mutate(name = idmap$orthologue(external_gene_name, to="hgnc_symbol"),
+                          adj.p = NA, n_smp = size)
+        })
     cis = io$load(args$cis)$result %>%
-        mouse_to_human()
+        ungroup() %>% #TODO: don't save grouped df
+        mutate(name = idmap$orthologue(external_gene_name, to="hgnc_symbol"))
 
     if (args$interactome == "DLBCL") {
         net = igraph::igraph.from.graphNEL(interactome) %>%
