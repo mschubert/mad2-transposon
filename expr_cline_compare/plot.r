@@ -1,9 +1,17 @@
+sys = import('sys')
 gdsc = import('data/gdsc')
 
-genes = c("STAT1", "PIAS1", "IFNG", "RELA", "RELB", "MYC", "TP53", "MDM2")
-clines = c("BT-549", "MCF7", "CAL-51")
+args = sys$cmd$parse(
+    opt('c', 'config', 'yaml', 'plot.yaml'),
+    opt('i', 'id', 'key in yaml', 'brca'),
+    opt('p', 'plotfile', 'pdf', 'brca.pdf'))
 
-tissues = gdsc$tissues("BRCA")
+cfg = yaml::read_yaml(args$config)
+genes = cfg$genes
+tissues = cfg[[args$id]]$tissues
+clines = cfg[[args$id]]$clines
+
+tissues = gdsc$tissues(tissues)
 expr = gdsc$basal_expression()
 expr = expr[genes ,intersect(colnames(expr), names(tissues))]
 colnames(expr) = gdsc$cosmic$id2name(colnames(expr))

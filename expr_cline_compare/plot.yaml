@@ -1,0 +1,17 @@
+genes:
+    STAT1
+    PIAS1
+    IFNG
+    RELA
+    RELB
+    MYC
+    TP53
+    MDM2
+
+brca:
+    tissues: BRCA
+    clines: [ BT-549, MCF7, CAL-51]
+
+hemato:
+    tissues: [ DLBCL, AML, ALL ]
+    clines: [ SUP-B15 ]

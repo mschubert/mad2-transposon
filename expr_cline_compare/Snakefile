@@ -1,0 +1,16 @@
+configfile: "plot.yaml"
+
+rule all:
+    input:
+        expand("{id}.pdf", id=['brca'])
+
+rule plot:
+    input:
+        rscript = "plot.r"
+    output:
+        plotfile = "{id}.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --config plot.yaml"
+            " --id {wildcards.id}"
+            " --plotfile {output.plotfile}"
