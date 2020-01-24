@@ -1,0 +1,20 @@
+configfile: "../../config.yaml"
+
+subworkflow genesets:
+    workdir: "../genesets"
+    snakefile: "../genesets/Snakefile"
+
+rule all:
+    input:
+        expand("gdsc/{sets}.rds", sets=config['genesets'])
+
+rule gdsc:
+    input:
+        rscript = "gdsc.r",
+        setfile = genesets("human/{sets}.RData")
+    output:
+        outfile = "gdsc/{sets}.rds"
+    shell:
+        "Rscript {input.rscript}"
+            " --setfile {input.setfile}"
+            " --outfile {output.outfile}"
