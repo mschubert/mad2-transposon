@@ -1,16 +1,16 @@
-configfile: "plot.yaml"
-
 rule all:
     input:
-        expand("{id}.pdf", id=['brca'])
+        expand("{dset}.pdf", dset=['gdsc', 'ccle'])
 
 rule plot:
     input:
-        rscript = "plot.r"
+        rscript = "{dset}.r",
+        highlight = "highlight.yaml",
+        dset = "{dset}.yaml"
     output:
-        plotfile = "{id}.pdf"
+        plotfile = "{dset}.pdf"
     shell:
         "Rscript {input.rscript}"
-            " --config plot.yaml"
-            " --id {wildcards.id}"
+            " --highlight {input.highlight}"
+            " --dset {input.dset}"
             " --plotfile {output.plotfile}"

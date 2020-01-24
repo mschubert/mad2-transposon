@@ -1,0 +1,7 @@
+brca:
+    tissues: BRCA
+    clines: [ BT-549, MCF7, CAL-51 ]
+
+hemato:
+    tissues: [ DLBCL, LAML, ALL ]
+    clines: [ SUP-B15, RS4-11, JURKAT ]
