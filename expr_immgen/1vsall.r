@@ -55,8 +55,31 @@ tps = tps[rowMaxs(abs(tps)) > 2 & !is.na(rownames(tps)),]
 narray::intersect(img, tps, along=1) # loses a lot of genes
 
 cosine = function(x, y) sum(x * y) / (sqrt(sum(x^2)) * sqrt(sum(y^2)))
-res = narray::lambda(~ cosine(tps, img), along=c(tps=2, img=2))
-clust = reshape2::melt(res) %>%
+
+img2 = img
+cos_img = narray::lambda(~ cosine(img, img2), along=c(img=2, img2=2)) %>%
+    reshape2::melt() %>%
+    plt$cluster(value ~ img + img2) %>%
+    as_tibble()
+p01 = ggplot(cos_img, aes(x=img, y=img2)) +
+    geom_raster(aes(fill=value)) +
+    scale_fill_distiller(palette="Spectral") +
+    coord_fixed() +
+    theme(axis.text.x = element_text(angle=45, hjust=1))
+
+tps2 = tps
+cos_tps = narray::lambda(~ cosine(tps, tps2), along=c(tps=2, tps2=2)) %>%
+    reshape2::melt() %>%
+    plt$cluster(value ~ tps + tps2) %>%
+    as_tibble()
+p02 = ggplot(cos_tps, aes(x=tps, y=tps2)) +
+    geom_raster(aes(fill=value)) +
+    scale_fill_distiller(palette="Spectral") +
+    coord_fixed() +
+    theme(axis.text.x = element_text(angle=45, hjust=1))
+
+clust = narray::lambda(~ cosine(tps, img), along=c(tps=2, img=2)) %>%
+    reshape2::melt() %>%
     plt$cluster(value ~ img + tps) %>%
     as_tibble()
 meta = meta_tps %>%
@@ -80,6 +103,9 @@ p4 = ggplot(clust %>% left_join(meta), aes(x=img, y=forcats::fct_reorder(tps, an
     geom_raster(aes(fill=value)) +
     scale_fill_distiller(palette="Spectral") +
     theme(axis.text.x = element_text(angle=45, hjust=1))
+
 pdf("1vsall.pdf", 20, 12)
+p01
+p02
 p1 + p2 + p3 + p4 + plot_layout(widths=c(1,1,1,50), guides="collect")
 dev.off()
