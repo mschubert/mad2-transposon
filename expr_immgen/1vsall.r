@@ -17,7 +17,8 @@ de_1vsall = function(eset, cur) {
 }
 
 annot = readxl::read_xlsx("../data/immgen/immgen_keypop.xlsx")
-immgen = readr::read_csv("../data/immgen/GSE109125_Gene_count_table.csv.gz")
+#immgen = readr::read_csv("../data/immgen/GSE109125_Gene_count_table.csv.gz")
+immgen = readr::read_csv("../data/immgen/GSE109125_Gene_count_table_GENCODE_vM25.csv.gz")
 coldata = tibble(id=colnames(immgen)[-1]) %>%
     mutate(Short = sub("#[0-9]+$", "", id)) #%>%
 #    inner_join(annot)
@@ -34,6 +35,8 @@ names(immgen_de) = unique(coldata$Short)
 
 tps = io$load("../expr_diff/eset_Mad2PB.RData")$eset
 colData(tps)$Short = colnames(tps)
+meta_tps = colData(tps) %>% as.data.frame() %>% as_tibble() %>%
+    mutate(HighErg = counts(tps, normalized=TRUE)["Erg",] > 300)
 tps = tps[rowMeans(counts(tps)) >= 1,]
 #tps_de = lapply(unique(colnames(tps)), de_1vsall, eset=tps)
 tps_de = clustermq::Q(de_1vsall, cur=unique(colnames(tps)), const=list(eset=tps),
@@ -56,9 +59,27 @@ res = narray::lambda(~ cosine(tps, img), along=c(tps=2, img=2))
 clust = reshape2::melt(res) %>%
     plt$cluster(value ~ img + tps) %>%
     as_tibble()
-pdf("1vsall.pdf", 20, 12)
-ggplot(clust, aes(x=img, y=tps)) +
+meta = meta_tps %>%
+    transmute(x1 = "type", x2="aneup", x3="high_erg",
+              high_erg = HighErg,
+              aneup = aneuploidy,
+              tps = factor(sample, levels=levels(clust$tps)),
+              type = type)
+p1 = ggplot(meta, aes(x=x1, y=forcats::fct_reorder(tps, aneup))) +
+    geom_raster(aes(fill=type)) +
+    theme(axis.text.x = element_text(angle=45, hjust=1))
+p2 = ggplot(meta, aes(x=x2, y=forcats::fct_reorder(tps, aneup))) +
+    geom_raster(aes(fill=aneup)) +
+    scale_fill_distiller(palette="OrRd", direction=1) +
+    theme(axis.text.x = element_text(angle=45, hjust=1))
+p3 = ggplot(meta, aes(x=x3, y=forcats::fct_reorder(tps, aneup))) +
+    geom_raster(aes(fill=high_erg)) +
+    scale_fill_manual(values=setNames(c("black", "white"), c(TRUE, FALSE))) +
+    theme(axis.text.x = element_text(angle=45, hjust=1))
+p4 = ggplot(clust %>% left_join(meta), aes(x=img, y=forcats::fct_reorder(tps, aneup))) +
     geom_raster(aes(fill=value)) +
     scale_fill_distiller(palette="Spectral") +
     theme(axis.text.x = element_text(angle=45, hjust=1))
+pdf("1vsall.pdf", 20, 12)
+p1 + p2 + p3 + p4 + plot_layout(widths=c(1,1,1,50), guides="collect")
 dev.off()
