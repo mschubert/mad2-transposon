@@ -17,20 +17,21 @@ de_1vsall = function(eset, cur) {
 }
 
 annot = readxl::read_xlsx("../data/immgen/immgen_keypop.xlsx")
-#immgen = readr::read_csv("../data/immgen/GSE109125_Gene_count_table.csv.gz")
+#immgen = readr::read_csv("../data/immgen/GSE109125_Gene_count_table.csv.gz") # L26 immgen$Gene_Symbol
 immgen = readr::read_csv("../data/immgen/GSE109125_Gene_count_table_GENCODE_vM25.csv.gz")
 coldata = tibble(id=colnames(immgen)[-1]) %>%
     mutate(Short = sub("#[0-9]+$", "", id)) #%>%
 #    inner_join(annot)
 expr = data.matrix(immgen[-1])
-rownames(expr) = immgen$Gene_Symbol
+rownames(expr) = immgen$GeneSymbol
 expr = expr[,coldata$id]
 expr = expr[rowMeans(expr) >= 1,]
 # update gene symbols??
-expr = DESeq2::DESeqDataSetFromMatrix(expr, coldata, ~1)
+expr = DESeq2::DESeqDataSetFromMatrix(expr, coldata, ~1) %>%
+    DESeq2::estimateSizeFactors()
 #immgen_de = lapply(unique(coldata$Short), de_1vsall, eset=expr)
 immgen_de = clustermq::Q(de_1vsall, cur=unique(coldata$Short), const=list(eset=expr),
-                         n_jobs=40, memory=2048, pkgs=c("dplyr", "SummarizedExperiment"))
+                         n_jobs=40, memory=3072, pkgs=c("dplyr", "SummarizedExperiment"))
 names(immgen_de) = unique(coldata$Short)
 
 tps = io$load("../expr_diff/eset_Mad2PB.RData")$eset
@@ -52,16 +53,17 @@ img = img[rowMaxs(abs(img)) > 3 & !is.na(rownames(img)),]
 tps = lapply(tps_de, function(x) setNames(x$stat, x$gene_name)) %>%
     narray::stack(along=2)
 tps = tps[rowMaxs(abs(tps)) > 2 & !is.na(rownames(tps)),]
-narray::intersect(img, tps, along=1) # loses a lot of genes
+img_expr = log10(counts(expr, normalized=TRUE) + 1)
+narray::intersect(img, tps, img_expr, along=1) # loses a lot of genes
 
 cosine = function(x, y) sum(x * y) / (sqrt(sum(x^2)) * sqrt(sum(y^2)))
 
-img2 = img
-cos_img = narray::lambda(~ cosine(img, img2), along=c(img=2, img2=2)) %>%
+img = narray::map(img, along=1, function(x) { x[order(-abs(x))>100] = 0; x })
+cos_img = narray::lambda(~ cosine(img, img_expr), along=c(img=2, img_expr=2)) %>%
     reshape2::melt() %>%
-    plt$cluster(value ~ img + img2) %>%
+    plt$cluster(value ~ img + img_expr) %>%
     as_tibble()
-p01 = ggplot(cos_img, aes(x=img, y=img2)) +
+p01 = ggplot(cos_img, aes(x=img_expr, y=img)) +
     geom_raster(aes(fill=value)) +
     scale_fill_distiller(palette="Spectral") +
     coord_fixed() +
