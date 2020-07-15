@@ -50,7 +50,7 @@ plot_sample = function(smp) {
         tidyr::gather("tissue", "grams", -sample) %>%
         mutate(category = "Weights") %>%
         ggplot(aes(x=tissue, y=grams, alpha=sample)) +
-               ggbeeswarm::geom_quasirandom() +
+               ggbeeswarm::geom_quasirandom(size=1.5) +
                guides(alpha=FALSE) +
                facet_wrap(~category, scales="free_x") +
                scale_alpha_manual(values=c(1, 0.1))
@@ -67,10 +67,12 @@ plot_sample = function(smp) {
         mutate(sample = ifelse(sample == rna_smp, rna_smp, "other"),
                sample = relevel(factor(sample), "other"),
                category = "Gene expression") %>%
-        ggplot(aes(x=gene, y=vst, alpha=sample)) +
-        ggbeeswarm::geom_quasirandom() +
+        ggplot(aes(x=gene, y=counts+1, alpha=sample)) +
+        geom_violin(aes(color=type), size=0.2, alpha=0.1, fill="white", position="identity", scale="width") +
+        ggbeeswarm::geom_quasirandom(aes(shape=genotype), color="black", size=1.5) +
+        scale_y_log10() +
         facet_wrap(~category, scales="free") +
-        scale_alpha_manual(values=c(0.1, 1))
+        scale_alpha_manual(values=c(0.2, 1))
 
     # Assemble
     plt$build_or_spacer(p1, p1_dens, p2, p2_dens, pm2, pm3)
@@ -79,7 +81,7 @@ plot_sample = function(smp) {
     widths = c(1+2, 1+length(unique(mixcr$type)), 3+length(unique(expr$gene)))
     pm = pm1 + pm2 + pm3 +
         plot_layout(nrow=1, widths=widths) &
-        theme(axis.text.x = element_text(angle=30, hjust=0.8),
+        theme(axis.text.x = element_text(angle=40, hjust=0.8),
               axis.title.x = element_blank())
     p / pm + plot_layout(heights=c(2,1))
 }
@@ -98,17 +100,23 @@ if (is.null(module_name())) {
     dna = io$load(args$dna)
     rna = io$load(args$rna)
 
-    genes = c("Mad2l1", "Msh2", "Pten", "Trp53", "Ets1", "Erg", "Myc", "Sox4")
+    genes = c("Mad2l1", "Trp53", "Ets1", "Erg", "Myc", "Sox4", "Il7", "Il7r", "Kit", "Irf4", "Stat1", "Stat3",
+              "Ebf1", "Cd19", "Ighm", "Ikzf1", "Tcf15", "Gata2", "Cd55b", "Pax5", "Tmem184a", "Dntt", "Igll1",
+              "Vpreb1", "Rag1", "Rag2")
     eset = io$load(args$expr)
-    rownames(eset$expr) = eset$genes
-    expr = narray::melt(eset$expr[genes,], dimnames=c("gene", "sample")) %>%
+    expr = DESeq2::DESeqDataSetFromMatrix(eset$counts, data.frame(id=colnames(eset$expr)), ~1) %>%
+        DESeq2::estimateSizeFactors() %>%
+        DESeq2::counts(normalized=TRUE)
+    rownames(expr) = eset$genes
+    expr = narray::melt(expr[genes,], dimnames=c("gene", "sample")) %>%
         mutate(gene = factor(gene, levels=genes, ordered=TRUE)) %>%
-        rename(vst = value)
+        rename(counts = value) %>%
+        left_join(meta %>% select(sample, genotype, type, aneuploidy))
 
     samples = sort(unique(dna$segments$sample))
     samples = samples[sub("-.*", "", samples) %in% meta$sample]
 
-    pdf(9, 8, file="karyograms.pdf")
+    pdf(13, 10, file="karyograms.pdf")
     for (smp in samples) {
         message(smp)
         print(plot_sample(smp))
