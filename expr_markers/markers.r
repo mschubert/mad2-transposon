@@ -13,7 +13,7 @@ args = sys$cmd$parse(
 
 genes = c("Mad2l1", "Trp53", "Ets1", "Erg", "Myc", "Sox4", "Il7", "Il7r", "Kit", "Irf4", "Stat1", "Stat3",
           "Ebf1", "Cd19", "Ighm", "Ikzf1", "Tcf15", "Gata2", "Cd55b", "Pax5", "Tmem184a", "Dntt", "Igll1",
-          "Vpreb1", "Rag1", "Rag2", "Xrcc6", "Cd34")
+          "Vpreb1", "Rag1", "Rag2", "Xrcc6", "Cd34", "Cd3g", "Cd3e", "Klrb1c", "Tacr1", "Itgam", "Ly6a")
 
 meta = io$load(args$meta)
 counts = io$load(args$expr)$counts
