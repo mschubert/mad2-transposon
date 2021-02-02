@@ -14,6 +14,7 @@ idmap = import('process/idmap')
 #' @param thresh  p-value/fdr cutoff
 #' @return  tidygraph object
 bionet = function(g, assocs, thresh=0.05, var="adj.p") {
+    assocs = assocs %>% filter(!duplicated(name))
     g = g %>% activate(nodes) %>% left_join(assocs)
     scores = setNames(pull(g, !! rlang::sym(var)), pull(g, name))
     scores[is.na(scores)] = 1
