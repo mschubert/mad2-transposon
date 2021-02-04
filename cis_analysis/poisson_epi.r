@@ -20,6 +20,7 @@ ins = io$load(args$infile) %>%
 
 genome = seq$genome("GRCm38", chrs=c(1:19, 'X'))
 
+genes = seq$coords$gene(dset="mmusculus_gene_ensembl", granges=TRUE)
 # time out
 ## biomart query ensembl mouse regulation
 #ensembl = biomaRt::useEnsembl("ENSEMBL_MART_FUNCGEN", dataset="mmusculus_regulatory_feature")
@@ -40,6 +41,7 @@ res = readr::read_tsv("poisson_epi.tsv") %>%
     anchor_center %>% stretch(10000) %>%
     mutate(TTAAs = seq$count_pattern("TTAA", genome, ., rc=TRUE)) %>%
     filter(TTAAs > 0) # if no upstream, Mir5136 has 0 TTAAs, 1 insert
+res = res[count_overlaps(res, genes) == 0]
 
 ins_sites_genome = seq$count_pattern("TTAA", genome, rc=TRUE)
 n_smp = length(unique(ins$sample))

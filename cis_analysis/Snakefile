@@ -17,9 +17,8 @@ rule all:
         "plot_tiles.pdf", "poisson.pdf", "ext_gene.pdf",
         expand("bionet_{int}.pdf", int=['DLBCL', 'omnipath']),
         expand("ins/{ins}.pdf", ins=config['ins_plots']),
-        expand("ext_epi-{feature}.pdf", feature=['promoter', 'enhancer',
-            'promoter_flanking_region', 'TF_binding_site',
-            'open_chromatin_region', 'CTCF_binding_site'])
+        expand("ext_epi-{feature}.pdf", feature=['enhancer',
+            'TF_binding_site', 'open_chromatin_region', 'CTCF_binding_site'])
 
 rule plot_ins:
     input:
