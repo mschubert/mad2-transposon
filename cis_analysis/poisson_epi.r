@@ -41,6 +41,7 @@ res = readr::read_tsv("poisson_epi.tsv") %>%
     anchor_center %>% stretch(10000) %>%
     mutate(TTAAs = seq$count_pattern("TTAA", genome, ., rc=TRUE)) %>%
     filter(TTAAs > 0) # if no upstream, Mir5136 has 0 TTAAs, 1 insert
+dists = join_nearest(ins, res, distance=TRUE)
 res = res[count_overlaps(res, genes) == 0]
 
 ins_sites_genome = seq$count_pattern("TTAA", genome, rc=TRUE)
@@ -58,8 +59,6 @@ samples = seq$intersect(ins, res) %>%
     summarize(n_ins = dplyr::n(),
               reads = sum(reads)) %>%
     ungroup()
-
-dists = join_nearest(ins, res, distance=TRUE)
 
 ptest = function(n_ins, len, rate) broom::tidy(poisson.test(n_ins, len*n_smp, rate))
 result = as.data.frame(GenomicRanges::mcols(res)) %>%

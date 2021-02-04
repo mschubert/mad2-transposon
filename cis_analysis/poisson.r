@@ -28,6 +28,7 @@ genes = seq$coords$gene(dset="mmusculus_gene_ensembl", granges=TRUE) %>%
     anchor_5p() %>% stretch(as.integer(args$downstream)) %>%
     mutate(TTAAs = seq$count_pattern("TTAA", genome, ., rc=TRUE)) %>%
     filter(TTAAs > 0) # if no upstream, Mir5136 has 0 TTAAs, 1 insert
+dists = join_nearest(ins, genes, distance=TRUE)
 
 ins_sites_genome = seq$count_pattern("TTAA", genome, rc=TRUE)
 n_smp = length(unique(ins$sample))
@@ -49,7 +50,8 @@ ptest = function(n_ins, len, rate) broom::tidy(poisson.test(n_ins, len*n_smp, ra
 result = as.data.frame(GenomicRanges::mcols(genes)) %>%
     inner_join(samples %>% select(sample, external_gene_name)) %>%
     group_by(external_gene_name, TTAAs) %>%
-    summarize(n_smp = n_distinct(sample)) %>%
+        summarize(n_smp = n_distinct(sample)) %>%
+    ungroup() %>%
     mutate(result = purrr::map2(n_smp, TTAAs, ptest, rate=ins_rate_genome)) %>%
     tidyr::unnest() %>%
     select(-(parameter:alternative)) %>%
@@ -68,4 +70,4 @@ pdf(args$plotfile)
 print(p)
 dev.off()
 
-save(samples, genes, sample_rates, result, file=args$outfile)
+save(samples, genes, sample_rates, result, dists, file=args$outfile)

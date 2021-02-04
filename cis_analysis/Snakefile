@@ -101,6 +101,8 @@ rule poisson_gene:
     output:
         result = "poisson.RData",
         plot = "poisson.pdf"
+    resources:
+        mem = 4096
     shell:
         "Rscript {input.rscript}"
             " --infile {input.aset}"
