@@ -59,6 +59,8 @@ samples = seq$intersect(ins, res) %>%
               reads = sum(reads)) %>%
     ungroup()
 
+dists = join_nearest(ins, res, distance=TRUE)
+
 ptest = function(n_ins, len, rate) broom::tidy(poisson.test(n_ins, len*n_smp, rate))
 result = as.data.frame(GenomicRanges::mcols(res)) %>%
     inner_join(samples %>% select(sample, id)) %>%
@@ -83,4 +85,4 @@ pdf(args$plotfile)
 print(p)
 dev.off()
 
-save(samples, res, sample_rates, result, file=args$outfile)
+save(samples, res, sample_rates, result, dists, file=args$outfile)

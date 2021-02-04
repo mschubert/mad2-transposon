@@ -40,12 +40,35 @@ plot_volcano = function(res) {
             ylab("non-adj. p-value")
 }
 
+#' Plot distribution of insertion-feature distances vs. external variable
+#'
+#' @param meta  metadata df
+#' @param rn    column name that is external var
+#' @param dist  distance measure
+#' @return      ggplot2 object
+plot_distance_distr = function(meta, rn, dist) {
+    df = as_tibble(as.data.frame(dist)) %>%
+        inner_join(meta, by="sample") %>%
+        dplyr::select(sample, id, distance, !! rlang::sym(rn)) %>%
+        mutate(sample = forcats::fct_reorder(sample, !! rlang::sym(rn)),
+               distance = log10(distance+1))
+
+    mod = broom::tidy(lm(distance ~ as.integer(sample), data=df)) %>%
+        filter(term == "as.integer(sample)")
+
+    ggplot(df, aes(x=sample, y=log10(distance+1))) +
+        geom_boxplot(outlier.shape=NA) +
+        labs(title = rn,
+             subtitle = sprintf("est=%.2f (p=%.2g)", mod$estimate, mod$p.value)) +
+        theme(axis.text.x = element_text(angle=90))
+}
+
 sys$run({
     args = sys$cmd$parse(
         opt('m', 'meta', 'meta+aneuploidy', '../ploidy_compare/analysis_set.RData'),
-        opt('p', 'poisson', 'cis assocs RData', 'poisson_epi.RData'),
-        opt('o', 'outfile', 'external assocs RData', 'ext_epi.RData'),
-        opt('p', 'plotfile', 'pdf', 'ext_epi.pdf'))
+        opt('p', 'poisson', 'cis assocs RData', 'poisson_epi-enhancer.RData'),
+        opt('o', 'outfile', 'external assocs RData', 'ext_epi-enhancer.RData'),
+        opt('p', 'plotfile', 'pdf', 'ext_epi-enhancer.pdf'))
 
     meta = io$load(args$meta) %>%
         mutate(aneuploidy = pmin(aneuploidy, 0.2))
@@ -80,6 +103,8 @@ sys$run({
     for (rn in names(results)) {
         message(rn)
         print(plot_volcano(results[[rn]]) + ggtitle(rn))
+        if (rn == "aneuploidy")
+            print(plot_distance_distr(meta, rn, dset$dist))
     }
     dev.off()
 
