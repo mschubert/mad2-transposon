@@ -16,7 +16,10 @@ rule all:
     input:
         "plot_tiles.pdf", "poisson.pdf", "ext_gene.pdf",
         expand("bionet_{int}.pdf", int=['DLBCL', 'omnipath']),
-        expand("ins/{ins}.pdf", ins=config['ins_plots'])
+        expand("ins/{ins}.pdf", ins=config['ins_plots']),
+        expand("ext_epi-{feature}.pdf", feature=['promoter', 'enhancer',
+            'promoter_flanking_region', 'TF_binding_site',
+            'open_chromatin_region', 'CTCF_binding_site'])
 
 rule plot_ins:
     input:
@@ -102,6 +105,37 @@ rule poisson_gene:
     shell:
         "Rscript {input.rscript}"
             " --infile {input.aset}"
+            " --outfile {output.result}"
+            " --plotfile {output.plot}"
+
+rule ext_assocs_epi:
+    input:
+        rscript = "ext_epi.r",
+        poisson = "poisson_epi-{feature}.RData",
+        meta = aneup("analysis_set.RData")
+    output:
+        result = "ext_epi-{feature}.RData",
+        plot = "ext_epi-{feature}.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --meta {input.meta}"
+            " --poisson {input.poisson}"
+            " --outfile {output.result}"
+            " --plotfile {output.plot}"
+
+rule poisson_epi:
+    input:
+        rscript = "poisson_epi.r",
+        aset = "analysis_set.RData"
+    output:
+        result = "poisson_epi-{feature}.RData",
+        plot = "poisson_epi-{feature}.pdf"
+    resources:
+        mem = 4096
+    shell:
+        "Rscript {input.rscript}"
+            " --infile {input.aset}"
+            " --feature {wildcards.feature}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"
 

@@ -50,11 +50,11 @@ sys$run({
     meta = io$load(args$meta) %>%
         mutate(aneuploidy = pmin(aneuploidy, 0.2))
     dset = io$load(args$poisson)
-    genes = with(dset, intersect(samples$id, result$id))
+    ids = with(dset, intersect(samples$id, result$id))
 
     aset = dset$samples %>%
         select(-n_ins) %>%
-        filter(id %in% genes) %>%
+        filter(id %in% ids) %>%
         mutate(reads=TRUE) %>%
         tidyr::complete(sample, id, fill=list(reads=FALSE)) %>%
         inner_join(dset$sample_rates %>% select(sample, n_ins, n_reads, rate)) %>%
@@ -62,7 +62,7 @@ sys$run({
                                    `T-cell`, Myeloid, Other))
 
     fields = c("aneuploidy", "T-cell", "Myeloid", "Other")
-    result = expand.grid(id=genes, ext=fields,
+    result = expand.grid(id=ids, ext=fields,
             type=unique(aset$type), stringsAsFactors=FALSE) %>%
         filter(is.na(type) | ext == "aneuploidy") %>%
         mutate(res = clustermq::Q(test_epi, const=list(dset=aset),

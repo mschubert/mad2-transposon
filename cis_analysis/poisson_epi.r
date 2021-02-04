@@ -7,6 +7,7 @@ plt = import('plot')
 
 args = sys$cmd$parse(
     opt('i', 'infile', 'transposon insert RData', 'analysis_set.RData'),
+    opt('f', 'feature', 'enhancer|promoter|TF_binding_site etc.', 'enhancer'),
     opt('u', 'upstream', 'bp to include before gene', '5000'),
     opt('d', 'downstream', 'bp to include after gene', '5000'),
     opt('o', 'outfile', 'insertion statistics RData', 'poisson_epi.RData'),
@@ -27,7 +28,7 @@ genome = seq$genome("GRCm38", chrs=c(1:19, 'X'))
 #res = biomaRt::getBM(attributes=attrs, filters=c("epigenome_name", "activity"),
 #                     values=list(c("spleen adult","thymus adult"), "ACTIVE"), mart=ensembl)
 res = readr::read_tsv("poisson_epi.tsv") %>%
-    filter(`Feature type` == "Enhancer") %>%
+    filter(`SO term name` == args$feature) %>%
     dplyr::rename(chr = `Chromosome/scaffold name`,
                   start = `Start (bp)`,
                   end = `End (bp)`,
@@ -80,4 +81,4 @@ pdf(args$plotfile)
 print(p)
 dev.off()
 
-save(samples, genes, sample_rates, result, file=args$outfile)
+save(samples, res, sample_rates, result, file=args$outfile)
