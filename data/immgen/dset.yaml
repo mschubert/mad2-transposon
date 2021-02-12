@@ -1,0 +1,30 @@
+cells:
+    LT-HSC:
+        - LTHSC
+        - LT−HSC_SPKSL
+    ST-HSC:
+        - STHSC
+    CLP:
+        - CLP
+    ProB:
+        - ProB
+    PreB:
+        - PreB
+    B:
+        - B-Cell
+    ETP:
+        - ETP
+    CD4:
+        - CD4+ naive T-cells t4n
+    CD8:
+        - CD8+ naive T-cells t8n
+        - CD48+ naive T-cells t8n
+    NK:
+        - NK cells NK
+        - NKmature
+    CMP:
+        - LMPP
+    Monocytes:
+        - Monocyte
+    Granulocytes:
+        - Granulocytes
