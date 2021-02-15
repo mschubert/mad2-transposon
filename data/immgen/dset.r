@@ -28,7 +28,7 @@ exps = c("E-GEOD-14833", "E-GEOD-6506") %>%
     lapply(ArrayExpress::ArrayExpress) %>%
     ma$qc() %>%
 #    ma$normalize() %>% # AE package already does this
-    ma$annotate(summarize="ensembl_gene_id")
+    ma$annotate(summarize="ensembl_gene_id", dset="mmusculus_gene_ensembl")
 
 expr = lapply(exps, as.matrix) %>%
     narray::stack(along=2)
