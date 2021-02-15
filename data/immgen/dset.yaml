@@ -22,7 +22,7 @@ cells:
     NK:
         - NK cells NK
         - NKmature
-    CMP:
+    LMPP:
         - LMPP
     Monocytes:
         - Monocyte

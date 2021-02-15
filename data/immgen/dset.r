@@ -7,7 +7,7 @@ plot_pca = function(meta, expr, color) {
     pca = prcomp(t(expr), scale=FALSE)
     ggplot(cbind(meta, pca$x), aes_string(x="PC1", y="PC2", color=color, shape="series")) +
         geom_point(size=5) +
-        geom_text_repel(aes_string(label=color), color="black") +
+        ggrepel::geom_text_repel(aes_string(label=color), color="black") +
         labs(x = sprintf("PC1 (%.1f%%)", summary(pca)$importance[2,1]*100),
              y = sprintf("PC2 (%.1f%%)", summary(pca)$importance[2,2]*100),
              title = "PCA plot (linear)")
