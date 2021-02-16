@@ -19,7 +19,7 @@ rule dset:
     input:
         rscript = "dset_merge.r",
         ploidy = ploidy_compare("compare_ploidy.tsv"),
-        cis = data_cis("cis_per_tumor.RData")
+        cis = data_cis("cis_per_tumor.rds")
     output:
         dset = "dset.RData"
     shell:

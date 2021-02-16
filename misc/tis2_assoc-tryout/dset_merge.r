@@ -22,7 +22,7 @@ aneup = io$read_table("../ploidy_compare/compare_ploidy.tsv", header=TRUE) %>%
         `WGS (merged)` %or% `WGS (30-cell)`)) %>%
     arrange(-aneup)
 
-cis = io$load("../data/cis/cis_per_tumor.RData") %>%
+cis = io$load("../data/cis/cis_per_tumor.rds") %>%
     mutate(sample = ifelse(sample == "410bm", "410t", sample),
            sample = ifelse(sample == "415bm", "415s", sample)) %>%
     filter(sample != "477s") %>%

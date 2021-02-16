@@ -2,6 +2,6 @@ rule all:
     input:
         rscript = "cis_per_tumor.r"
     output:
-        cis = "cis_per_tumor.RData"
+        cis = "cis_per_tumor.rds"
     shell:
         "Rscript {input.rscript}"

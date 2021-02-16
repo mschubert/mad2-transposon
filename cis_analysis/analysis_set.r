@@ -17,7 +17,7 @@ is_local_hop = function(pos, reads, wsize) {
 }
 
 args = sys$cmd$parse(
-    opt('i', 'infile', 'all samples .RData', '../data/cis/cis_per_tumor.RData'),
+    opt('i', 'infile', 'all samples .RData', '../data/cis/cis_per_tumor.rds'),
     opt('r', 'reads', 'min reads to consider ins', '20'),
     opt('f', 'read_frac', 'min frac of reads for gene', '0'),
     opt('s', 'sheet', 'exclude/replace yaml', 'analysis_set.yaml'),
