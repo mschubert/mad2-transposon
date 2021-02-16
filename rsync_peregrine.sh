@@ -1,8 +1,11 @@
 #!/bin/bash
 
-rsync -auvr --include='*.pdf' \
+rsync -auvr $@ --include='*.pdf' \
     --exclude '.snakemake' \
     --include '*.RData' \
+    --include '*.rds' \
+    --include '*.xls' \
+    --include '*.xlsx' \
     --include '*.tsv' \
     --include='*/' \
     --include='docs/*' \

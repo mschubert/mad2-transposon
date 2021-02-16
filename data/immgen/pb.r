@@ -1,6 +1,7 @@
 library(dplyr)
 io = import('io')
 sys = import('sys')
+dset = import('./dset')
 
 args = sys$cmd$parse(
     opt('i', 'infile', 'rds', 'dset.rds'),
@@ -14,6 +15,16 @@ meta = dset$meta %>%
 expr = dset$expr
 narray::intersect(expr, meta$fname, along=2)
 
+## select informative genes for lineages
+#gene_variances = matrixStats::rowVars(expr)
+#hivar = head(order(gene_variances, decreasing=TRUE), 1000)
+#expr = expr[hivar,]
+x = readr::read_tsv("mart_export.txt") %>%
+    filter(`GO term accession` == "GO:0003700") %>%
+    pull(`Gene stable ID`) %>%
+    intersect(rownames(expr))
+expr = expr[x,]
+
 # batch-correct mouse tumors
 tps = io$load("../rnaseq/assemble.RData")
 tpse = tps$expr
@@ -25,11 +36,17 @@ merge = sva::ComBat(e2, batch=c(rep("immgen", ncol(expr)), rep("tps", ncol(tpse)
 expr = merge[,1:ncol(expr)]
 tpse = merge[,-c(1:ncol(expr))]
 
+# sanity checks for batch correction
+#dset$plot_pca(meta, expr, color)
+
 # train LDA model on reference set
 library(MASS)
 mod = lda(meta$annot ~ ., data=as.data.frame(t(expr)))
 
 
 # predict label for each mouse tumor
+res = predict(mod, newdata=as.data.frame(t(tpse)))
+tpsm %>% cbind(pred=res$class) %>% dplyr::select(mouse, genotype, tissue, type, pred) %>% as.data.frame()
+
 
 # plot mouse tumors along differentiation tree
