@@ -20,7 +20,7 @@ rule all:
 rule hit_table:
     input:
         rscript = "cis_sanger.r",
-        dset = cis("cis_per_tumor.RData")
+        dset = cis("cis_per_tumor.rds")
     output:
         table = "cis_sanger.tsv"
     shell:

@@ -153,7 +153,7 @@ rule analysis_set:
     input:
         rscript = "analysis_set.r",
         sheet = "analysis_set.yaml",
-        data = cis("cis_per_tumor.RData")
+        data = cis("cis_per_tumor.rds")
     output:
         aset = "analysis_set.RData"
     shell:

@@ -3,7 +3,7 @@ io = import('io')
 sys = import('sys')
 
 args = sys$cmd$parse(
-    opt('i', 'infile', 'cis RData', '../data/cis/cis_per_tumor.RData'),
+    opt('i', 'infile', 'cis RData', '../data/cis/cis_per_tumor.rds'),
     opt('o', 'outfile', 'tsv to save to', 'cis_sanger.tsv'))
 
 hits = io$load(args$infile) %>%
