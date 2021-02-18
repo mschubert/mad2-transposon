@@ -44,6 +44,11 @@ meta3 = meta %>% filter(type %in% c("Myeloid", "Other"))
 exp3 = t(assay(expr[diffg, meta3$sample]))
 pr3 = prcomp(exp3)
 
+g4 = c("Ets1", "Erg", "Kit")
+meta4 = meta #%>% filter(type %in% c("Myeloid", "Other"))
+exp4 = t(assay(expr[g4, meta4$sample]))
+pr4 = prcomp(exp4)
+
 pdf("Rplots.pdf", 10, 8)
 plt$pca(pr, aes(x=PC1, y=PC2), annot=meta, biplot=TRUE, bi_color="black", bi_size=3) +
     geom_point(aes(color=type, size=aneuploidy)) +
@@ -94,8 +99,31 @@ ggplot(cbind(meta, exp1), aes(x=Ly6a, y=Cd34)) +
     geom_point(aes(size=aneuploidy, color=type)) +
     ggrepel::geom_text_repel(aes(label=sample), size=2) +
     theme_classic()
+
+plt$pca(pr4, aes(x=PC1, y=PC2), annot=meta4, biplot=TRUE, bi_color="black", bi_size=3) +
+    geom_point(aes(size=aneuploidy, color=type)) +
+    geom_text(aes(label=sample), size=2) +
+    theme_classic()
 ggplot(cbind(meta, exp1), aes(x=Ets1, y=Erg)) +
     geom_point(aes(size=aneuploidy, color=type)) +
     ggrepel::geom_text_repel(aes(label=sample), size=2) +
+    theme_classic()
+ggplot(cbind(meta, exp1), aes(x=Kit, y=Erg)) +
+    geom_point(aes(size=aneuploidy, color=type)) +
+    ggrepel::geom_text_repel(aes(label=sample), size=2) +
+    theme_classic()
+ggplot(cbind(meta, exp1), aes(x=Ly6a, y=Erg)) +
+    geom_point(aes(size=aneuploidy, color=type)) +
+    ggrepel::geom_text_repel(aes(label=sample), size=2) +
+    theme_classic()
+ggplot(cbind(meta, exp1), aes(x=Ly6a, y=aneuploidy)) +
+    geom_point(aes(size=aneuploidy, color=type)) +
+    ggrepel::geom_text_repel(aes(label=sample), size=2) +
+    geom_smooth(aes(color=type), method="lm", se=FALSE) +
+    theme_classic()
+ggplot(cbind(meta, exp1), aes(x=Kit, y=aneuploidy)) +
+    geom_point(aes(size=aneuploidy, color=type)) +
+    ggrepel::geom_text_repel(aes(label=sample), size=2) +
+    geom_smooth(aes(color=type), method="lm", se=FALSE) +
     theme_classic()
 dev.off()
