@@ -31,7 +31,7 @@ plot_one = function(fname, cluster=TRUE) {
     if (cluster) {
         mdf = df[sample(seq_len(nrow(df)), 500), fields] %>%
             data.matrix() %>% pmax(1) %>% log10()
-        mcl = mclust::Mclust(mdf, modelNames=c("VVV"))
+        mcl = mclust::Mclust(mdf, G=1:5, modelNames=c("VVV"))
         pd = df[colnames(mcl$data)] %>% data.matrix() %>% pmax(1) %>% log10()
         df$cl = factor(predict(mcl, newdata=as.data.frame(pd))$classification)
     } else {
@@ -43,14 +43,14 @@ plot_one = function(fname, cluster=TRUE) {
         ggfacs(df, aes(x=`CD45`, y=`FSC-A`)) + scale_x_log10(),
         ggfacs(df, aes(x=`MAC1/GR1`, y=`SSC-A`)) + scale_x_log10(),
         ggfacs(df, aes(x=`FSC-A`, y=`B220`)) + scale_y_log10(),
-        ggfacs(df, aes(x=`CD3`, y=`FSC-A`)) + scale_x_log10(),
+        ggfacs(df, aes(x=`CD3`, y=`CD19`)) + scale_x_log10() + scale_y_log10(),
         ggfacs(df, aes(x=`SCA-1`, y=`CKIT`)) + scale_x_log10() + scale_y_log10()
     )
     plt$text(bn, size=9) / wrap_plots(plots) + plot_layout(heights=c(1,20))
 }
 
-scale_x_biexp = function() scale_x_continuous(trans=)
-scale_y_biexp = function() scale_y_continuous(trans=)
+#scale_x_biexp = function() scale_x_continuous(trans=)
+#scale_y_biexp = function() scale_y_continuous(trans=)
 
 fcs = list.files(pattern="\\.fcs$", recursive=TRUE, full.names=TRUE)
 
@@ -60,8 +60,8 @@ for (f in fcs)
 dev.off()
 
 
-fname = "./FCS files - part 2/Specimen_002_180 20_017.fcs"
-plot_one(fname)
+#fname = "./FCS files - part 2/Specimen_002_180 20_017.fcs"
+#plot_one(fname)
 
 
 
