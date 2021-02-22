@@ -4,7 +4,7 @@ library(flowCore)
 library(mclust)
 plt = import('plot')
 
-ggfacs = function(df, meta, aes, ctrans="identity") {
+ggfacs = function(df, meta, aes, ctrans="identity", gate=NULL) {
     meta$desc = ifelse(is.na(meta$desc), meta$name, meta$desc)
     meds = df %>%
         group_by(cl) %>%
@@ -16,6 +16,11 @@ ggfacs = function(df, meta, aes, ctrans="identity") {
 #    xlims = quantile(df[[vs[1]]], c(0.01, 0.99))
 #    ylims = quantile(df[[vs[2]]], c(0.01, 0.99))
     xlims = ylims = c(5, 2e5)
+    if (is.null(gate)) {
+        gates = list()
+    } else {
+        gates = list(geom_polygon(data=gate, color="red", fill=NA, size=1))
+    }
     ggplot(df, aes) +
         geom_bin2d(bins = 70) +
         scale_fill_continuous(type="viridis", trans=ctrans) +
@@ -25,6 +30,7 @@ ggfacs = function(df, meta, aes, ctrans="identity") {
         theme_bw() +
         scale_x_continuous(limits=range(brk[[1]]), breaks=brk[[1]], trans=logs[1]) +
         scale_y_continuous(limits=range(brk[[2]]), breaks=brk[[2]], trans=logs[2]) +
+        gates +
         coord_cartesian(expand=FALSE) +
         labs(title = sprintf("%s vs. %s", vs[1], vs[2]),
              x = sprintf("%s [%s]", vs[1], meta$name[meta$desc==vs[1]]),
@@ -38,13 +44,13 @@ log_mat = function(df, meta) { #, n_max=1.5e4) {
         data.matrix() %>% pmax(1) %>% log10()
 }
 
-refine_mclust = function(df, meta) {
+refine_mclust = function(df, meta, G=1:4, n_pts=500) {
     df$cl = as.character(df$cl)
     for (cl in setdiff(df$cl, NA)) { # filter by size?
         cur_cl = !is.na(df$cl) & df$cl == cl
         lmat = log_mat(df[cur_cl,], meta)
-        cur_subs = sample(seq_len(nrow(lmat)), 500)
-        res = mclust::Mclust(lmat[cur_subs,], G=1:4, modelNames="VVV") # 1:4 only if HDB didn't find a cluster?
+        cur_subs = sample(seq_len(nrow(lmat)), min(nrow(lmat), n_pts)) # needs 1000, G=1:5 if hdbscan finds nothing
+        res = mclust::Mclust(lmat[cur_subs,], G=G, modelNames="VVV") # 1:4 only if HDB didn't find a cluster?
         df$cl[cur_cl] = paste0(cl, predict(res, newdata=lmat)$classification)
     }
     df
@@ -56,10 +62,17 @@ plot_one = function(fname, cluster=TRUE) {
     bn = tools::file_path_sans_ext(basename(fname))
     bn = sub("Specimen_002_", "", bn, fixed=TRUE)
 
+#    gates = yaml::read_yaml("fsc-ssc-gates.yaml")$common
+    fsc_ssc = tibble("FSC-H" = c(50, 30, 75, 240, 240),
+                     "SSC-H" = c(10, 25, 240, 240, 25)) * 1e3
+    debris = do.call(polygonGate, c(fsc_ssc, list(filterId="debris")))
+
     meta = ff@parameters@data
     fields = c(na.omit(meta$desc))
-    df = as_tibble(ff@exprs) %>%
-        dplyr::filter(`FSC-H`+`SSC-H` > 5e4, `FSC-H` > 2.5e4) #, `FSC-A` > 0, `SSC-A` > 0)
+    ungated = as_tibble(ff@exprs) %>%
+        mutate(cl = NA) #todo: would be better to have this in there
+    db = flowCore::filter(ff, debris)
+    df = as.data.frame(ff@exprs)[db@subSet,] %>% as_tibble()
     df = df[rowSums(df < 0) == 0,]
     colnames(df) = ifelse(is.na(meta$desc), meta$name, meta$desc)
 #    comp = ff@description$SPILL
@@ -68,17 +81,22 @@ plot_one = function(fname, cluster=TRUE) {
     cl_df_idx = sample(seq_len(nrow(df)), min(nrow(df), 1.5e4))
     mdf = df[cl_df_idx, fields] %>%
         data.matrix() %>% pmax(1) %>% log10()
-    mcl = dbscan::hdbscan(mdf, minPts=500)
-    if (length(unique(mcl$cluster)) > 1)
+    mcl = dbscan::hdbscan(mdf, minPts=200)
+    G = 1:5
+    mclust_pts = 1500 # e.g. 422 not split ckit +/- with 1000 pts
+    if (length(unique(mcl$cluster)) > 1) {
         mcl$cluster[mcl$cluster == 0] = NA
+        G = 1:4
+        mclust_pts = 500
+    }
     df$cl = NA
     df$cl[cl_df_idx] = mcl$cluster
-    df = refine_mclust(df, meta)
+    df = refine_mclust(df, meta, G, mclust_pts)
     df$cl = factor(df$cl)
 #    levels(df$cl) = seq_along(levels(df$cl))
 
     plots = list(
-        ggfacs(df, meta, aes(x=`FSC-H`, y=`SSC-H`)),
+        ggfacs(ungated, meta, aes(x=`FSC-H`, y=`SSC-H`), ctrans="log", gate=fsc_ssc),
         ggfacs(df, meta, aes(x=`CD45`, y=`FSC-A`)),
         ggfacs(df, meta, aes(x=`MAC1/GR1`, y=`SSC-A`)),
         ggfacs(df, meta, aes(x=`FSC-A`, y=`B220`)),
@@ -107,6 +125,11 @@ plot_one = function(fname, cluster=TRUE) {
 dir = "FCS files - part 1"
 fcs = list.files(dir, pattern="\\.fcs$", recursive=TRUE, full.names=TRUE)
 
+fcs = c(
+    "FCS files - part 1/Specimen_002_401 21_019.fcs",
+    "FCS files - part 1/Specimen_002_443 20_046.fcs"
+)
+
 pdf("Rplots.pdf", 16, 10)
 for (f in rev(fcs))
     try(print(plt$try(plot_one(f))))
@@ -118,7 +141,8 @@ dev.off()
 #fname = "FCS files - part 1/Specimen_002_404 20_022.fcs"
 #plot_one(fname)
 fname = "FCS files - part 1/Specimen_002_446 20_048.fcs"
-
+fname = "FCS files - part 1/Specimen_002_443 20_046.fcs"
+fname = "FCS files - part 1/Specimen_002_422 20_033.fcs" # 1500 pts split ckit+/-?
 
 # do standard gating and subsetting here
 
