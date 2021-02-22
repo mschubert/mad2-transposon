@@ -46,8 +46,10 @@ refine_mclust = function(df, meta, G=1:4, n_pts=500) {
     for (cl in setdiff(df$cl, NA)) { # filter by size?
         cur_cl = !is.na(df$cl) & df$cl == cl
         lmat = log_mat(df[cur_cl,], meta)
-        cur_subs = sample(seq_len(nrow(lmat)), min(nrow(lmat), n_pts)) # needs 1000, G=1:5 if hdbscan finds nothing
-        res = mclust::Mclust(lmat[cur_subs,], G=G, modelNames="VVV") # 1:4 only if HDB didn't find a cluster?
+        cur_subs = sample(seq_len(nrow(lmat)), min(nrow(lmat), n_pts))
+        icl = mclust::mclustICL(lmat[cur_subs,], G=G, modelNames="VVV")
+        bestG = as.integer(sub("VVV,", "", names(summary(icl)[1])))
+        res = mclust::Mclust(lmat[cur_subs,], G=seq_len(bestG), modelNames="VVV")
         df$cl[cur_cl] = paste0(cl, predict(res, newdata=lmat)$classification)
     }
     df
@@ -92,7 +94,7 @@ plot_one = function(fname, cluster=TRUE) {
     df$cl[cl_df_idx] = mcl$cluster
     df = refine_mclust(df, meta, G, mclust_pts)
     df$cl = factor(df$cl)
-    ungated = left_join(ungated, df) # add cluster information
+    ungated = suppressMessages(left_join(ungated, df)) # add cluster information
 #    levels(df$cl) = seq_along(levels(df$cl))
 
     dens_max = function(x) {
@@ -136,10 +138,13 @@ plot_one = function(fname, cluster=TRUE) {
 dir = "FCS files - part 1"
 fcs = list.files(dir, pattern="\\.fcs$", recursive=TRUE, full.names=TRUE)
 
-#fcs = c(
-#    "FCS files - part 1/Specimen_002_401 21_019.fcs",
-#    "FCS files - part 1/Specimen_002_443 20_046.fcs"
-#)
+fcs = c(
+    "FCS files - part 1/Specimen_002_401 21_019.fcs",
+    "FCS files - part 1/Specimen_002_443 20_046.fcs",
+    "FCS files - part 1/Specimen_002_425 20_036.fcs",
+    "FCS files - part 1/Specimen_002_409 20_025.fcs",
+    "FCS files - part 1/Specimen_002_422 20_033.fcs" # 1500 pts split ckit+/-?
+)
 
 res = sapply(fcs, function(x) try(plot_one(x)), simplify=FALSE)
 errs = sapply(res, class) == "try-error"
@@ -166,6 +171,7 @@ saveRDS(ccs, file="ccs.rds")
 fname = "FCS files - part 1/Specimen_002_446 20_048.fcs"
 fname = "FCS files - part 1/Specimen_002_443 20_046.fcs"
 fname = "FCS files - part 1/Specimen_002_422 20_033.fcs" # 1500 pts split ckit+/-?
+fname = "FCS files - part 1/Specimen_002_437 20_043.fcs" # red/blue clusters are the same?
 
 # do standard gating and subsetting here
 
