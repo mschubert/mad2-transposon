@@ -59,16 +59,18 @@ plot_one = function(fname, cluster=TRUE) {
     bn = tools::file_path_sans_ext(basename(fname))
     bn = sub("Specimen_002_", "", bn, fixed=TRUE)
 
-#    gates = yaml::read_yaml("fsc-ssc-gates.yaml")$common
-    fsc_ssc = tibble("FSC-H" = c(50, 30, 75, 240, 240),
-                     "SSC-H" = c(10, 25, 240, 240, 25)) * 1e3
+    gates = yaml::read_yaml("fsc-ssc-gates.yaml")
+    fsc_ssc = as_tibble(gates$common$debris) * 1e3
+    if (basename(fname) %in% names(gates$sample))
+        fsc_ssc = as_tibble(gates$sample[[basename(fname)]]$debris) * 1e3
     debris = do.call(polygonGate, c(fsc_ssc, list(filterId="debris")))
 
     meta = ff@parameters@data
     fields = c(na.omit(meta$desc))
     ungated = as_tibble(ff@exprs)
     db = flowCore::filter(ff, debris)
-    df = as_tibble(ff@exprs)[db@subSet,]
+    df = as_tibble(ff@exprs)[db@subSet,] %>%
+        dplyr::filter(`SSC-A` < 2.5e5) # todo: is this caught by singlets [FSC-H FSC-A] gate?
     df = df[rowSums(df < 0) == 0,]
     colnames(df) = ifelse(is.na(meta$desc), meta$name, meta$desc)
     colnames(ungated) = ifelse(is.na(meta$desc), meta$name, meta$desc)
@@ -134,18 +136,24 @@ plot_one = function(fname, cluster=TRUE) {
 dir = "FCS files - part 1"
 fcs = list.files(dir, pattern="\\.fcs$", recursive=TRUE, full.names=TRUE)
 
-fcs = c(
-    "FCS files - part 1/Specimen_002_401 21_019.fcs",
-    "FCS files - part 1/Specimen_002_443 20_046.fcs"
-)
+#fcs = c(
+#    "FCS files - part 1/Specimen_002_401 21_019.fcs",
+#    "FCS files - part 1/Specimen_002_443 20_046.fcs"
+#)
 
-res = lapply(fcs, plot_one)
+res = sapply(fcs, function(x) try(plot_one(x)), simplify=FALSE)
+errs = sapply(res, class) == "try-error"
+if (any(errs)) {
+    warning("Samples failed: ", paste(names(res)[errs], collapse=", "))
+    res = res[!errs]
+}
+
 ccs = lapply(res, function(x) x$ccs)
 plots = lapply(res, function(x) x$plot)
 
 pdf("Rplots.pdf", 16, 10)
-for (i in seq_along(fcs))
-    try(print(plt$try(plots[[i]])))
+for (p in plots)
+    print(plt$try(p))
 dev.off()
 
 saveRDS(ccs, file="ccs.rds")
