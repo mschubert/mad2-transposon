@@ -1,0 +1,17 @@
+dirs = ["FCS files - part 1", "FCS files - part 2"]
+
+rule all:
+    input:
+        expand("{dir}.{ext}", dir=dirs, ext=['pdf', 'rds'])
+
+rule facs:
+    input:
+        rscript = "do.r"
+    output:
+        outfile = "{dir}.rds",
+        plotfile = "{dir}.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --dir '{wildcards.dir}'"
+            " --outfile '{output.outfile}'"
+            " --plotfile '{output.plotfile}'"

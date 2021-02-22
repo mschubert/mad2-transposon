@@ -2,6 +2,7 @@ library(dplyr)
 library(patchwork)
 library(flowCore)
 library(mclust)
+sys = import('sys')
 plt = import('plot')
 
 ggfacs = function(df, meta, ccs, aes, ctrans="identity", gate=NULL) {
@@ -149,38 +150,35 @@ plot_one = function(fname, cluster=TRUE) {
     )
 }
 
-set.seed(120587)
-dir = "FCS files - part 1"
-fcs = list.files(dir, pattern="\\.fcs$", recursive=TRUE, full.names=TRUE)
+sys$run({
+    args = sys$cmd$parse(
+        opt('d', 'dir', 'fcs file dir', 'FCS files - part 1'),
+        opt('o', 'outfile', 'rds', 'FCS files - part 1.rds'),
+        opt('p', 'plotfile', 'pdf', 'FCS files - part 1.pdf')
+    )
 
-#fcs = sample(fcs, 3)
+    set.seed(120587)
+    fcs = list.files(args$dir, pattern="\\.fcs$", recursive=TRUE, full.names=TRUE)
 
-res = sapply(fcs, function(x) try(plot_one(x)), simplify=FALSE)
-errs = sapply(res, class) == "try-error"
-if (any(errs)) {
-    warning("Samples failed: ", paste(names(res)[errs], collapse=", "))
-    res = res[!errs]
-}
+    #fcs = sample(fcs, 3)
 
-ccs = lapply(res, function(x) x$ccs)
-plots = lapply(res, function(x) x$plot)
+    res = sapply(fcs, function(x) try(plot_one(x)), simplify=FALSE)
+    errs = sapply(res, class) == "try-error"
+    if (any(errs)) {
+        warning("Samples failed: ", paste(names(res)[errs], collapse=", "))
+        res = res[!errs]
+    }
 
-pdf("Rplots.pdf", 16, 10)
-for (p in plots)
-    print(plt$try(p))
-dev.off()
+    ccs = lapply(res, function(x) x$ccs)
+    plots = lapply(res, function(x) x$plot)
 
-saveRDS(ccs, file="ccs.rds")
+    pdf(args$plotfile, 16, 10)
+    for (p in plots)
+        print(plt$try(p))
+    dev.off()
 
-
-#fname = "./FCS files - part 2/Specimen_002_180 20_017.fcs"
-#fname = "FCS files - part 1/Specimen_002_404 20_022.fcs"
-#fname = "FCS files - part 1/Specimen_002_404 20_022.fcs"
-#plot_one(fname)
-fname = "FCS files - part 1/Specimen_002_446 20_048.fcs"
-fname = "FCS files - part 1/Specimen_002_443 20_046.fcs"
-fname = "FCS files - part 1/Specimen_002_422 20_033.fcs" # 1500 pts split ckit+/-?
-fname = "FCS files - part 1/Specimen_002_437 20_043.fcs" # red/blue clusters are the same?
+    saveRDS(ccs, file=args$outfile)
+})
 
 # do standard gating and subsetting here
 
