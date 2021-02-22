@@ -5,7 +5,7 @@ library(mclust)
 plt = import('plot')
 
 dens_max = function(x) {
-    d = density(log10(x), adjust=2)
+    d = density(log10(x[x>=1]), adjust=1.5)
     10^(d$x[which.max(d$y)])
 }
 
@@ -74,12 +74,12 @@ plot_one = function(fname, cluster=TRUE) {
 
     meta = ff@parameters@data
     fields = c(na.omit(meta$desc))
-    ungated = as_tibble(ff@exprs) %>%
-        mutate(cl = NA) #todo: would be better to have this in there
+    ungated = as_tibble(ff@exprs)
     db = flowCore::filter(ff, debris)
     df = as_tibble(ff@exprs)[db@subSet,]
     df = df[rowSums(df < 0) == 0,]
     colnames(df) = ifelse(is.na(meta$desc), meta$name, meta$desc)
+    colnames(ungated) = ifelse(is.na(meta$desc), meta$name, meta$desc)
 #    comp = ff@description$SPILL
 #    name = ff@description$`TUBE NAME`
 
@@ -98,6 +98,7 @@ plot_one = function(fname, cluster=TRUE) {
     df$cl[cl_df_idx] = mcl$cluster
     df = refine_mclust(df, meta, G, mclust_pts)
     df$cl = factor(df$cl)
+    ungated = left_join(ungated, df) # add cluster information
 #    levels(df$cl) = seq_along(levels(df$cl))
 
     plots = list(
