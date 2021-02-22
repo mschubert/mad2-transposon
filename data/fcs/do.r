@@ -4,16 +4,8 @@ library(flowCore)
 library(mclust)
 plt = import('plot')
 
-dens_max = function(x) {
-    d = density(log10(x[x>=1]), adjust=1.5)
-    10^(d$x[which.max(d$y)])
-}
-
-ggfacs = function(df, meta, aes, ctrans="identity", gate=NULL) {
+ggfacs = function(df, meta, ccs, aes, ctrans="identity", gate=NULL) {
     meta$desc = ifelse(is.na(meta$desc), meta$name, meta$desc)
-    max_dens = df %>%
-        group_by(cl) %>%
-        summarize_all(dens_max)
     vs = sapply(aes, all.vars)
     scs = grepl("[FS]SC-[AH]|Time", vs) + 1 # x,y axes: 1=log, 2=linear
     logs = c("log", "identity")[scs]
@@ -31,7 +23,7 @@ ggfacs = function(df, meta, aes, ctrans="identity", gate=NULL) {
         scale_fill_continuous(type="viridis", trans=ctrans) +
         geom_density_2d(aes(color=cl), bins=7, size=0.5, linetype="dashed") +
         scale_color_brewer(palette="Set1") +
-        geom_text(data=max_dens, aes(label="X", color=cl), size=7) +
+        geom_text(data=ccs, aes(label="X", color=cl), size=7) +
         theme_bw() +
         scale_x_continuous(limits=range(brk[[1]]), breaks=brk[[1]], trans=logs[1]) +
         scale_y_continuous(limits=range(brk[[2]]), breaks=brk[[2]], trans=logs[2]) +
@@ -101,13 +93,21 @@ plot_one = function(fname, cluster=TRUE) {
     ungated = left_join(ungated, df) # add cluster information
 #    levels(df$cl) = seq_along(levels(df$cl))
 
+    dens_max = function(x) {
+        d = density(log10(x[x>=1]), adjust=1.5)
+        10^(d$x[which.max(d$y)])
+    }
+    ccs = df %>%
+        group_by(cl) %>%
+        summarize_all(dens_max)
+
     plots = list(
-        ggfacs(ungated, meta, aes(x=`FSC-H`, y=`SSC-H`), ctrans="log", gate=fsc_ssc),
-        ggfacs(df, meta, aes(x=`CD45`, y=`FSC-A`)),
-        ggfacs(df, meta, aes(x=`MAC1/GR1`, y=`SSC-A`)),
-        ggfacs(df, meta, aes(x=`FSC-A`, y=`B220`)),
-        ggfacs(df, meta, aes(x=`CD3`, y=`CD19`)),
-        ggfacs(df, meta, aes(x=`SCA-1`, y=`CKIT`))
+        ggfacs(ungated, meta, ccs, aes(x=`FSC-H`, y=`SSC-H`), ctrans="log", gate=fsc_ssc),
+        ggfacs(df, meta, ccs, aes(x=`CD45`, y=`FSC-A`)),
+        ggfacs(df, meta, ccs, aes(x=`MAC1/GR1`, y=`SSC-A`)),
+        ggfacs(df, meta, ccs, aes(x=`FSC-A`, y=`B220`)),
+        ggfacs(df, meta, ccs, aes(x=`CD3`, y=`CD19`)),
+        ggfacs(df, meta, ccs, aes(x=`SCA-1`, y=`CKIT`))
     )
 
     not_na = sum(!is.na(df$cl))
@@ -122,7 +122,10 @@ plot_one = function(fname, cluster=TRUE) {
         theme_void() +
         theme(legend.position = "none")
 
-    (plt$text(bn, size=7) | pp) / wrap_plots(plots) + plot_layout(heights=c(1,20))
+    list(
+        ccs = ccs,
+        plot = (plt$text(bn, size=7) | pp) / wrap_plots(plots) + plot_layout(heights=c(1,20))
+    )
 }
 
 #scale_x_biexp = function() scale_x_continuous(trans=)
@@ -136,10 +139,16 @@ fcs = c(
     "FCS files - part 1/Specimen_002_443 20_046.fcs"
 )
 
+res = lapply(fcs, plot_one)
+ccs = lapply(res, function(x) x$ccs)
+plots = lapply(res, function(x) x$plot)
+
 pdf("Rplots.pdf", 16, 10)
-for (f in rev(fcs))
-    try(print(plt$try(plot_one(f))))
+for (i in seq_along(fcs))
+    try(print(plt$try(plots[[i]])))
 dev.off()
+
+saveRDS(ccs, file="ccs.rds")
 
 
 #fname = "./FCS files - part 2/Specimen_002_180 20_017.fcs"
