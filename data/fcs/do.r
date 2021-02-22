@@ -4,11 +4,16 @@ library(flowCore)
 library(mclust)
 plt = import('plot')
 
+dens_max = function(x) {
+    d = density(log10(x), adjust=2)
+    10^(d$x[which.max(d$y)])
+}
+
 ggfacs = function(df, meta, aes, ctrans="identity", gate=NULL) {
     meta$desc = ifelse(is.na(meta$desc), meta$name, meta$desc)
-    meds = df %>%
+    max_dens = df %>%
         group_by(cl) %>%
-        summarize_all(median)
+        summarize_all(dens_max)
     vs = sapply(aes, all.vars)
     scs = grepl("[FS]SC-[AH]|Time", vs) + 1 # x,y axes: 1=log, 2=linear
     logs = c("log", "identity")[scs]
@@ -26,7 +31,7 @@ ggfacs = function(df, meta, aes, ctrans="identity", gate=NULL) {
         scale_fill_continuous(type="viridis", trans=ctrans) +
         geom_density_2d(aes(color=cl), bins=7, size=0.5, linetype="dashed") +
         scale_color_brewer(palette="Set1") +
-        geom_text(data=meds, aes(label="X", color=cl), size=7) +
+        geom_text(data=max_dens, aes(label="X", color=cl), size=7) +
         theme_bw() +
         scale_x_continuous(limits=range(brk[[1]]), breaks=brk[[1]], trans=logs[1]) +
         scale_y_continuous(limits=range(brk[[2]]), breaks=brk[[2]], trans=logs[2]) +
@@ -72,7 +77,7 @@ plot_one = function(fname, cluster=TRUE) {
     ungated = as_tibble(ff@exprs) %>%
         mutate(cl = NA) #todo: would be better to have this in there
     db = flowCore::filter(ff, debris)
-    df = as.data.frame(ff@exprs)[db@subSet,] %>% as_tibble()
+    df = as_tibble(ff@exprs)[db@subSet,]
     df = df[rowSums(df < 0) == 0,]
     colnames(df) = ifelse(is.na(meta$desc), meta$name, meta$desc)
 #    comp = ff@description$SPILL
