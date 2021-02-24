@@ -11,9 +11,9 @@ args = sys$cmd$parse(
     opt('m', 'meta', 'sample .RData', '../ploidy_compare/analysis_set.RData'),
     opt('p', 'plotfile', 'pdf to save plot to', '/dev/null'))
 
-genes = c("Mad2l1", "Trp53", "Ets1", "Erg", "Myc", "Sox4", "Il7", "Il7r", "Kit", "Irf4", "Stat1", "Stat3",
-          "Ebf1", "Cd19", "Ighm", "Ikzf1", "Tcf15", "Gata2", "Cd55b", "Pax5", "Tmem184a", "Dntt", "Igll1",
-          "Vpreb1", "Rag1", "Rag2", "Xrcc6", "Cd34", "Cd3g", "Cd3e", "Klrb1c", "Tacr1", "Itgam", "Ly6a")
+genes = c("Mad2l1", "Trp53", "Ets1", "Erg", "Myc", "Sox4", "Il7", "Il7r", "Kit", "Irf4", "Stat1", "Stat3", "Bcl6",
+          "Ebf1", "Cd19", "Ighm", "Ikzf1", "Tcf15", "Gata2", "Cd55b", "Pax5", "Tmem184a", "Dntt", "Igll1", "Runx1",
+          "Vpreb1", "Rag1", "Rag2", "Xrcc6", "Cd34", "Cd3g", "Cd3e", "Klrb1c", "Tacr1", "Itgam", "Ly6a", "Ptprc")
 
 meta = io$load(args$meta)
 counts = io$load(args$expr)$counts
@@ -27,7 +27,7 @@ reads = DESeq2::counts(eset, normalized=TRUE)
 expr = DESeq2::varianceStabilizingTransformation(eset)
 
 exp1 = t(assay(expr[genes,]))
-meta2 = meta %>% filter(type == "Other")
+meta2 = meta %>% filter(type %in% c("Myeloid", "Other"))
 exp2 = t(assay(expr[genes, meta2$sample]))
 pr = prcomp(exp1)
 umap = uwot::umap(exp1)
@@ -38,6 +38,16 @@ clust1 = igraph::cluster_louvain(scran::buildSNNGraph(t(exp1), k=5))
 clust2 = igraph::cluster_louvain(scran::buildSNNGraph(t(exp2), k=5))
 umap = cbind(meta, umap, clust=factor(clust1$membership))
 umap2 = cbind(meta2, umap2, clust=factor(clust2$membership))
+
+diffg = c("Cd34", "Ptprc", "Ly6a", "Kit")
+meta3 = meta %>% filter(type %in% c("Myeloid", "Other"))
+exp3 = t(assay(expr[diffg, meta3$sample]))
+pr3 = prcomp(exp3)
+
+g4 = c("Ets1", "Erg", "Kit")
+meta4 = meta #%>% filter(type %in% c("Myeloid", "Other"))
+exp4 = t(assay(expr[g4, meta4$sample]))
+pr4 = prcomp(exp4)
 
 pdf("Rplots.pdf", 10, 8)
 plt$pca(pr, aes(x=PC1, y=PC2), annot=meta, biplot=TRUE, bi_color="black", bi_size=3) +
@@ -57,18 +67,63 @@ cbind(umap, t(reads[genes,])) %>%
         facet_wrap(~ gene, scales="free_y")
 
 plt$pca(pr2, aes(x=PC1, y=PC2), annot=meta2, biplot=TRUE, bi_color="black", bi_size=3) +
-    geom_point(aes(size=aneuploidy), color="#00ba38") +
+    geom_point(aes(size=aneuploidy, color=type)) +
     geom_text(aes(label=sample), size=2) +
     theme_classic()
 
 ggplot(umap2, aes(x=umap1, y=umap2)) +
-    geom_point(aes(size=aneuploidy, shape=clust), color="#00ba38") +
+    geom_point(aes(size=aneuploidy, shape=clust, color=type)) +
     ggrepel::geom_text_repel(aes(label=sample), size=2) +
     theme_classic()
 
 cbind(umap2, t(reads[genes,meta2$sample])) %>%
     tidyr::gather("gene", "reads", -(aneup_src:clust)) %>%
     ggplot(aes(x=clust, y=log10(reads+1), group=clust)) +
-        geom_point(aes(size=aneuploidy), color="#00ba38", alpha=0.3) +
+        geom_point(aes(size=aneuploidy, color=type), alpha=0.3) +
         facet_wrap(~ gene, scales="free_y")
+
+plt$pca(pr3, aes(x=PC1, y=PC2), annot=meta3, biplot=TRUE, bi_color="black", bi_size=3) +
+    geom_point(aes(size=aneuploidy, color=type)) +
+    geom_text(aes(label=sample), size=2) +
+    theme_classic()
+
+ggplot(cbind(meta, exp1), aes(x=Ptprc, y=Cd34)) +
+    geom_point(aes(size=aneuploidy, color=type)) +
+    ggrepel::geom_text_repel(aes(label=sample), size=2) +
+    theme_classic()
+ggplot(cbind(meta, exp1), aes(x=Kit, y=Ly6a)) +
+    geom_point(aes(size=aneuploidy, color=type)) +
+    ggrepel::geom_text_repel(aes(label=sample), size=2) +
+    theme_classic()
+ggplot(cbind(meta, exp1), aes(x=Ly6a, y=Cd34)) +
+    geom_point(aes(size=aneuploidy, color=type)) +
+    ggrepel::geom_text_repel(aes(label=sample), size=2) +
+    theme_classic()
+
+plt$pca(pr4, aes(x=PC1, y=PC2), annot=meta4, biplot=TRUE, bi_color="black", bi_size=3) +
+    geom_point(aes(size=aneuploidy, color=type)) +
+    geom_text(aes(label=sample), size=2) +
+    theme_classic()
+ggplot(cbind(meta, exp1), aes(x=Ets1, y=Erg)) +
+    geom_point(aes(size=aneuploidy, color=type)) +
+    ggrepel::geom_text_repel(aes(label=sample), size=2) +
+    theme_classic()
+ggplot(cbind(meta, exp1), aes(x=Kit, y=Erg)) +
+    geom_point(aes(size=aneuploidy, color=type)) +
+    ggrepel::geom_text_repel(aes(label=sample), size=2) +
+    theme_classic()
+ggplot(cbind(meta, exp1), aes(x=Ly6a, y=Erg)) +
+    geom_point(aes(size=aneuploidy, color=type)) +
+    ggrepel::geom_text_repel(aes(label=sample), size=2) +
+    theme_classic()
+ggplot(cbind(meta, exp1), aes(x=Ly6a, y=aneuploidy)) +
+    geom_point(aes(size=aneuploidy, color=type)) +
+    ggrepel::geom_text_repel(aes(label=sample), size=2) +
+    geom_smooth(aes(color=type), method="lm", se=FALSE) +
+    theme_classic()
+ggplot(cbind(meta, exp1), aes(x=Kit, y=aneuploidy)) +
+    geom_point(aes(size=aneuploidy, color=type)) +
+    ggrepel::geom_text_repel(aes(label=sample), size=2) +
+    geom_smooth(aes(color=type), method="lm", se=FALSE) +
+    theme_classic()
 dev.off()
