@@ -1,12 +1,12 @@
 rule all:
     input:
-        "E-GEOD-13159.RData", "E-GEOD-28497.RData"
+        "E-GEOD-13159.rds", "E-GEOD-28497.rds"
 
 rule dataset:
     input:
         rscript = "process.r"
     output:
-        outfile = "{accession}.RData"
+        outfile = "{accession}.rds"
     resources:
         mem = 204800,
         walltime = 4200

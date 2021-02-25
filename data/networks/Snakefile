@@ -10,15 +10,15 @@ subworkflow gsets:
 
 rule all:
     input:
-        "E-GEOD-13159.RData",
-        expand("set_fet/{sets}.RData", sets=config['genesets'])
+        "E-GEOD-13159.rds",
+        expand("set_fet/{sets}.rds", sets=config['genesets'])
 
 rule aracne:
     input:
         rscript = "aracne.r",
-        expr = aex("{accession}.RData")
+        expr = aex("{accession}.rds")
     output:
-        data = "{accession}.RData"
+        data = "{accession}.rds"
     resources:
         mem = 10240,
         walltime = 720
@@ -30,10 +30,10 @@ rule aracne:
 rule set_fet:
     input:
         rscript = "set_fet.r",
-        net = "E-GEOD-13159.RData",
-        sets = gsets("human/{sets}.RData")
+        net = "E-GEOD-13159.rds",
+        sets = gsets("human/{sets}.rds")
     output:
-        data = "set_fet/{sets}.RData"
+        data = "set_fet/{sets}.rds"
     resources:
         walltime = 480
     shell:

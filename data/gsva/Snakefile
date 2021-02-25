@@ -6,12 +6,12 @@ subworkflow genesets:
 
 rule all:
     input:
-        expand("{dsets}/{sets}.rds", dsets=['gdsc', 'ccle'], sets=config['genesets'])
+        expand("{dsets}/{sets}.rds", dsets=['gdsc', 'ccle', 'tcga'], sets=config['genesets'])
 
 rule gdsc:
     input:
         rscript = "{dset}.r",
-        setfile = genesets("human/{sets}.RData")
+        setfile = genesets("human/{sets}.rds")
     output:
         outfile = "{dset}/{sets}.rds"
     resources:

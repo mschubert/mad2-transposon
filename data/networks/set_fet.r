@@ -1,5 +1,4 @@
 library(dplyr)
-io = import('io')
 sys = import('sys')
 gset = import('data/genesets')
 
@@ -14,13 +13,13 @@ do_fet = function(rname, sname) {
 
 sys$run({
     args = sys$cmd$parse(
-        opt('n', 'network', 'aracne RData', 'E-GEOD-13159.RData'),
-        opt('s', 'setfile', 'gene set RData', '../genesets/human/GO_Biological_Process_2018.RData'),
-        opt('o', 'outfile', 'result RData', 'set_fet/GO_Biological_Process_2018.RData')
+        opt('n', 'network', 'aracne RData', 'E-GEOD-13159.rds'),
+        opt('s', 'setfile', 'gene set RData', '../genesets/human/GO_Biological_Process_2018.rds'),
+        opt('o', 'outfile', 'result RData', 'set_fet/GO_Biological_Process_2018.rds')
     )
 
-    net = io$load(args$network)
-    sets = io$load(args$setfile) %>%
+    net = readRDS(args$network)
+    sets = readRDS(args$setfile) %>%
         gset$filter(min=5, max=500, valid=c(net$Regulator, net$Target))
 
     result = expand.grid(Regulator = unique(net$Regulator),
@@ -32,5 +31,5 @@ sys$run({
         mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
         arrange(p.value)
 
-    save(result, file=args$outfile)
+    saveRDS(result, file=args$outfile)
 })
