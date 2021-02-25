@@ -13,8 +13,6 @@ args = sys$cmd$parse(
         list.files("gsva", "\\.rds$", recursive=TRUE, full.names=TRUE))
 )
 
-args$setfiles = grep("GO_Bio|Hallm|ENC", args$setfiles, value=TRUE)
-
 cfg = yaml::read_yaml(args$config)
 sets = lapply(args$setfiles, readRDS) %>%
     setNames(tools::file_path_sans_ext(basename(args$setfiles)))
