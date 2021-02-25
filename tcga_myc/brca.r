@@ -30,7 +30,14 @@ args = sys$cmd$parse(
 ds = readRDS(args$infile)
 dset = cbind(ds$meta, as.data.frame(ds$dmat))
 
+dens = dset %>%
+    select(Sample, purity, `Aneuploidy Score`, `Interferon Gamma Response`, `Myc Targets V2`) %>%
+    tidyr::gather("field", "value", -Sample)
+
+ggplot(dens, aes(x=value)) +
+    geom_density() +
+    facet_wrap(~ field, scales="free")
 lm_plot(dset, aes(x=`Myc Targets V2`, y=`Interferon Gamma Response`), covar="purity")
-lm_plot(dset, aes(x=`Myc Targets V2`, y=aneup), covar="purity")
+lm_plot(dset, aes(x=`Myc Targets V2`, y=`Aneuploidy Score`), covar="purity")
 lm_plot(dset, aes(x=`Myc Targets V2`, y=purity), covar="Interferon Gamma Response")
 dev.off()

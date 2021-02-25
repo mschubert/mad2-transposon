@@ -1,16 +1,9 @@
-genesets:
-    - MSigDB_Hallmark_2020
-    - GO_Biological_Process_2020
-#    - Reactome_2016
-    - DoRothEA
-#    - SPEED2
-
 dset:
-    - genes:
+    genes:
         - expr: IL1RN
         - mut: [ TP53, PIK3CA, PTEN ]
         - cna: [ MYC, TP53, PTEN ]
-    - MSigDB_Hallmark_2020:
+    MSigDB_Hallmark_2020:
         - TNF-alpha Signaling via NF-kB
         - Interferon Gamma Response
         - Interferon Alpha Response
@@ -18,13 +11,13 @@ dset:
         - Myc Targets V1
         - Myc Targets V2
         - p53 Pathway
-#    - SPEED2:
+#    SPEED2:
 #        - speed2.IL-1
-#    - PROGENy:
+#    PROGENy:
 #        - prog.MAPK
 #        - prog.PI3K
 #        - prog.p53
-    - Thorsson:
+    Thorsson:
         - Leukocyte Fraction
         - Stromal Fraction
         - Lymphocytes
