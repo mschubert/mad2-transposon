@@ -8,7 +8,7 @@ rule dataset:
     output:
         outfile = "{accession}.rds"
     resources:
-        mem = 204800,
+        mem = 61440,
         walltime = 4200
     shell:
         "Rscript {input.rscript}"

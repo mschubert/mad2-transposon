@@ -8,16 +8,18 @@ rule all:
     input:
         expand("{dsets}/{sets}.rds", dsets=['gdsc', 'ccle', 'tcga'], sets=config['genesets'])
 
-rule gdsc:
+rule gsva:
     input:
         rscript = "{dset}.r",
         setfile = genesets("human/{sets}.rds")
     output:
         outfile = "{dset}/{sets}.rds"
+    threads: 12
     resources:
         walltime = 60,
-        mem = 4096
+        mem = 10240
     shell:
         "Rscript {input.rscript}"
             " --setfile {input.setfile}"
+            " --threads {threads}"
             " --outfile {output.outfile}"
