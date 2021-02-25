@@ -18,7 +18,7 @@ rule aracne:
         rscript = "aracne.r",
         expr = aex("{accession}.rds")
     output:
-        data = "{accession}.rds"
+        data = "aracne_{accession}.rds"
     resources:
         mem = 10240,
         walltime = 720
@@ -30,7 +30,7 @@ rule aracne:
 rule set_fet:
     input:
         rscript = "set_fet.r",
-        net = "E-GEOD-13159.rds",
+        net = "aracne_E-GEOD-13159.rds",
         sets = gsets("human/{sets}.rds")
     output:
         data = "set_fet/{sets}.rds"

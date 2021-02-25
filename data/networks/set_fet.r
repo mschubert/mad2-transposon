@@ -13,9 +13,9 @@ do_fet = function(rname, sname) {
 
 sys$run({
     args = sys$cmd$parse(
-        opt('n', 'network', 'aracne RData', 'E-GEOD-13159.rds'),
-        opt('s', 'setfile', 'gene set RData', '../genesets/human/GO_Biological_Process_2018.rds'),
-        opt('o', 'outfile', 'result RData', 'set_fet/GO_Biological_Process_2018.rds')
+        opt('n', 'network', 'rds', 'aracne_E-GEOD-13159.rds'),
+        opt('s', 'setfile', 'rds', '../genesets/human/GO_Biological_Process_2020.rds'),
+        opt('o', 'outfile', 'rds', 'set_fet/GO_Biological_Process_2020.rds')
     )
 
     net = readRDS(args$network)
