@@ -7,10 +7,11 @@ ar = import('tools/aracne')
 args = sys$cmd$parse(
     opt('i', 'infile', 'expression data', '../arrayexpress/E-GEOD-13159.rds'),
     opt('b', 'bootstraps', 'number', '100'),
-    opt('o', 'outfile', 'save network to', 'aracne_E-GEOD-13159.rds'))
+    opt('o', 'outfile', 'save network to', 'aracne_E-GEOD-13159.rds')
+)
 
-tfs = gset$go() %>%
-    filter(id == "GO:0003700") %>%
+tfs = gset$go(ontology="MF") %>%
+    filter(go_id == "GO:0003700") %>% # DNA-binding transcription factor activity
     pull(hgnc_symbol)
 
 expr = Biobase::exprs(readRDS(args$infile))

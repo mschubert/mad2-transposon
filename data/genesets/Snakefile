@@ -27,7 +27,7 @@ rule enrichr:
 rule mi_regulons:
     input:
         rscript = "mi_regulons.r",
-        network = mi_network("E-GEOD-13159.rds")
+        network = mi_network("aracne_E-GEOD-13159.rds")
     output:
         human = "human/MILE_regulons.rds",
         mouse = "mouse/MILE_regulons.rds"

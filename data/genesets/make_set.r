@@ -11,8 +11,8 @@ args = sys$cmd$parse(
     opt('m', 'mouse', 'save to RData', 'mouse/KEA_2015.rds'))
 
 if (args$geneset == "GO_Biological_Process_2020") { # ontology-guided set selection
-    sets = gset$go(as_list=TRUE)
-else if (args$geneset %in% enr$dbs()$name) {
+    sets = gset$go(leaf_depth=3, as_list=TRUE)
+} else if (args$geneset %in% enr$dbs()$name) {
     sets = enr$genes(args$geneset)
 } else if (args$geneset %in% msdb$dbs()) {
     sets = msdb$genes(args$geneset)
