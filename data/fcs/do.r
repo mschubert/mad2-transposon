@@ -1,17 +1,10 @@
-library(dplyr)
 library(patchwork)
 library(flowCore)
-library(mclust)
+library(dplyr)
 sys = import('sys')
 plt = import('plot')
 
 ggfacs = function(df, meta, ccs, aes, ctrans="identity", gate=NULL) {
-    biexp_trans = function() scales::trans_new("biexp", function(x) log10(x), function(x) 10^x)
-#        function(x) {
-#        flowJo_biexp_trans(channelRange=4096, maxValue=262144, pos=4.5,neg=0, widthBasis=-10)
-#        log10(x)
-#    }
-
     meta$desc = ifelse(is.na(meta$desc), meta$name, meta$desc)
     vs = sapply(aes, all.vars)
     scs = grepl("[FS]SC-[AH]|Time", vs) + 1 # x,y axes: 1=log, 2=linear
@@ -52,26 +45,10 @@ log_mat = function(df, meta, sample_n=NULL) {
         data.matrix() %>% pmax(1) %>% log10()
 }
 
-refine_mclust = function(df, meta, G=1:4, n_pts=500, min_frac=0.05) {
-    df$cl = as.character(df$cl)
-    for (cl in setdiff(df$cl, NA)) { # filter by size?
-        cur_cl = !is.na(df$cl) & df$cl == cl
-        lmat = log_mat(df[cur_cl,], meta)
-        cur_subs = sample(seq_len(nrow(lmat)), min(nrow(lmat), n_pts))
-        icl = mclust::mclustICL(lmat[cur_subs,], G=G, modelNames="VVV")
-        bestG = as.integer(sub("VVV,", "", names(summary(icl)[1])))
-        res = mclust::Mclust(lmat[cur_subs,], G=seq_len(bestG), modelNames="VVV")
-        fracs = table(res$classification)/length(res$classification)
-        for (f in names(fracs)[fracs < min_frac])
-            res$classification[res$classification == f] = NA
-        df$cl[cur_cl] = paste0(cl, predict(res, newdata=lmat)$classification)
-    }
-    df
-}
-
 plot_one = function(fname, cluster=TRUE) {
     message(fname)
     ff = read.FCS(fname)
+#    ff = read.flowSet(fname)
     bn = tools::file_path_sans_ext(basename(fname))
     bn = sub("Specimen_002_", "", bn, fixed=TRUE)
 
@@ -82,10 +59,14 @@ plot_one = function(fname, cluster=TRUE) {
     debris = do.call(polygonGate, c(fsc_ssc, list(filterId="debris")))
 
     meta = ff@parameters@data
-    fields = c(na.omit(meta$desc))
+    comp = ff@description$SPILL
+#    fields = c(na.omit(meta$desc))
+#    gs = GatingSet(ff)
+#    ungated = compensate(gs, comp) %>% gs_pop_get_data() %>% `[[`(1) %>% realize_view()
+#               @exprs %>% as_tibble()
     ungated = as_tibble(ff@exprs)
     db = flowCore::filter(ff, debris)
-    df = as_tibble(ff@exprs)[db@subSet,] %>%
+    df = as_tibble(Subset(ff, db)@exprs) %>%
         dplyr::filter(`SSC-A` < 2.5e5) # todo: is this caught by singlets [FSC-H FSC-A] gate?
     df = df[rowSums(df < 0) == 0,]
     colnames(df) = ifelse(is.na(meta$desc), meta$name, meta$desc)
@@ -93,26 +74,14 @@ plot_one = function(fname, cluster=TRUE) {
 #    comp = ff@description$SPILL
 #    name = ff@description$`TUBE NAME`
 
-    cl_df_idx = sample(seq_len(nrow(df)), min(nrow(df), 1.5e4))
-    mdf = log_mat(df[cl_df_idx,], meta)
-    mcl = dbscan::hdbscan(mdf, minPts=200)
-    G = 1:5
-    mclust_pts = 1500 # e.g. 422 not split ckit +/- with 1000 pts
-    if (length(unique(mcl$cluster)) > 1) {
-        mcl$cluster[mcl$cluster == 0] = NA
-        G = 1:4
-        mclust_pts = 500
-    }
-    df$cl = NA
-    df$cl[cl_df_idx] = mcl$cluster
-    df = refine_mclust(df, meta, G, mclust_pts)
+#    bet = flowJo_biexp_trans(channelRange=4096, maxValue=262144, pos=4.5,neg=0, widthBasis=-10)
 
-    rc = yaml::read_yaml("reclust.yaml")[[bn]]
-    for (i in seq_along(rc))
-        df$cl[df$cl %in% rc[[i]]] = names(rc)[i]
-    df$cl[df$cl == "NA"] = NA
-#    levels(df$cl) = seq_along(levels(df$cl))
-    df$cl = factor(df$cl)
+    fields = c(na.omit(meta$desc))
+    mdf = log_mat(df, meta)
+    res = flowClust::flowClust(mdf, varNames=fields, K=1:6)
+    best = which.max(scale(flowClust::criterion(res, "BIC")) - scale(1:6)) # elbow method
+    df$cl = factor(res[[best]]@label)
+
     ungated = suppressMessages(left_join(ungated, df)) # add cluster information
 
     dens_max = function(x) {
@@ -160,7 +129,7 @@ sys$run({
     set.seed(120587)
     fcs = list.files(args$dir, pattern="\\.fcs$", recursive=TRUE, full.names=TRUE)
 
-    #fcs = sample(fcs, 3)
+    # fcs = sample(fcs, 3)
 
     res = sapply(fcs, function(x) try(plot_one(x)), simplify=FALSE)
     errs = sapply(res, class) == "try-error"
