@@ -51,12 +51,15 @@ sys$run({
 
     fcs = list.files(args$dir, pattern="\\.fcs$", recursive=TRUE, full.names=TRUE)
     fs = read.flowSet(fcs)
+    bf = flowCore::boundaryFilter(colnames(fs), side="both")
+    fs = flowCore::Subset(fs, bf)
+
+    meta = pData(flowCore::parameters(fs[[1]]))
     ffs = as.list(fs@frames)
     names(ffs) = pData(phenoData(fs))$name %>%
         tools::file_path_sans_ext() %>%
         sub("Specimen_002_", "", ., fixed=TRUE)
 
-    meta = pData(flowCore::parameters(fs[[1]]))
     colors = meta$name[!is.na(meta$desc)]
     biexpTrans = flowWorkspace::flowjo_biexp_trans(channelRange=4096, maxValue=262144, pos=4.5, neg=0, widthBasis=-10)
     trans_colors = flowWorkspace::transformerList(colors, biexpTrans)
@@ -65,7 +68,7 @@ sys$run({
 
     res = clustermq::Q(cluster_flowframe, ff=ffs,
                        const = list(gates=gates, transformer=trans_colors),
-                       n_jobs = 20, memory = 5210, pkgs=c("flowCore"))
+                       n_jobs = 20, memory = 3072, pkgs=c("flowCore"))
     names(res) = names(ffs)
 
     saveRDS(list(res=res, trans=trans_colors, meta=meta, gates=gates), file=args$outfile)
