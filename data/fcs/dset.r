@@ -40,7 +40,7 @@ process_one = function(fname, cluster=TRUE) {
         flowCore::Subset(db) %>%
         flowClust::flowClust(varNames=colors, K=1:6)
 #    res[[1]]@mu # this is transformed space
-    best = which.max(scale(flowClust::criterion(res, "BIC")) - scale(1)) # elbow method
+    best = which.max(scale(flowClust::criterion(res, "BIC")) - scale(1:6)) # elbow method
 
     df = as_tibble(ff[[1]]@exprs)
     colnames(df) = ifelse(is.na(meta$desc), meta$name, meta$desc)
@@ -62,7 +62,7 @@ sys$run({
 
     # fcs = sample(fcs, 3)
 
-    res = lapply(fcs, function(x) try(plot_one(x))) %>%
+    res = lapply(fcs, function(x) try(process_one(x))) %>%
         setNames(fcs)
     errs = sapply(res, class) == "try-error"
     if (any(errs)) {

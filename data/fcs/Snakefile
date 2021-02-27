@@ -2,16 +2,25 @@ dirs = ["FCS files - part 1", "FCS files - part 2"]
 
 rule all:
     input:
-        expand("{dir}.{ext}", dir=dirs, ext=['pdf', 'rds'])
+        expand("{dir}.pdf", dir=dirs)
 
-rule facs:
+rule dset:
     input:
-        rscript = "do.r"
+        rscript = "dset.r"
     output:
-        outfile = "{dir}.rds",
-        plotfile = "{dir}.pdf"
+        outfile = "{dir}.rds"
     shell:
         "Rscript {input.rscript}"
             " --dir '{wildcards.dir}'"
             " --outfile '{output.outfile}'"
+
+rule plot:
+    input:
+        rscript = "plot.r",
+        infile = "{dir}.rds"
+    output:
+        plotfile = "{dir}.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --infile '{input.infile}'"
             " --plotfile '{output.plotfile}'"
