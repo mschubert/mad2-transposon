@@ -3,21 +3,46 @@ library(dplyr)
 sys = import('sys')
 plt = import('plot')
 
-ggfacs = function(df, meta, ccs, aes, ctrans="identity", gate=NULL) {
-    df = df %>% filter(CKIT >= 1) # neg due compensation, needs biexp trans instead log
-#    meta$desc = ifelse(is.na(meta$desc), meta$name, meta$desc)
-    vs = sapply(aes, all.vars)
-    scs = grepl("[FS]SC-[AH]|Time", vs) + 1 # x,y axes: 1=log, 2=linear
-    logs = list("log", "identity")[scs]
-    brk = list(c(10,100,1e3,1e4,1e5), 0:10 * 2.5e4)[scs]
-#    xlims = quantile(df[[vs[1]]], c(0.01, 0.99))
-#    ylims = quantile(df[[vs[2]]], c(0.01, 0.99))
-    xlims = ylims = c(5, 2e5)
+#' Compute cluster centers from FACS data
+#'
+#' @param gated
+#' @return
+cluster_centers = function(gated) {
+    dens_max = function(x) {
+        d = density(log10(x[x>=1]), adjust=1.5)
+        10^(d$x[which.max(d$y)])
+    }
+    gated %>%
+        group_by(cl) %>%
+        summarize_all(dens_max)
+}
+
+#' Plot one FACS panel
+#'
+#' @param df      A flowFrame-like tibble [events x markers]
+#' @param meta    A tibble with fields: name [scatter, color], desc [marker]
+#' @param gates
+#' @param ccs     A tibble of cluster centers: cl [cluster], markers
+#' @param trans   Scale transformation for axes
+#' @param ctrans  Transformation for the color space (default: identity)
+#' @return        A ggplot2 object of a panel
+ggfacs = function(df, meta, gates, ccs, aes, trans, ctrans="identity") {
+    meta$desc = ifelse(is.na(meta$desc), meta$name, meta$desc)
+    vs = sapply(aes, all.vars) # variable names
+    cols = meta$name[match(vs, meta$desc)]
+    trs = setNames(trans[cols], c("x", "y"))
+    trs[sapply(trs, is.null)] = "identity"
+    lims = lapply(vs, function(v) quantile(df[[v]], c(0.01, 0.99)))
+
+    colnames(df)[match(meta$name, colnames(df))] = meta$desc
+    colnames(ccs)[match(meta$name, colnames(ccs))] = meta$desc
+
     if (is.null(gate)) {
         gates = list()
     } else {
         gates = list(geom_polygon(data=gate, color="red", fill=NA, size=1))
     }
+
     ggplot(df, aes) +
         geom_bin2d(bins = 70) +
         scale_fill_continuous(type="viridis", trans=ctrans) +
@@ -25,33 +50,24 @@ ggfacs = function(df, meta, ccs, aes, ctrans="identity", gate=NULL) {
         scale_color_brewer(palette="Set1") +
         geom_text(data=ccs, aes(label="X", color=cl), size=7) +
         theme_bw() +
-        scale_x_continuous(limits=range(brk[[1]]), breaks=brk[[1]], trans=logs[1]) +
-        scale_y_continuous(limits=range(brk[[2]]), breaks=brk[[2]], trans=logs[2]) +
+        scale_x_continuous(trans=trs$x, limits=lims$x) +
+        scale_y_continuous(trans=trs$y, limits=lims$y) +
         gates +
         coord_cartesian(expand=FALSE) +
         labs(title = sprintf("%s vs. %s", vs[1], vs[2]),
-             x = sprintf("%s [%s]", vs[1], vs[1]), #meta$name[meta$desc==vs[1]]),
-             y = sprintf("%s [%s]", vs[2], vs[2]))#, meta$name[meta$desc==vs[2]]))
+             x = sprintf("%s [%s]", vs[1], cols[1]),
+             y = sprintf("%s [%s]", vs[2], cols[2]))
 }
 
-plot_one = function(df, title) {
-    message(title)
-    # would be better to save this with object
-    gates = yaml::read_yaml("fsc-ssc-gates.yaml")
-    fsc_ssc = as_tibble(gates$common$debris) * 1e3
-#    if (basename(fname) %in% names(gates$sample))
-#        fsc_ssc = as_tibble(gates$sample[[basename(fname)]]$debris) * 1e3
-
-    df$cl = factor(df$cl) #todo: in data
+#' Assemble FACS panels
+#'
+#' @param df      A flowFrame-like tibble [events x markers]
+#' @param meta    A tibble with fields: name [scatter, color], desc [marker]
+#' @param gates
+#' @param title
+assemble = function(df, meta, gates, title) {
     gated = df %>% filter(debris_gate)
-
-    dens_max = function(x) {
-        d = density(log10(x[x>=1]), adjust=1.5)
-        10^(d$x[which.max(d$y)])
-    }
-    ccs = gated %>%
-        group_by(cl) %>%
-        summarize_all(dens_max)
+    ccs = cluster_centers(gated)
 
     plots = list(
         ggfacs(df, meta, ccs, aes(x=`FSC-H`, y=`SSC-H`), ctrans="log", gate=fsc_ssc),
@@ -83,7 +99,11 @@ sys$run({
         opt('p', 'plotfile', 'pdf', 'FCS files - part 1.pdf')
     )
 
-    res = readRDS(args$infile)
+    dset = readRDS(args$infile)
+
+    plot_one(dset$res[[5]], dset$meta, "5")
+
+
     plots = mapply(function(...) try(plot_one(...)), res, names(res), SIMPLIFY=FALSE)
 
     plots = plots[sapply(plots, class) != "try-error"]

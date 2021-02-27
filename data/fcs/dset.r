@@ -38,7 +38,8 @@ cluster_flowframe = function(ff, transformer, gates, k=1:6) {
     df = as_tibble(ff[[1]]@exprs) %>%
         mutate(debris_gate = keep,
                cl = NA)
-    df$cl[keep] = factor(res@label)
+    df$cl[keep] = res@label
+    df$cl = factor(df$cl)
     df
 }
 
@@ -66,5 +67,6 @@ sys$run({
                        const = list(gates=gates, transformer=trans_colors),
                        n_jobs = 20, memory = 5210, pkgs=c("flowCore"))
 
-    saveRDS(list(res=res, ), file=args$outfile)
+    saveRDS(list(res=res, trans_colors=trans_colors,
+                 meta=meta, gates=gates), file=args$outfile)
 })
