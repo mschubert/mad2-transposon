@@ -66,7 +66,7 @@ sys$run({
     res = clustermq::Q(cluster_flowframe, ff=ffs,
                        const = list(gates=gates, transformer=trans_colors),
                        n_jobs = 20, memory = 5210, pkgs=c("flowCore"))
+    names(res) = names(ffs)
 
-    saveRDS(list(res=res, trans_colors=trans_colors,
-                 meta=meta, gates=gates), file=args$outfile)
+    saveRDS(list(res=res, trans=trans_colors, meta=meta, gates=gates), file=args$outfile)
 })

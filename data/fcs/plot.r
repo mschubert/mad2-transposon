@@ -26,22 +26,19 @@ cluster_centers = function(gated) {
 #' @param trans   Scale transformation for axes
 #' @param ctrans  Transformation for the color space (default: identity)
 #' @return        A ggplot2 object of a panel
-ggfacs = function(df, meta, gates, ccs, aes, trans, ctrans="identity") {
+ggfacs = function(df, meta, ccs, aes, trans, gates=list(), ctrans="identity") {
     meta$desc = ifelse(is.na(meta$desc), meta$name, meta$desc)
     vs = sapply(aes, all.vars) # variable names
     cols = meta$name[match(vs, meta$desc)]
     trs = setNames(trans[cols], c("x", "y"))
     trs[sapply(trs, is.null)] = "identity"
-    lims = lapply(vs, function(v) quantile(df[[v]], c(0.01, 0.99)))
+    lims = lapply(cols, function(c) quantile(df[[c]], c(0.02, 0.98)))
 
     colnames(df)[match(meta$name, colnames(df))] = meta$desc
     colnames(ccs)[match(meta$name, colnames(ccs))] = meta$desc
 
-    if (is.null(gate)) {
-        gates = list()
-    } else {
-        gates = list(geom_polygon(data=gate, color="red", fill=NA, size=1))
-    }
+    if (length(gates) != 0)
+        gates = list(geom_polygon(data=as.data.frame(gates@boundaries), color="red", fill=NA, size=1))
 
     ggplot(df, aes) +
         geom_bin2d(bins = 70) +
@@ -65,17 +62,17 @@ ggfacs = function(df, meta, gates, ccs, aes, trans, ctrans="identity") {
 #' @param meta    A tibble with fields: name [scatter, color], desc [marker]
 #' @param gates
 #' @param title
-assemble = function(df, meta, gates, title) {
+assemble = function(df, meta, trans, gates, title) {
     gated = df %>% filter(debris_gate)
     ccs = cluster_centers(gated)
 
     plots = list(
-        ggfacs(df, meta, ccs, aes(x=`FSC-H`, y=`SSC-H`), ctrans="log", gate=fsc_ssc),
-        ggfacs(gated, meta, ccs, aes(x=`CD45`, y=`FSC-A`)),
-        ggfacs(gated, meta, ccs, aes(x=`MAC1/GR1`, y=`SSC-A`)),
-        ggfacs(gated, meta, ccs, aes(x=`FSC-A`, y=`B220`)),
-        ggfacs(gated, meta, ccs, aes(x=`CD3`, y=`CD19`)),
-        ggfacs(gated, meta, ccs, aes(x=`SCA-1`, y=`CKIT`))
+        ggfacs(df, meta, ccs, aes(x=`FSC-H`, y=`SSC-H`), trans, ctrans="log", gates=gates),
+        ggfacs(gated, meta, ccs, aes(x=`CD45`, y=`FSC-A`), trans),
+        ggfacs(gated, meta, ccs, aes(x=`MAC1/GR1`, y=`SSC-A`), trans),
+        ggfacs(gated, meta, ccs, aes(x=`FSC-A`, y=`B220`), trans),
+        ggfacs(gated, meta, ccs, aes(x=`CD3`, y=`CD19`), trans),
+        ggfacs(gated, meta, ccs, aes(x=`SCA-1`, y=`CKIT`), trans)
     )
 
     not_na = sum(!is.na(df$cl))
@@ -101,15 +98,11 @@ sys$run({
 
     dset = readRDS(args$infile)
 
-    plot_one(dset$res[[5]], dset$meta, "5")
-
-
-    plots = mapply(function(...) try(plot_one(...)), res, names(res), SIMPLIFY=FALSE)
-
-    plots = plots[sapply(plots, class) != "try-error"]
-
     pdf(args$plotfile, 16, 10)
-    for (p in plots)
-        try(print(plt$try(p)))
+    for (i in seq_along(dset$res)) {
+        title = names(dset$res)[i]
+        message(title)
+        print(with(dset, assemble(res[[i]], meta, trans, gates, title)))
+    }
     dev.off()
 })
