@@ -1,53 +1,44 @@
+library(Biobase)
 library(flowCore)
 library(dplyr)
 sys = import('sys')
 
-process_one = function(fname, cluster=TRUE) {
-    message(fname)
-#    ff = read.FCS(fname)
-    ff = read.flowSet(fname)
-    bn = tools::file_path_sans_ext(basename(fname))
-    bn = sub("Specimen_002_", "", bn, fixed=TRUE)
-
+make_gates = function() {
     gates = yaml::read_yaml("fsc-ssc-gates.yaml")
     fsc_ssc = as_tibble(gates$common$debris) * 1e3
-    if (basename(fname) %in% names(gates$sample))
-        fsc_ssc = as_tibble(gates$sample[[basename(fname)]]$debris) * 1e3
-    debris = do.call(polygonGate, c(fsc_ssc, list(filterId="debris")))
+#    if (basename(fname) %in% names(gates$sample))
+#        fsc_ssc = as_tibble(gates$sample[[basename(fname)]]$debris) * 1e3
+    do.call(polygonGate, c(fsc_ssc, list(filterId="debris")))
+}
 
-    meta = flowCore::parameters(ff[[1]]) %>% Biobase::pData()
-    db = flowCore::filter(ff[[1]], debris)
+cluster_flowframe = function(ff, transformer, gates, k=1:6) {
+    ff = flowSet(ff) # can not transform flowFrame?!
+    db = flowCore::filter(ff[[1]], gates)
     keep = db@subSet
-
-#    df = as_tibble(Subset(ff, db)@exprs) %>%
-#        dplyr::filter(`SSC-A` < 2.5e5) # todo: is this caught by singlets [FSC-H FSC-A] gate?
-#    df = df[rowSums(df < 0) == 0,]
-
-    fields = c(na.omit(meta$desc))
-    colors = meta$name[!is.na(meta$desc)]
 
     # not sure if compensation is already applied, applying multiple times gives no errors
     # ff_comp = flowCore::compensate(ff, spillover(ff)$SPILL)
 
-    biexpTrans = flowWorkspace::flowjo_biexp_trans(channelRange=4096, maxValue=262144, pos=4.5, neg=0, widthBasis=-10)
-    trans_colors = flowWorkspace::transformerList(colors, biexpTrans)
-
-    options(mc.cores = 6)
+    options(mc.cores = 1) # flowClust does mclapply, we want to parallelize the whole call
     res = flowWorkspace::GatingSet(ff) %>%
-        flowCore::transform(trans_colors) %>%
+        flowCore::transform(transformer) %>%
         flowWorkspace::gh_pop_get_data() %>% # returns cytoframe
         flowWorkspace::cytoframe_to_flowFrame() %>%
         flowCore::Subset(db) %>%
-        flowClust::flowClust(varNames=colors, K=1:6)
-#    res[[1]]@mu # this is transformed space
-    best = which.max(scale(flowClust::criterion(res, "BIC")) - scale(1:6)) # elbow method
+        flowClust::flowClust(varNames=names(transformer), K=k) # coords are transformed space
 
-    df = as_tibble(ff[[1]]@exprs)
-    colnames(df) = ifelse(is.na(meta$desc), meta$name, meta$desc)
-    df = df %>%
+    if (length(k) > 1) {
+        scale01 = function(x) (x - min(x, na.rm=TRUE)) / diff(range(x, na.rm=TRUE))
+        perf = scale01(flowClust::criterion(res, "BIC")) - scale01(k) # elbow method
+        res = res[[which.max(perf)]]
+    }
+
+    # todo: use cluster centers from flowCore and reverse transform?
+
+    df = as_tibble(ff[[1]]@exprs) %>%
         mutate(debris_gate = keep,
                cl = NA)
-    df$cl[keep] = factor(res[[best]]@label)
+    df$cl[keep] = factor(res@label)
     df
 }
 
@@ -57,18 +48,23 @@ sys$run({
         opt('o', 'outfile', 'rds', 'FCS files - part 1.rds')
     )
 
-    set.seed(120587)
     fcs = list.files(args$dir, pattern="\\.fcs$", recursive=TRUE, full.names=TRUE)
+    fs = read.flowSet(fcs)
+    ffs = as.list(fs@frames)
+    names(ffs) = pData(phenoData(fs))$name %>%
+        tools::file_path_sans_ext() %>%
+        sub("Specimen_002_", "", ., fixed=TRUE)
 
-    # fcs = sample(fcs, 3)
+    meta = pData(flowCore::parameters(fs[[1]]))
+    colors = meta$name[!is.na(meta$desc)]
+    biexpTrans = flowWorkspace::flowjo_biexp_trans(channelRange=4096, maxValue=262144, pos=4.5, neg=0, widthBasis=-10)
+    trans_colors = flowWorkspace::transformerList(colors, biexpTrans)
 
-    res = lapply(fcs, function(x) try(process_one(x))) %>%
-        setNames(fcs)
-    errs = sapply(res, class) == "try-error"
-    if (any(errs)) {
-        warning("Samples failed: ", paste(names(res)[errs], collapse=", "))
-        res = res[!errs]
-    }
+    gates = make_gates()
 
-    saveRDS(res, file=args$outfile)
+    res = clustermq::Q(cluster_flowframe, ff=ffs,
+                       const = list(gates=gates, transformer=trans_colors),
+                       n_jobs = 20, memory = 5210, pkgs=c("flowCore"))
+
+    saveRDS(list(res=res, ), file=args$outfile)
 })
