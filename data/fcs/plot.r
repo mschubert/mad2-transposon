@@ -4,6 +4,7 @@ sys = import('sys')
 plt = import('plot')
 
 ggfacs = function(df, meta, ccs, aes, ctrans="identity", gate=NULL) {
+    df = df %>% filter(CKIT >= 1) # neg due compensation, needs biexp trans instead log
 #    meta$desc = ifelse(is.na(meta$desc), meta$name, meta$desc)
     vs = sapply(aes, all.vars)
     scs = grepl("[FS]SC-[AH]|Time", vs) + 1 # x,y axes: 1=log, 2=linear
@@ -34,19 +35,20 @@ ggfacs = function(df, meta, ccs, aes, ctrans="identity", gate=NULL) {
 }
 
 plot_one = function(df, title) {
-    dens_max = function(x) {
-        d = density(log10(x[x>=1]), adjust=1.5)
-        10^(d$x[which.max(d$y)])
-    }
-
+    message(title)
     # would be better to save this with object
     gates = yaml::read_yaml("fsc-ssc-gates.yaml")
     fsc_ssc = as_tibble(gates$common$debris) * 1e3
 #    if (basename(fname) %in% names(gates$sample))
 #        fsc_ssc = as_tibble(gates$sample[[basename(fname)]]$debris) * 1e3
 
-    df$cl = factor(df$cl)
+    df$cl = factor(df$cl) #todo: in data
     gated = df %>% filter(debris_gate)
+
+    dens_max = function(x) {
+        d = density(log10(x[x>=1]), adjust=1.5)
+        10^(d$x[which.max(d$y)])
+    }
     ccs = gated %>%
         group_by(cl) %>%
         summarize_all(dens_max)
@@ -82,10 +84,12 @@ sys$run({
     )
 
     res = readRDS(args$infile)
-    plots = mapply(plot_one, res, names(res), SIMPLIFY=FALSE)
+    plots = mapply(function(...) try(plot_one(...)), res, names(res), SIMPLIFY=FALSE)
+
+    plots = plots[sapply(plots, class) != "try-error"]
 
     pdf(args$plotfile, 16, 10)
     for (p in plots)
-        print(plt$try(p))
+        try(print(plt$try(p)))
     dev.off()
 })
