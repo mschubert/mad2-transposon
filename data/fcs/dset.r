@@ -25,7 +25,7 @@ cluster_flowframe = function(ff, transformer, gates, k=1:6) {
         flowWorkspace::gh_pop_get_data() %>% # returns cytoframe
         flowWorkspace::cytoframe_to_flowFrame() %>%
         flowCore::Subset(db) %>%
-        flowClust::flowClust(varNames=names(transformer), K=k) # coords are transformed space
+        flowClust::flowClust(varNames=names(transformer), K=k, B=500)
 
     if (length(k) > 1) {
         scale01 = function(x) (x - min(x, na.rm=TRUE)) / diff(range(x, na.rm=TRUE))

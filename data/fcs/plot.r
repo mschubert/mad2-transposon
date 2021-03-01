@@ -9,8 +9,10 @@ plt = import('plot')
 #' @return
 cluster_centers = function(gated) {
     dens_max = function(x) {
-        d = density(log10(x[x>=1]), adjust=1.5)
-        10^(d$x[which.max(d$y)])
+        tryCatch({
+            d = density(log10(x[x>=1]), adjust=1.5) # todo: use the transformer here (or use ccs right away)
+            10^(d$x[which.max(d$y)])
+        }, error = function(e) NA)
     }
     gated %>%
         group_by(cl) %>%
@@ -40,7 +42,7 @@ ggfacs = function(df, meta, ccs, aes, trans, gates=list(), ctrans="identity") {
     if (length(gates) != 0)
         gates = list(geom_polygon(data=as.data.frame(gates@boundaries), color="red", fill=NA, size=1))
 
-    ggplot(df, aes) +
+    p = ggplot(df, aes) +
         geom_bin2d(bins = 70) +
         scale_fill_continuous(type="viridis", trans=ctrans) +
         geom_density_2d(aes(color=cl), bins=7, size=0.5, linetype="dashed") +
@@ -54,6 +56,7 @@ ggfacs = function(df, meta, ccs, aes, trans, gates=list(), ctrans="identity") {
         labs(title = sprintf("%s vs. %s", vs[1], vs[2]),
              x = sprintf("%s [%s]", vs[1], cols[1]),
              y = sprintf("%s [%s]", vs[2], cols[2]))
+    plt$try(p)
 }
 
 #' Assemble FACS panels
