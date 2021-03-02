@@ -11,7 +11,7 @@ make_gates = function() {
     do.call(polygonGate, c(fsc_ssc, list(filterId="debris")))
 }
 
-cluster_flowframe = function(ff, transformer, gates, k=1:6) {
+cluster_flowframe = function(ff, transformer, gates, k=1:6, elbow_slope=1) {
     ff = flowSet(ff) # can not transform flowFrame?!
     db = flowCore::filter(ff[[1]], gates)
     keep = db@subSet
@@ -29,7 +29,7 @@ cluster_flowframe = function(ff, transformer, gates, k=1:6) {
 
     if (length(k) > 1) {
         scale01 = function(x) (x - min(x, na.rm=TRUE)) / diff(range(x, na.rm=TRUE))
-        perf = scale01(flowClust::criterion(res, "BIC")) - scale01(k) # elbow method
+        perf = scale01(flowClust::criterion(res, "BIC")) - elbow_slope * scale01(k)
         res = res[[which.max(perf)]]
     }
 
