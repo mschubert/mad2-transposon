@@ -7,16 +7,22 @@ plt = import('plot')
 #'
 #' @param gated
 #' @return
-cluster_centers = function(gated) {
+cluster_centers = function(gated, trans) {
     dens_max = function(x) {
-        tryCatch({
-            d = density(log10(x[x>=1]), adjust=1.5) # todo: use the transformer here (or use ccs right away)
-            10^(d$x[which.max(d$y)])
-        }, error = function(e) NA)
+        d = density(x, adjust=1.5)
+        d$x[which.max(d$y)]
     }
-    gated %>%
+    for (cn in colnames(gated))
+        if (cn %in% names(trans))
+            gated[[cn]] = trans[[cn]]$transform(gated[[cn]])
+    gated = gated %>%
+        select(-debris_gate) %>%
         group_by(cl) %>%
         summarize_all(dens_max)
+    for (cn in colnames(gated))
+        if (cn %in% names(trans))
+            gated[[cn]] = trans[[cn]]$inverse(gated[[cn]])
+    gated
 }
 
 #' Plot one FACS panel
@@ -67,7 +73,7 @@ ggfacs = function(df, meta, ccs, aes, trans, gates=list(), ctrans="identity") {
 #' @param title
 assemble = function(df, meta, trans, gates, title) {
     gated = df %>% filter(debris_gate)
-    ccs = cluster_centers(gated)
+    ccs = cluster_centers(gated, trans)
 
     plots = list(
         ggfacs(df, meta, ccs, aes(x=`FSC-H`, y=`SSC-H`), trans, ctrans="log", gates=gates),
