@@ -12,16 +12,26 @@ cluster_centers = function(gated, trans) {
         d = density(x, adjust=1.5)
         d$x[which.max(d$y)]
     }
+
     for (cn in colnames(gated))
         if (cn %in% names(trans))
             gated[[cn]] = trans[[cn]]$transform(gated[[cn]])
+
+    not_na = sum(!is.na(gated$cl))
+    fracs = gated %>%
+        group_by(cl) %>%
+        summarize(pct = n() / not_na)
+
     gated = gated %>%
         select(-debris_gate) %>%
         group_by(cl) %>%
-        summarize_all(dens_max)
+        summarize_all(dens_max) %>%
+        left_join(fracs, by="cl")
+
     for (cn in colnames(gated))
         if (cn %in% names(trans))
             gated[[cn]] = trans[[cn]]$inverse(gated[[cn]])
+
     gated
 }
 
@@ -84,17 +94,15 @@ assemble = function(df, meta, trans, gates, title) {
         ggfacs(gated, meta, ccs, aes(x=`SCA-1`, y=`CKIT`), trans)
     )
 
-    not_na = sum(!is.na(df$cl))
-    fdf = group_by(df, cl) %>%
-        summarize(pro = n() / not_na) %>%
-        mutate(lab = sprintf("(%i) %.0f%%", cl, pro * 100))
-    pp = ggplot(fdf) +
-        geom_point(aes(x=cl, size=pro, color=factor(cl)), y=1) +
-        scale_color_brewer(palette="Set1") +
-        geom_text(aes(x=cl, label=lab), y=0.5) +
-        scale_size_area(guide=FALSE) +
-        theme_void() +
-        theme(legend.position = "none")
+    pp = ccs %>%
+        mutate(lab = sprintf("(%i) %.0f%%", cl, pct * 100)) %>%
+        ggplot(aes(x=cl)) +
+            geom_point(aes(size=pct, color=factor(cl)), y=1) +
+            scale_color_brewer(palette="Set1") +
+            geom_text(aes(label=lab), y=0.5) +
+            scale_size_area(guide=FALSE) +
+            theme_void() +
+            theme(legend.position = "none")
 
     (plt$text(title, size=7) | pp) / wrap_plots(plots) + plot_layout(heights=c(1,20))
 }
