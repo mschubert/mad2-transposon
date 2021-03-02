@@ -5,9 +5,11 @@ plt = import('plot')
 
 #' Compute cluster centers from FACS data
 #'
-#' @param gated
-#' @return
-cluster_centers = function(gated, trans) {
+#' @param gated    A data.frame of events
+#' @param trans    TransformerList to apply before density calculation
+#' @param inverse  Whether to apply the inverse transform after
+#' @return         A data.frame of cluster centers
+cluster_centers = function(gated, trans, inverse=TRUE) {
     dens_max = function(x) {
         d = density(x, adjust=1.5)
         d$x[which.max(d$y)]
@@ -28,9 +30,11 @@ cluster_centers = function(gated, trans) {
         summarize_all(dens_max) %>%
         left_join(fracs, by="cl")
 
-    for (cn in colnames(gated))
-        if (cn %in% names(trans))
-            gated[[cn]] = trans[[cn]]$inverse(gated[[cn]])
+    if (inverse) {
+        for (cn in colnames(gated))
+            if (cn %in% names(trans))
+                gated[[cn]] = trans[[cn]]$inverse(gated[[cn]])
+    }
 
     gated
 }
