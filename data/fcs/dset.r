@@ -55,9 +55,8 @@ sys$run({
     fs = flowCore::Subset(fs, bf)
 
     meta = pData(flowCore::parameters(fs[[1]]))
-    ffs = as.list(fs@frames)
-    names(ffs) = pData(phenoData(fs))$name %>%
-        tools::file_path_sans_ext() %>%
+    ffs = flowCore::flowSet_to_list(fs)
+    names(ffs) = tools::file_path_sans_ext(names(ffs)) %>%
         sub("Specimen_002_", "", ., fixed=TRUE)
 
     colors = meta$name[!is.na(meta$desc)]
