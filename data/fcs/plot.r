@@ -51,7 +51,7 @@ ggfacs = function(df, meta, ccs, aes, trans, gates=list(), ctrans="identity") {
     p = ggplot(df, aes) +
         geom_bin2d(bins = 70) +
         scale_fill_continuous(type="viridis", trans=ctrans) +
-        geom_density_2d(aes(color=cl), bins=7, size=0.5, linetype="dashed") +
+        geom_density_2d(data=df[!is.na(df$cl),], aes(color=cl), bins=7, size=0.5, linetype="dashed") +
         scale_color_brewer(palette="Set1") +
         geom_text(data=ccs, aes(label="X", color=cl), size=7) +
         theme_bw() +
