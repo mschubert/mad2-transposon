@@ -11,7 +11,7 @@ make_gates = function() {
     do.call(polygonGate, c(fsc_ssc, list(filterId="debris")))
 }
 
-cluster_flowframe = function(ff, transformer, gates, k=1:6, elbow_slope=1) {
+cluster_flowframe = function(ff, transformer, gates, k=1:6, elbow_slope=0.5) {
     ff = flowSet(ff) # can not transform flowFrame?!
     db = flowCore::filter(ff[[1]], gates)
     keep = db@subSet
