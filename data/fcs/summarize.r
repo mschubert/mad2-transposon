@@ -25,6 +25,13 @@ res = c(dset[[1]]$res, dset[[2]]$res) %>%
     bind_rows(.id = "sample") %>%
     filter(grepl("^[0-9]{3}", sample))
 
+dmat = data.matrix(res[names(trans)]) #todo: do we want scatter here?
+colnames(dmat) = meta$desc[match(colnames(dmat), meta$name)]
+clust = igraph::cluster_louvain(scran::buildSNNGraph(t(dmat), k=10))
+pca = prcomp(dmat, scale.=TRUE) # does this still center?
+umap2 = uwot::umap(dmat, n_components=2)
+colnames(umap2) = c("umap1", "umap2")
+
 annot = res %>%
     select(sample, cl, pct) %>%
     mutate(hist_nr = as.integer(sub("^([^ ]+).*", "\\1", sample)),
@@ -33,13 +40,6 @@ annot = res %>%
            clust = factor(clust$membership)) %>%
     left_join(readr::read_tsv(args$meta), by=c("sample", "hist_nr"))
 #todo: fix type assignment with "t","s" samples
-
-dmat = data.matrix(res[names(trans)]) #todo: do we want scatter here?
-colnames(dmat) = meta$desc[match(colnames(dmat), meta$name)]
-clust = igraph::cluster_louvain(scran::buildSNNGraph(t(dmat), k=10))
-pca = prcomp(dmat, scale.=TRUE) # does this still center?
-umap2 = uwot::umap(dmat, n_components=2)
-colnames(umap2) = c("umap1", "umap2")
 
 p1 = plt$pca(pca, aes(x=PC1, y=PC2), annot=annot, biplot=TRUE) +
     geom_point(aes(color=type, shape=clust, size=pct), alpha=0.8) +
