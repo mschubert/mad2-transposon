@@ -1,8 +1,12 @@
+subworkflow meta:
+    workdir: "../meta"
+
 dirs = ["FCS files - part 1", "FCS files - part 2"]
 
 rule all:
     input:
-        expand("{dir}.pdf", dir=dirs)
+        expand("{dir}.pdf", dir=dirs),
+        "summarize.pdf"
 
 rule dset:
     input:
@@ -24,3 +28,17 @@ rule plot:
         "Rscript {input.rscript}"
             " --infile '{input.infile}'"
             " --plotfile '{output.plotfile}'"
+
+rule summarize:
+    input:
+        rscript = "summarize.r",
+        meta = meta("meta.tsv"),
+        infiles = expand("{dir}.rds", dir=dirs)
+    output:
+        outfile = "summarize.rds",
+        plotfile = "summarize.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --outfile {output.outfile}"
+            " --plotfile {output.plotfile}"
+#            " {input.infiles}" # missing quotes around each file name

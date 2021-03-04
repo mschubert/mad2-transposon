@@ -16,9 +16,6 @@ cluster_flowframe = function(ff, transformer, gates, k=1:6, elbow_slope=0.5) {
     db = flowCore::filter(ff[[1]], gates)
     keep = db@subSet
 
-    # not sure if compensation is already applied, applying multiple times gives no errors
-    # ff_comp = flowCore::compensate(ff, spillover(ff)$SPILL)
-
     options(mc.cores = 1) # flowClust does mclapply, we want to parallelize the whole call
     res = flowWorkspace::GatingSet(ff) %>%
         flowCore::transform(transformer) %>%
@@ -53,6 +50,7 @@ sys$run({
     fs = read.flowSet(fcs)
     bf = flowCore::boundaryFilter(colnames(fs), side="both")
     fs = flowCore::Subset(fs, bf)
+#    fs = flowCore::compensate(fs, flowCore::spillover(fs[[1]])$SPILL)
 
     meta = pData(flowCore::parameters(fs[[1]]))
     ffs = flowCore::flowSet_to_list(fs)
