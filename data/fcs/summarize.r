@@ -13,24 +13,27 @@ args = sys$cmd$parse(
     opt('m', 'meta', 'tsv', '../meta/meta.tsv'),
     opt('o', 'outfile', 'rds', 'summarize.rds'),
     opt('p', 'plotfile', 'pdf', 'summarize.pdf'),
-    arg('infiles', 'rds', arity='*', list.files(pattern="\\.rds"))
+    arg('infiles', 'rds', arity='*', list.files(pattern="FCS.*\\.rds"))
 )
 
 dset = lapply(args$infiles, readRDS)
 
-meta = dset[[1]]$meta # same
-trans = dset[[1]]$trans # same
+meta = dset[[1]]$meta # same across set
+trans = dset[[1]]$trans # same across set
 res = c(dset[[1]]$res, dset[[2]]$res) %>%
     lapply(ccs) %>%
     bind_rows(.id = "sample") %>%
     filter(grepl("^[0-9]{3}", sample))
 
-dmat = data.matrix(res[names(trans)]) #todo: do we want scatter here?
+dmat = data.matrix(res[names(trans)]) #todo: do we want FSC, SSC here?
 colnames(dmat) = meta$desc[match(colnames(dmat), meta$name)]
 clust = igraph::cluster_louvain(scran::buildSNNGraph(t(dmat), k=10))
 pca = prcomp(dmat, scale.=TRUE) # does this still center?
 umap2 = uwot::umap(dmat, n_components=2)
 colnames(umap2) = c("umap1", "umap2")
+
+#library(mclust)
+#mc = Mclust(dmat) # pretty much the same
 
 annot = res %>%
     select(sample, cl, pct) %>%
@@ -38,6 +41,7 @@ annot = res %>%
            sample = paste0(hist_nr, "s"),
            label = sprintf("%s.%s", sample, cl),
            clust = factor(clust$membership)) %>%
+#           clust = factor(mc$classfication)) %>%
     left_join(readr::read_tsv(args$meta), by=c("sample", "hist_nr"))
 #todo: fix type assignment with "t","s" samples
 
@@ -53,14 +57,23 @@ p2 = ggplot(cbind(annot, umap2), aes(x=umap1, y=umap2)) +
     ggrepel::geom_text_repel(aes(label=label), size=2, max.overlaps=Inf) +
     theme_classic()
 
-both = cbind(annot, dmat) %>%
+# rev trans dmat
+dmat_untrans = dmat
+col_lookup = setNames(meta$desc, meta$name)
+for (tr in names(trans))
+    dmat_untrans[,col_lookup[tr]] = trans[[tr]]$inverse(dmat[,col_lookup[tr]])
+
+both = cbind(annot, dmat_untrans) %>%
     tidyr::gather("marker", "intensity", -(sample:type))
 p3 = ggplot(both, aes(x=clust, y=intensity, group=clust)) +
-    geom_point(aes(color=type, size=pct), alpha=0.3) +
+    geom_violin(color="black", fill="white") +
+    geom_point(aes(color=type, size=pct), alpha=0.5) +
+    scale_y_continuous(trans=trans[[1]]) +
     facet_wrap(~ marker, scales="free_y")
 
 p4 = ggplot(both, aes(x=intensity)) +
     geom_density() +
+    scale_x_continuous(trans=trans[[1]]) +
     facet_wrap(~ marker)
 
 pdf(args$plotfile, 10, 9)
@@ -69,3 +82,5 @@ print(p2)
 print(p3)
 print(p4)
 dev.off()
+
+saveRDS(list(), file=args$outfile)
