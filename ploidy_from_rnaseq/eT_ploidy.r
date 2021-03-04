@@ -1,5 +1,4 @@
 library(dplyr)
-io = import('io')
 seq = import('seq')
 sys = import('sys')
 
@@ -61,9 +60,9 @@ extract_segment = function(smp, chr, ratio, genes, bw=NULL) {
 
 sys$run({
     args = sys$cmd$parse(
-        opt('r', 'ref', 'eT expression RData', '../data/rnaseq/Mad2+p53_batch2.RData'),
-        opt('e', 'expr', 'expression RData', '../data/rnaseq/assemble.RData'),
-        opt('o', 'outfile', 'results RData', 'eT_ploidy.RData'))
+        opt('r', 'ref', 'eT expression rds', '../data/rnaseq/Mad2+p53_batch2.rds'),
+        opt('e', 'expr', 'expression rds', '../data/rnaseq/assemble.rds'),
+        opt('o', 'outfile', 'results rds', 'eT_ploidy.rds'))
 
     genes = seq$coords$gene("ensembl_gene_id", dset="mmusculus_gene_ensembl", granges=TRUE) %>%
         plyranges::select(ensembl_gene_id) %>%
@@ -71,8 +70,8 @@ sys$run({
         filter(seqnames %in% c(1:19, 'X'))
 
     smps = c("eT_p0", "eT_p2")
-    ref = io$load(args$ref)$counts[,smps]
-    panel = io$load(args$expr)$counts
+    ref = readRDS(args$ref)$counts[,smps]
+    panel = readRDS(args$expr)$counts
     eset = normalize_reads(narray::stack(ref, panel, along=2))
     ref = eset[,colnames(ref)]
     panel = eset[,colnames(panel)]
@@ -98,5 +97,5 @@ sys$run({
     ratio = cbind(genes, ratio) %>%
         tidyr::gather("sample", "ratio", -(seqnames:ensembl_gene_id))
 
-    save(segments, ratio, file="eT_ploidy.RData")
+    saveRDS(list(segments=segments, ratio=ratio), file="eT_ploidy.rds")
 })

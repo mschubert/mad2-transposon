@@ -70,4 +70,6 @@ cis = dplyr::bind_rows(hits, flanking) %>%
     select(sample:gene_name, hit_dist, everything()) %>%
     arrange(sample, -reads)
 
+stopifnot(all(cis$assembly == "GRCm38"))
+
 saveRDS(cis, file="cis_per_tumor.rds")

@@ -2,7 +2,6 @@ library(dplyr)
 library(magrittr)
 library(ggplot2)
 library(patchwork)
-theme_set(cowplot::theme_cowplot())
 io = import('io')
 seq = import('seq')
 sys = import('sys')
@@ -67,12 +66,14 @@ plot_aneup_compare = function(aneup) {
 
 sys$run({
     args = sys$cmd$parse(
-        opt('o', 'outfile', 'models with copy number segments', '30cellseq.RData'),
+        opt('o', 'outfile', 'models with copy number segments', '30cellseq.rds'),
         opt('p', 'plotfile', 'compare karyograms to aneufinder', '30cellseq.pdf'),
-        arg('infiles', 'aneufinder models', sprintf('30cellseq_batch%i.RData', 1:2), arity='*'))
+        arg('infiles', 'aneufinder models', arity='*',
+            list.files(pattern="30cellseq_.*\\.rds"))
+    )
 
     # load the models we constructed
-    models = do.call(c, unname(io$load(args$infiles)))
+    models = unlist(lapply(args$infiles, readRDS), recursive=FALSE)
     stopifnot(sum(duplicated(names(models))) == 0)
     models = lapply(models[order(names(models))], fit_segments)
 
@@ -89,5 +90,5 @@ sys$run({
     }
     dev.off()
 
-    save(segments, bins, file=args$outfile)
+    saveRDS(list(segments=segments, bins=bins), file=args$outfile)
 })

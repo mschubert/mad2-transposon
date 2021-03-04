@@ -41,19 +41,19 @@ plot_paircor = function(aneups) {
 sys$run({
     args = sys$cmd$parse(
         opt('m', 'meta', 'metadata table', '../data/meta/meta.tsv'),
-        opt('d', 'dna_seq', 'wgs ploidy', '../data/wgs/30cellseq.RData'),
-        opt('r', 'rna_seq', 'eT ploidy', '../ploidy_from_rnaseq/eT_ploidy.RData'),
+        opt('d', 'dna_seq', 'wgs ploidy', '../data/wgs/30cellseq.rds'),
+        opt('r', 'rna_seq', 'eT ploidy', '../ploidy_from_rnaseq/eT_ploidy.rds'),
         opt('g', 'merge', 'fractions of high/low', 'analysis_set_merge.tsv'),
-        opt('s', 'sc_seq', 'merged RData', '../data/wgs/sc_merge.RData'),
-        opt('o', 'outfile', '.RData results', 'analysis_set.RData'),
+        opt('s', 'sc_seq', 'merged rds', '../data/wgs/sc_merge.rds'),
+        opt('o', 'outfile', 'rds results', 'analysis_set.rds'),
         opt('p', 'plotfile', 'pdf', 'analysis_set.pdf'))
 
     meta_old = io$read_table(args$meta, header=TRUE)
-    dna = io$load(args$dna_seq)$segments %>%
+    dna = readRDS(args$dna_seq)$segments %>%
         seq$aneuploidy(sample="sample", assembly="GRCm38")
-    rna = io$load(args$rna_seq)$segments %>%
+    rna = readRDS(args$rna_seq)$segments %>%
         seq$aneuploidy(sample="sample", ploidy="ploidy", assembly="GRCm38")
-    sc_wgs = io$load(args$sc_seq) %>%
+    sc_wgs = readRDS(args$sc_seq) %>%
         seq$aneuploidy(sample="sample", width="length", assembly="GRCm38")
     dna_merge = readr::read_tsv(args$merge) %>%
         left_join(dna %>% select(subset=sample, aneuploidy)) %>%
@@ -85,5 +85,5 @@ sys$run({
     print(plot_paircor(aneups))
     dev.off()
 
-    save(meta, file=args$outfile)
+    saveRDS(meta, file=args$outfile)
 })

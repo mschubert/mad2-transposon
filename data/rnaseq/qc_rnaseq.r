@@ -1,6 +1,5 @@
-library(dplyr)
-library(ggrepel)
-library(RColorBrewer)
+import_package("dplyr", attach=TRUE)
+import_package("ggplot2", attach=TRUE)
 b = import('base')
 io = import('io')
 sys = import('sys')
@@ -17,7 +16,7 @@ plot_pca = function(expr, idx) {
     pca = prcomp(t(expr), scale=FALSE)
     p1 = ggplot(cbind(idx, pca$x), aes(x=PC1, y=PC2, color=tissue, shape=type)) +
         geom_point(size=5) +
-        geom_text_repel(aes(label=sample), color="black") +
+        ggrepel::geom_text_repel(aes(label=sample), color="black") +
         labs(x = sprintf("PC1 (%.1f%%)", summary(pca)$importance[2,1]*100),
              y = sprintf("PC2 (%.1f%%)", summary(pca)$importance[2,2]*100),
              title = "PCA plot (linear)")
@@ -34,7 +33,7 @@ plot_tsne = function(expr, idx) {
     p2 = cbind(idx, x=tsne$Y[,1], y=tsne$Y[,2]) %>%
         ggplot(aes(x=x, y=y, color=tissue, shape=type)) +
         geom_point(size=5) +
-        geom_text_repel(aes(label=sample), color="black") +
+        ggrepel::geom_text_repel(aes(label=sample), color="black") +
         labs(x = "tsne 1",
              y = "tsne 2",
              title = "T-SNE plot (non-linear)")
@@ -63,7 +62,7 @@ sys$run({
         opt('i', 'infile', 'read count tsv', 'Mad2+PB_batch3.tsv'),
         opt('s', 'stats', 'STAR summary file', 'Mad2+PB_batch3.tsv.summary'),
         opt('m', 'meta', 'sample metadata', '../meta/meta.tsv'),
-        opt('o', 'outfile', 'save results to .RData', 'Mad2+PB_batch3.RData'),
+        opt('o', 'outfile', 'save results to rds', 'Mad2+PB_batch3.rds'),
         opt('p', 'plotfile', 'qc plot pdf', 'Mad2+PB_batch3.pdf'))
 
     stats = io$read_table(args$stats, header=TRUE)
@@ -84,10 +83,10 @@ sys$run({
 
     pdf(args$plotfile, width=10, height=8)
     print(plot_stats(stats))
-    pheatmap::pheatmap(dd, col=colorRampPalette(rev(brewer.pal(9, "Blues")))(255))
+    pheatmap::pheatmap(dd, col=colorRampPalette(rev(RColorBrewer::brewer.pal(9, "Blues")))(255))
     print(plot_pca(expr, idx))
     print(plot_tsne(expr, idx))
     dev.off()
 
-    save(expr, counts, idx, file=args$outfile)
+    saveRDS(list(expr=expr, counts=counts, idx=idx), file=args$outfile)
 })

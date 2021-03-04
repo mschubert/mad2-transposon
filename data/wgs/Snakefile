@@ -8,26 +8,26 @@ fstem = [os.path.splitext(p)[0] for p in files]
 
 rule all:
     input:
-        "30cellseq.RData",
-        "sc_merge.RData",
-        expand("{sample}.RData", sample=fstem),
+        "30cellseq.rds",
+        "sc_merge.rds",
+        expand("{sample}.rds", sample=fstem),
         expand("{sample}.pdf", sample=fstem)
 
 rule assemble_single:
     input:
         rscript = "sc_merge.r",
-        data = expand("{sample}.RData", sample=['401t', '419t', '413s'])
+        data = expand("{sample}.rds", sample=['401t', '419t', '413s'])
     output:
-        merged = "sc_merge.RData"
+        merged = "sc_merge.rds"
     shell:
         "Rscript {input.rscript} --outfile {output.merged} {input.data}"
 
 rule assemble_thirty:
     input:
         rscript = "30cellseq.r",
-        data = expand("30cellseq_batch{batch}.RData", batch=[1,2])
+        data = glob("30cellseq_batch*.rds")
     output:
-        merged = "30cellseq.RData",
+        merged = "30cellseq.rds",
         plot = "30cellseq.pdf"
     shell:
         "Rscript {input.rscript}"
@@ -40,12 +40,12 @@ rule samples:
         samples = "{sample}.yaml",
         diploid_ref = "GRCm38_diploid_ref.bam"
     output:
-        model = "{sample}.RData",
+        model = "{sample}.rds",
         plot = "{sample}.pdf"
     resources:
         mem = 10240
     shell:
-        "Rscript /data/p282396/ebits/tools/aneufinder/__init__.r"
+        "Rscript ../../../ebits/tools/aneufinder/__init__.r"
             " --outfile {output.model}"
             " --plotfile {output.plot}"
             " --min_reads 1e5"

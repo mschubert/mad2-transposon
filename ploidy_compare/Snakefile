@@ -12,17 +12,17 @@ subworkflow meta:
 
 rule all:
     input:
-        "analysis_set.RData",
+        "analysis_set.rds",
         "karyograms.pdf",
-        "gene_copies.RData"
+        "gene_copies.rds"
 
 rule gene_copies:
     input:
         rscript = "gene_copies.r",
-        dna = ploidy_wgs("30cellseq.RData"),
+        dna = ploidy_wgs("30cellseq.rds"),
         fractions = "analysis_set_merge.tsv"
     output:
-        mat = "gene_copies.RData"
+        mat = "gene_copies.rds"
     resources:
         mem = 4096
     shell:
@@ -35,12 +35,12 @@ rule analysis_set:
     input:
         rscript = "analysis_set.r",
         meta = meta("meta.tsv"),
-        dna_seq = ploidy_wgs("30cellseq.RData"),
-        rna_seq = ploidy_rnaseq("eT_ploidy.RData"),
-        sc_seq = ploidy_wgs("sc_merge.RData"),
+        dna_seq = ploidy_wgs("30cellseq.rds"),
+        rna_seq = ploidy_rnaseq("eT_ploidy.rds"),
+        sc_seq = ploidy_wgs("sc_merge.rds"),
         merge = "analysis_set_merge.tsv"
     output:
-        table = "analysis_set.RData",
+        table = "analysis_set.rds",
         plot = "analysis_set.pdf"
     shell:
         "Rscript {input.rscript}"
@@ -55,10 +55,10 @@ rule analysis_set:
 rule karyograms:
     input:
         rscript = "karyograms.r",
-        expr = rnaseq("assemble.RData"),
-        dna = ploidy_wgs("30cellseq.RData"),
-        rna = ploidy_rnaseq("eT_ploidy.RData"),
-        meta = "analysis_set.RData",
+        expr = rnaseq("assemble.rds"),
+        dna = ploidy_wgs("30cellseq.rds"),
+        rna = ploidy_rnaseq("eT_ploidy.rds"),
+        meta = "analysis_set.rds",
         mixcr = "../data/rnaseq/mixcr_Mad2+PB.tsv"
     output:
         plot = "karyograms.pdf"

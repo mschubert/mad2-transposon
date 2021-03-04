@@ -16,7 +16,7 @@ fracs = io$read_table(args$fractions, header=TRUE) %>%
 coords = seq$coords$gene("ensembl_gene_id", granges=TRUE,
     dset="mmusculus_gene_ensembl", chromosomes=c(1:19,'X'))
 
-gene_copies = io$load(args$dna)$segments %>%
+gene_copies = readRDS(args$dna)$segments %>%
     GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns=TRUE) %>%
     seq$intersect(coords) %>%
     select(subset=sample, ensembl_gene_id, ploidy) %>%
@@ -29,9 +29,9 @@ gene_copies = io$load(args$dna)$segments %>%
     na.omit() %>% # drop 417s, 446s[nofrac], 449s, 462s, 477t, 489s, 613t
     narray::construct(ploidy ~ ensembl_gene_id + sample)
 
-#rna = io$load(args$rna)$segments %>%
+#rna = readRDS(args$rna)$segments %>%
 #    GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns=TRUE) %>%
 #    seq$intersect(coords) %>%
 #    select(sample = sample, ensembl_gene_id, ploidy=expr)
 
-save(gene_copies, file=args$outfile)
+saveRDS(gene_copies, file=args$outfile)

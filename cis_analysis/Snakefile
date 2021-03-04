@@ -23,8 +23,8 @@ rule plot_ins:
         exons = imfusion("exon_counts.txt"),
         ctgs = imfusion("merged_ctgs.txt"),
         rna_ins = imfusion("insertions.txt"),
-        dna_ins = "analysis_set.RData",
-        meta = aneup("analysis_set.RData")
+        dna_ins = "analysis_set.rds",
+        meta = aneup("analysis_set.rds")
     output:
         plot = "ins/{gene}.pdf"
     resources:
@@ -42,10 +42,10 @@ rule plot_ins:
 rule plot_tiles:
     input:
         rscript = "plot_tiles.r",
-        aneup = "../ploidy_compare/analysis_set.RData",
-        ins_dna = "poisson.RData",
+        aneup = "../ploidy_compare/analysis_set.rds",
+        ins_dna = "poisson.rds",
         ins_rna = imfusion("insertions.txt"),
-        assocs_dna = "ext_gene.RData",
+        assocs_dna = "ext_gene.rds",
         assocs_rna = imfusion("merged_ctgs.txt"),
         exons = imfusion("exon_counts.txt")
     output:
@@ -63,10 +63,10 @@ rule plot_tiles:
 rule bionet:
     input:
         rscript = "bionet.r",
-        cis = "poisson.RData",
-        aneup = "ext_gene.RData"
+        cis = "poisson.rds",
+        aneup = "ext_gene.rds"
     output:
-        outfile = "bionet_{interactome}.RData",
+        outfile = "bionet_{interactome}.rds",
         plotfile = "bionet_{interactome}.pdf"
     shell:
         "Rscript {input.rscript}"
@@ -79,10 +79,10 @@ rule bionet:
 rule ext_assocs:
     input:
         rscript = "ext_gene.r",
-        poisson = "poisson.RData",
-        meta = aneup("analysis_set.RData")
+        poisson = "poisson.rds",
+        meta = aneup("analysis_set.rds")
     output:
-        result = "ext_gene.RData",
+        result = "ext_gene.rds",
         plot = "ext_gene.pdf"
     shell:
         "Rscript {input.rscript}"
@@ -94,9 +94,9 @@ rule ext_assocs:
 rule poisson_gene:
     input:
         rscript = "poisson.r",
-        aset = "analysis_set.RData"
+        aset = "analysis_set.rds"
     output:
-        result = "poisson.RData",
+        result = "poisson.rds",
         plot = "poisson.pdf"
     resources:
         mem = 4096
@@ -109,10 +109,10 @@ rule poisson_gene:
 rule ext_assocs_epi:
     input:
         rscript = "ext_epi.r",
-        poisson = "poisson_epi-{feature}.RData",
-        meta = aneup("analysis_set.RData")
+        poisson = "poisson_epi-{feature}.rds",
+        meta = aneup("analysis_set.rds")
     output:
-        result = "ext_epi-{feature}.RData",
+        result = "ext_epi-{feature}.rds",
         plot = "ext_epi-{feature}.pdf"
     shell:
         "Rscript {input.rscript}"
@@ -124,9 +124,9 @@ rule ext_assocs_epi:
 rule poisson_epi:
     input:
         rscript = "poisson_epi.r",
-        aset = "analysis_set.RData"
+        aset = "analysis_set.rds"
     output:
-        result = "poisson_epi-{feature}.RData",
+        result = "poisson_epi-{feature}.rds",
         plot = "poisson_epi-{feature}.pdf"
     resources:
         mem = 4096
@@ -140,9 +140,9 @@ rule poisson_epi:
 rule cimpl:
     input:
         rscript = "kernel_cimpl.r",
-        aset = "analysis_set.RData"
+        aset = "analysis_set.rds"
     output:
-        result = "kernel_cimpl.RData"
+        result = "kernel_cimpl.rds"
     shell:
         "Rscript {input.rscript} --infile {input.aset} --outfile {output.result}"
 
@@ -152,6 +152,6 @@ rule analysis_set:
         sheet = "analysis_set.yaml",
         data = cis("cis_per_tumor.rds")
     output:
-        aset = "analysis_set.RData"
+        aset = "analysis_set.rds"
     shell:
         "Rscript {input.rscript} --infile {input.data} --sheet {input.sheet} --outfile {output.aset}"

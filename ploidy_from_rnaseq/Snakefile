@@ -3,8 +3,8 @@ subworkflow rnaseq:
 
 rule all:
     input:
-        "panel_ploidy.RData",
-        "eT_ploidy.RData",
+        "panel_ploidy.rds",
+        "eT_ploidy.rds",
         "violin_compare.pdf"
 
 rule violin:
@@ -18,18 +18,18 @@ rule violin:
 rule panel:
     input:
         rscript = "panel_ploidy.r",
-        rnaseq = rnaseq("assemble.RData")
+        rnaseq = rnaseq("assemble.rds")
     output:
-        result = "panel_ploidy.RData"
+        result = "panel_ploidy.rds"
     shell:
         "Rscript {input.rscript}"
 
 rule eT:
     input:
         rscript = "eT_ploidy.r",
-        rnaseq = rnaseq("assemble.RData"),
-        eT = rnaseq("Mad2+p53_batch2.RData")
+        rnaseq = rnaseq("assemble.rds"),
+        eT = rnaseq("Mad2+p53_batch2.rds")
     output:
-        result = "eT_ploidy.RData"
+        result = "eT_ploidy.rds"
     shell:
         "Rscript {input.rscript}"

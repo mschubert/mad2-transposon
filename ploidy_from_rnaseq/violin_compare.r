@@ -4,9 +4,9 @@ library(ggplot2)
 io = import('io')
 idmap = import('process/idmap')
 
-load('../data/rnaseq/assemble.RData') # counts, expr, idx
+dset = readRDS('../data/rnaseq/assemble.rds')
 ctl = edgeR::cpm(io$read_table("../data/rnaseq/read_count.txt"))[,c("eT_p0", "eT_p2")]
-samples = edgeR::cpm(counts)
+samples = edgeR::cpm(dset$counts)
 narray::intersect(samples, ctl, along=1)
 keep = rowMeans(ctl) > 1 & rowMeans(ctl) < 100 &
        rowMeans(samples) > 1 & rowMeans(samples) < 100

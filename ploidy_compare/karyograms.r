@@ -95,10 +95,10 @@ if (is.null(module_name())) {
         opt('c', 'mixcr', 'mixcr tsv', '../data/rnaseq/mixcr_Mad2+PB.tsv'),
         opt('p', 'plotfile', 'pdf to save plot to', '/dev/null'))
 
-    meta = io$load(args$meta)
+    meta = readRDS(args$meta)
     mixcr = io$read_table(args$mixcr, header=TRUE)
-    dna = io$load(args$dna)
-    rna = io$load(args$rna)
+    dna = readRDS(args$dna)
+    rna = readRDS(args$rna)
 
     genes = c("Mad2l1", "Trp53", "Ets1", "Erg", "Myc", "Sox4", "Il7", "Il7r", "Kit", "Irf4", "Stat1", "Stat3",
               "Ebf1", "Cd19", "Ighm", "Ikzf1", "Tcf15", "Gata2", "Cd55b", "Pax5", "Tmem184a", "Dntt", "Igll1",

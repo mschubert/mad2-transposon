@@ -19,16 +19,16 @@ wildcard_constraints:
 
 rule all:
     input:
-        "assemble.RData",
-        expand("{sset}.RData", sset=ssets),
+        "assemble.rds",
+        expand("{sset}.rds", sset=ssets),
         expand("mixcr_{sset}.tsv", sset=ssets)
 
 rule assemble_rnaseq:
     input:
         rscript = "assemble.r",
-        expr = expand("{sset}.RData", sset=ssets)
+        expr = expand("{sset}.rds", sset=ssets)
     output:
-        merged = "assemble.RData",
+        merged = "assemble.rds",
         plot = "assemble.pdf"
     shell:
         "Rscript {input.rscript}"
@@ -42,7 +42,7 @@ rule qc_rnaseq:
         stats = "{sset}.tsv.summary",
         meta = meta("meta.tsv")
     output:
-        expr = "{sset}.RData",
+        expr = "{sset}.rds",
         plot = "{sset}.pdf"
     shell:
         "Rscript {input.rscript}"

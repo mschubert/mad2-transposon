@@ -3,7 +3,6 @@ library(dplyr)
 library(ggplot2)
 library(ggbio)
 library(GenomicRanges)
-io = import('io')
 seq = import('seq')
 
 load('../data/rnaseq/assemble.RData') # counts, expr, idx
@@ -53,4 +52,4 @@ segments = as.data.frame(genes) %>%
     as.data.frame() %>%
     tbl_df()
 
-save(segments, genes, file="panel_ploidy.RData")
+saveRDS(list(segments=segments, genes=genes), file="panel_ploidy.rds")
