@@ -2,7 +2,6 @@ configfile: "../../config.yaml"
 
 subworkflow sets:
     workdir: "../genesets"
-    snakefile: "../genesets/Snakefile"
 
 rule all:
     input:

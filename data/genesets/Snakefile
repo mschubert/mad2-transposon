@@ -2,7 +2,6 @@ configfile: "../../config.yaml"
 
 subworkflow mi_network:
     workdir: "../networks"
-    snakefile: "../networks/Snakefile"
 
 enrichr_sets = set(config['genesets']) - set("MILE_regulons")
 org = ['human', 'mouse']

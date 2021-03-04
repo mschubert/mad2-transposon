@@ -2,15 +2,12 @@ configfile: "../config.yaml"
 
 subworkflow expr:
     workdir: "../expr_diff"
-    snakefile: "../expr_diff/Snakefile"
 
 subworkflow genesets:
     workdir: "../data/genesets"
-    snakefile: "../data/genesets/Snakefile"
 
 subworkflow viper:
     workdir: "../expr_cor"
-    snakefile: "../expr_cor/Snakefile"
 
 dset = {
     'mile' : 'eset_MILE.RData',

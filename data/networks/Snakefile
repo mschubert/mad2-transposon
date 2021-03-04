@@ -2,11 +2,9 @@ configfile: "../../config.yaml"
 
 subworkflow aex:
     workdir: "../arrayexpress"
-    snakefile: "../arrayexpress/Snakefile"
 
 subworkflow gsets:
     workdir: "../genesets"
-    snakefile: "../genesets/Snakefile"
 
 rule all:
     input:

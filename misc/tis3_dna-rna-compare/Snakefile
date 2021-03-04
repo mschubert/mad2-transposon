@@ -1,14 +1,11 @@
 subworkflow cis:
     workdir: "../../data/cis"
-    snakefile: "../../data/cis/Snakefile"
 
 subworkflow imfusion:
     workdir: "../../data/rnaseq_imfusion"
-    snakefile: "../../data/rnaseq_imfusion/Snakefile"
 
 subworkflow tis2:
     workdir: "../tis2_assoc-tryout"
-    snakefile: "../tis2_assoc-tryout/Snakefile"
 
 genes = ['Erg', 'Ets1', 'Pten', 'Nanos3', 'Rapgef6', 'Rps3', 'Notch1']
 

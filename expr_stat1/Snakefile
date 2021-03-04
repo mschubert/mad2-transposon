@@ -2,15 +2,12 @@ configfile: "../config.yaml"
 
 subworkflow stat_ko:
     workdir: "../data/rnaseq_stat1"
-    snakefile: "../data/rnaseq_stat1/Snakefile"
 
 subworkflow sets:
     workdir: "../data/genesets"
-    snakefile: "../data/genesets/Snakefile"
 
 subworkflow expr_diff:
     workdir: "../expr_diff"
-    snakefile: "../expr_diff/Snakefile"
 
 rule all:
     input:

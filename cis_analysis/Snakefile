@@ -2,15 +2,12 @@ configfile: "../config.yaml"
 
 subworkflow cis:
     workdir: "../data/cis"
-    snakefile: "../data/cis/Snakefile"
 
 subworkflow aneup:
     workdir: "../ploidy_compare"
-    snakefile: "../ploidy_compare/Snakefile"
 
 subworkflow imfusion:
     workdir: "../data/rnaseq_imfusion"
-    snakefile: "../data/rnaseq_imfusion/Snakefile"
 
 rule all:
     input:

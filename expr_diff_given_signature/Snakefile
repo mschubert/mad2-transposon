@@ -2,15 +2,12 @@ configfile: "../config.yaml"
 
 subworkflow sets:
     workdir: "../data/genesets"
-    snakefile: "../data/genesets/Snakefile"
 
 subworkflow expr_diff:
     workdir: "../expr_diff"
-    snakefile: "../expr_diff/Snakefile"
 
 subworkflow expr_stat1:
     workdir: "../expr_stat1"
-    snakefile: "../expr_stat1/Snakefile"
 
 infiles = {
     'EtsErg' : expr_diff('de_Mad2PB+EtsErg.RData'),

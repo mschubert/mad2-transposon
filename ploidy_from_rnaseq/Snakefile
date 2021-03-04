@@ -1,6 +1,5 @@
 subworkflow rnaseq:
     workdir: "../data/rnaseq"
-    snakefile: "../data/rnaseq/Snakefile"
 
 rule all:
     input:

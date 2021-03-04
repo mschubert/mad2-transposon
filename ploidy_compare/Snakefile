@@ -1,18 +1,14 @@
 subworkflow rnaseq:
     workdir: "../data/rnaseq"
-    snakefile: "../data/rnaseq/Snakefile"
 
 subworkflow ploidy_wgs:
     workdir: "../data/wgs"
-    snakefile: "../data/wgs/Snakefile"
 
 subworkflow ploidy_rnaseq:
     workdir: "../ploidy_from_rnaseq"
-    snakefile: "../ploidy_from_rnaseq/Snakefile"
 
 subworkflow meta:
     workdir: "../data/meta"
-    snakefile: "../data/meta/Snakefile"
 
 rule all:
     input:

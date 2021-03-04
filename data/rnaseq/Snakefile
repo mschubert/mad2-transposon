@@ -1,6 +1,5 @@
 subworkflow meta:
     workdir: "../meta"
-    snakefile: "../meta/Snakefile"
 
 import yaml
 import os.path

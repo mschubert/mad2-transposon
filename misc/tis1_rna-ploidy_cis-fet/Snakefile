@@ -1,10 +1,8 @@
 subworkflow rnaseq:
     workdir: "../../data/rnaseq"
-    snakefile: "../../data/rnaseq/Snakefile"
 
 subworkflow ploidy_eT:
     workdir: "compare_rna-scWGS_ploidy"
-    snakefile: "compare_rna-scWGS_ploidy/Snakefile"
 
 rule all:
     input:

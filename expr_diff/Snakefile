@@ -2,27 +2,21 @@ configfile: "../config.yaml"
 
 subworkflow rnaseq:
     workdir: "../data/rnaseq"
-    snakefile: "../data/rnaseq/Snakefile"
 
 subworkflow mile:
     workdir: "../data/arrayexpress"
-    snakefile: "../data/arrayexpress/Snakefile"
 
 subworkflow ploidy:
     workdir: "../ploidy_compare"
-    snakefile: "../ploidy_compare/Snakefile"
 
 subworkflow cis:
     workdir: "../cis_analysis"
-    snakefile: "../cis_analysis/Snakefile"
 
 subworkflow sets:
     workdir: "../data/genesets"
-    snakefile: "../data/genesets/Snakefile"
 
 subworkflow net:
     workdir: "../data/networks"
-    snakefile: "../data/networks/Snakefile"
 
 rule all:
     input:
