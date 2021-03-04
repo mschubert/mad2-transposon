@@ -14,7 +14,7 @@ rule all:
         "plot_tiles.pdf", "poisson.pdf", "ext_gene.pdf",
         expand("bionet_{int}.pdf", int=['DLBCL', 'omnipath']),
         expand("ins/{ins}.pdf", ins=config['ins_plots']),
-        expand("ext_epi-{feature}.pdf", feature=['enhancer',
+        expand("ext_epi/{feature}.pdf", feature=['enhancer',
             'TF_binding_site', 'open_chromatin_region', 'CTCF_binding_site'])
 
 rule plot_ins:
@@ -109,11 +109,11 @@ rule poisson_gene:
 rule ext_assocs_epi:
     input:
         rscript = "ext_epi.r",
-        poisson = "poisson_epi-{feature}.rds",
+        poisson = "poisson_epi/{feature}.rds",
         meta = aneup("analysis_set.rds")
     output:
-        result = "ext_epi-{feature}.rds",
-        plot = "ext_epi-{feature}.pdf"
+        result = "ext_epi/{feature}.rds",
+        plot = "ext_epi/{feature}.pdf"
     shell:
         "Rscript {input.rscript}"
             " --meta {input.meta}"
@@ -126,8 +126,8 @@ rule poisson_epi:
         rscript = "poisson_epi.r",
         aset = "analysis_set.rds"
     output:
-        result = "poisson_epi-{feature}.rds",
-        plot = "poisson_epi-{feature}.pdf"
+        result = "poisson_epi/{feature}.rds",
+        plot = "poisson_epi/{feature}.pdf"
     resources:
         mem = 4096
     shell:
