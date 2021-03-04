@@ -20,8 +20,8 @@ dset = lapply(args$infiles, readRDS)
 
 meta = dset[[1]]$meta # same across set
 trans = dset[[1]]$trans # same across set
-res = c(dset[[1]]$res, dset[[2]]$res) %>%
-    lapply(ccs) %>%
+res = c(lapply(dset[[1]]$res, . %>% ccs %>% mutate(fc_batch=1)),
+        lapply(dset[[2]]$res, . %>% ccs %>% mutate(fc_batch=2))) %>%
     bind_rows(.id = "sample") %>%
     filter(grepl("^[0-9]{3}", sample))
 
@@ -32,11 +32,8 @@ pca = prcomp(dmat, scale.=TRUE) # does this still center?
 umap2 = uwot::umap(dmat, n_components=2)
 colnames(umap2) = c("umap1", "umap2")
 
-#library(mclust)
-#mc = Mclust(dmat) # pretty much the same
-
 annot = res %>%
-    select(sample, cl, pct) %>%
+    select(sample, cl, pct, fc_batch) %>%
     mutate(hist_nr = as.integer(sub("^([^ ]+).*", "\\1", sample)),
            sample = paste0(hist_nr, "s"),
            label = sprintf("%s.%s", sample, cl),
@@ -72,7 +69,7 @@ p3 = ggplot(both, aes(x=clust, y=intensity, group=clust)) +
     facet_wrap(~ marker, scales="free_y")
 
 p4 = ggplot(both, aes(x=intensity)) +
-    geom_density() +
+    geom_density(aes(fill=factor(fc_batch)), alpha=0.3) +
     scale_x_continuous(trans=trans[[1]]) +
     facet_wrap(~ marker)
 
