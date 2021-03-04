@@ -124,7 +124,8 @@ rule ext_assocs_epi:
 rule poisson_epi:
     input:
         rscript = "poisson_epi.r",
-        aset = "analysis_set.rds"
+        aset = "analysis_set.rds",
+        epigenome = "../data/rnaseq/epigenome_ensembl102.tsv"
     output:
         result = "poisson_epi/{feature}.rds",
         plot = "poisson_epi/{feature}.pdf"
@@ -133,6 +134,7 @@ rule poisson_epi:
     shell:
         "Rscript {input.rscript}"
             " --infile {input.aset}"
+            " --epigenome {input.epigenome}"
             " --feature {wildcards.feature}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"

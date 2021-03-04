@@ -7,6 +7,7 @@ plt = import('plot')
 
 args = sys$cmd$parse(
     opt('i', 'infile', 'transposon insert RData', 'analysis_set.RData'),
+    opt('e', 'epigenome', 'tsv', '../data/rnaseq/epigenome_ensembl102.tsv'),
     opt('f', 'feature', 'enhancer|promoter|TF_binding_site etc.', 'enhancer'),
     opt('u', 'upstream', 'bp to include before gene', '5000'),
     opt('d', 'downstream', 'bp to include after gene', '5000'),
@@ -28,7 +29,7 @@ genes = seq$coords$gene(dset="mmusculus_gene_ensembl", granges=TRUE)
 #          "regulatory_stable_id", "epigenome_name", "activity")
 #res = biomaRt::getBM(attributes=attrs, filters=c("epigenome_name", "activity"),
 #                     values=list(c("spleen adult","thymus adult"), "ACTIVE"), mart=ensembl)
-res = readr::read_tsv("poisson_epi.tsv") %>%
+res = readr::read_tsv(args$epigenome) %>%
     filter(`SO term name` == args$feature) %>%
     dplyr::rename(chr = `Chromosome/scaffold name`,
                   start = `Start (bp)`,
