@@ -5,9 +5,9 @@ library(ggbio)
 library(GenomicRanges)
 seq = import('seq')
 
-load('../data/rnaseq/assemble.RData') # counts, expr, idx
-cpm = edgeR::cpm(counts)
-cpm = edgeR::cpm(counts[narray::map(cpm, along=2, function(x) all(x > 1 & x < 500)),])
+dset = readRDS('../data/rnaseq/assemble.rds')
+cpm = edgeR::cpm(dset$counts)
+cpm = edgeR::cpm(dset$counts[narray::map(cpm, along=2, function(x) all(x > 1 & x < 500)),])
 scale_cpm = function(x) {
 #    dens = density(x, kernel="gaussian", bw=(max(x)-min(x))/5)
 #    log2(x / dens$x[dens$y==max(dens$y)])

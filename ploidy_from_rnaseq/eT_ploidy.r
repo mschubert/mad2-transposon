@@ -62,9 +62,11 @@ sys$run({
     args = sys$cmd$parse(
         opt('r', 'ref', 'eT expression rds', '../data/rnaseq/Mad2+p53_batch2.rds'),
         opt('e', 'expr', 'expression rds', '../data/rnaseq/assemble.rds'),
-        opt('o', 'outfile', 'results rds', 'eT_ploidy.rds'))
+        opt('o', 'outfile', 'results rds', 'eT_ploidy.rds')
+    )
 
-    genes = seq$coords$gene("ensembl_gene_id", dset="mmusculus_gene_ensembl", granges=TRUE) %>%
+    genes = seq$coords$gene("ensembl_gene_id", dset="mmusculus_gene_ensembl",
+                            assembly="GRCm38", granges=TRUE) %>%
         plyranges::select(ensembl_gene_id) %>%
         as.data.frame() %>%
         filter(seqnames %in% c(1:19, 'X'))

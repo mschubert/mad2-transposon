@@ -4,8 +4,8 @@ subworkflow rnaseq:
 rule all:
     input:
         "panel_ploidy.rds",
-        "eT_ploidy.rds",
-        "violin_compare.pdf"
+        "eT_ploidy.rds"
+#        "violin_compare.pdf"
 
 rule violin:
     input:

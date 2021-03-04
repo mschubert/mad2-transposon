@@ -15,7 +15,8 @@ scaled = 2*(samples / rowMeans(ctl))[keep,]
 df = melt(scaled) %>%
 	mutate(Var1 = as.character(Var1),
            Var2 = as.character(Var2))
-df$chr = idmap$gene(df$Var1, from="ensembl_gene_id", to="chromosome_name", dset="mmusculus_gene_ensembl")
+df$chr = idmap$gene(df$Var1, from="ensembl_gene_id", to="chromosome_name",
+                    dset="mmusculus_gene_ensembl", assembly="GRCm38")
 df = df %>%
     filter(chr %in% c(1:19,'X')) %>% # no Y in ctl
     mutate(chr = factor(chr, levels=c(1:19,'X')))
