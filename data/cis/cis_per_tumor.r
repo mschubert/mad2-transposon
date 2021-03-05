@@ -6,7 +6,8 @@ read_one = function(fname) {
 
     extract_flanking = function(...) {
         cols = unlist(list(...))
-        flank = cols[grepl("Flanking Gene(__[0-9])?$", names(cols))]
+        flank = cols[grepl("^Flanking Gene\\.", names(cols))]
+        stopifnot(length(flank) == 10)
         nona = flank[!is.na(flank)]
         data_frame(gene_name = b$grep("(^[^ ]+)", nona),
                    ensembl_gene_id = b$grep("(ENS[A-Z0-9]+)", nona),
@@ -17,7 +18,7 @@ read_one = function(fname) {
 
     cis = readxl::read_excel(fname)
 
-    cis = cis[-1,] %>%
+    cis = cis %>%
         filter(`Tumour ID` != "tumourid") %>%
         transmute(sample = `Tumour ID` %>%
                       sub("PB[0-9]+", "", .) %>%
