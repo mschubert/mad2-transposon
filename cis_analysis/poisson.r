@@ -19,7 +19,7 @@ ins = readRDS(args$infile) %>%
         start.field="position", end.field="position")
 
 genome = seq$genome("GRCm38", chrs=c(1:19, 'X'))
-genes = seq$coords$gene(dset="mmusculus_gene_ensembl", granges=TRUE) %>%
+genes = seq$coords$gene(dset="mmusculus_gene_ensembl", assembly="GRCm38", granges=TRUE) %>%
     filter(seqnames(.) %in% seqnames(ins)) %>%
     select(external_gene_name) %>%
     group_by(seqnames, strand, external_gene_name) %>% # 100 dups w/ diff pos
