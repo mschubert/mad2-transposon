@@ -95,12 +95,15 @@ sys$run({
             select(name = geneSymbol)
         fdr = 0.01
     } else if (args$interactome == "omnipath") {
-        net = OmnipathR::import_AllInteractions() %>%
+        net = OmnipathR::import_all_interactions() %>%
             OmnipathR::interaction_graph() %>%
             as_tbl_graph() %>%
             activate(edges) %>%
-            select(-dip_url, -sources, -references) # ggraph issue #214
-        fdr = 1e-3
+#            select(-dip_url, -sources, -references) %>% # ggraph issue #214
+#            to_simple()
+            select(from, to) %>%
+            distinct()
+        fdr = 0.05
     } else
         stop("invalid interactome")
 
