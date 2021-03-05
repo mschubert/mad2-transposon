@@ -12,7 +12,7 @@ subworkflow imfusion:
 rule all:
     input:
         "plot_tiles.pdf", "poisson.pdf", "ext_gene.pdf",
-        expand("bionet_{int}.pdf", int=['DLBCL', 'omnipath']),
+        expand("bionet_{int}.pdf", int=['omnipath']), # int=DLBCL: ggraph#247
         expand("ins/{ins}.pdf", ins=config['ins_plots']),
         expand("ext_epi/{feature}.pdf", feature=['enhancer',
             'TF_binding_site', 'open_chromatin_region', 'CTCF_binding_site'])

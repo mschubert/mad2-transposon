@@ -5,11 +5,12 @@ seq = import('seq')
 sys = import('sys')
 
 args = sys$cmd$parse(
-    opt('i', 'infile', 'cis RData', '../data/cis/cis_per_tumor.rds'),
+    opt('i', 'infile', 'cis rds', '../data/cis/cis_per_tumor.rds'),
     opt('u', 'upstream', 'bp to include before gene', '10000'),
     opt('d', 'downstream', 'bp to include after gene', '0'),
     opt('r', 'reads', 'min num of reads', '20'),
-    opt('o', 'outfile', 'insertion statistics RData', 'kernel_cimpl.RData'))
+    opt('o', 'outfile', 'insertion statistics rds', 'kernel_cimpl.rds')
+)
 
 ins = io$load(args$infile) %>%
     dplyr::select(sample, chr, position, reads) %>% # ignore strand

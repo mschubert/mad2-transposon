@@ -88,6 +88,7 @@ sys$run({
 
     segments = expand.grid(sample=colnames(ratio), seqnames=c(1:19,'X')) %>%
         mutate(sample = as.character(sample),
+               seqnames = as.character(seqnames),
                result = clustermq::Q(extract_segment, smp=sample, chr=seqnames,
                    const=list(genes=genes, ratio=ratio),
                    n_jobs=15, memory=1024)) %>%

@@ -6,15 +6,16 @@ sys = import('sys')
 plt = import('plot')
 
 args = sys$cmd$parse(
-    opt('i', 'infile', 'transposon insert RData', 'analysis_set.RData'),
+    opt('i', 'infile', 'transposon insert rds', 'analysis_set.rds'),
     opt('e', 'epigenome', 'tsv', '../data/rnaseq/epigenome_ensembl102.tsv'),
     opt('f', 'feature', 'enhancer|promoter|TF_binding_site etc.', 'enhancer'),
     opt('u', 'upstream', 'bp to include before gene', '5000'),
     opt('d', 'downstream', 'bp to include after gene', '5000'),
-    opt('o', 'outfile', 'insertion statistics RData', 'poisson_epi.RData'),
-    opt('p', 'plotfile', 'volcano pdf', 'poisson_epi.pdf'))
+    opt('o', 'outfile', 'insertion statistics rds', 'poisson_epi.rds'),
+    opt('p', 'plotfile', 'volcano pdf', 'poisson_epi.pdf')
+)
 
-ins = io$load(args$infile) %>%
+ins = readRDS(args$infile) %>%
     filter(chr %in% c(1:19, 'X'), !is_local) %>%
     GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns=TRUE,
         start.field="position", end.field="position")
@@ -85,4 +86,5 @@ pdf(args$plotfile)
 print(p)
 dev.off()
 
-save(samples, res, sample_rates, result, dists, file=args$outfile)
+saveRDS(list(samples=samples, res=res, sample_rates=sample_rates,
+             result=result, dists=dists), file=args$outfile)

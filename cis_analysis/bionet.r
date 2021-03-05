@@ -1,8 +1,6 @@
 library(BioNet)
-library(DLBCL)
 library(ggraph)
 library(tidygraph)
-data(interactome)
 io = import('io')
 sys = import('sys')
 idmap = import('process/idmap')
@@ -73,22 +71,24 @@ get_node_stats = function(net, ov) {
 
 sys$run({
     args = sys$cmd$parse(
-        opt('c', 'cis', 'gene-level poisson', 'poisson.RData'),
-        opt('a', 'aneup', 'aneup assocs', 'ext_gene.RData'),
+        opt('c', 'cis', 'gene-level poisson', 'poisson.rds'),
+        opt('a', 'aneup', 'aneup assocs', 'ext_gene.rds'),
         opt('i', 'interactome', 'DLBCL|omnipath', 'DLBCL'),
-        opt('o', 'outfile', 'network data', 'bionet_DLBCL.RData'),
-        opt('p', 'plotfile', 'pdf', 'bionet_DLBCL.pdf'))
+        opt('o', 'outfile', 'network data', 'bionet_DLBCL.rds'),
+        opt('p', 'plotfile', 'pdf', 'bionet_DLBCL.pdf')
+    )
 
-    aneup = io$load(args$aneup) %>%
+    aneup = readRDS(args$aneup) %>%
         lapply(function(df) {
             df %>% mutate(name = idmap$orthologue(external_gene_name, to="hgnc_symbol"),
                           adj.p = NA, n_smp = size)
         })
-    cis = io$load(args$cis)$result %>%
-        ungroup() %>% #TODO: don't save grouped df
+    cis = readRDS(args$cis)$result %>%
         mutate(name = idmap$orthologue(external_gene_name, to="hgnc_symbol"))
 
     if (args$interactome == "DLBCL") {
+        library(DLBCL)
+        data(interactome)
         net = igraph::igraph.from.graphNEL(interactome) %>%
             as_tbl_graph() %>%
             activate(nodes) %>%
@@ -106,7 +106,7 @@ sys$run({
 
     cis_net = bionet(net, cis, fdr, "adj.p")
     ext_nets = lapply(aneup, bionet, g=net, thresh=0.2, var="p.value")
-    save(cis_net, file=args$outfile)
+    saveRDS(cis_net, file=args$outfile)
 
     pdf(args$plotfile)
     print(plot_net(cis_net, aes(size=n_smp)))

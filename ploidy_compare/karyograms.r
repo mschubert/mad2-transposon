@@ -88,9 +88,9 @@ plot_sample = function(smp) {
 
 if (is.null(module_name())) {
     args = sys$cmd$parse(
-        opt('e', 'expr', 'gene expression RData', '../data/rnaseq/assemble.RData'),
-        opt('r', 'rna', 'RNA expr reference RData', '../ploidy_from_rnaseq/eT_ploidy.RData'),
-        opt('d', 'dna', '30-cell DNA WGS', '../data/wgs/30cellseq.RData'),
+        opt('e', 'expr', 'gene expression rds', '../data/rnaseq/assemble.rds'),
+        opt('r', 'rna', 'RNA expr reference rds', '../ploidy_from_rnaseq/eT_ploidy.rds'),
+        opt('d', 'dna', '30-cell DNA WGS', '../data/wgs/30cellseq.rds'),
         opt('m', 'meta', 'sample .RData', 'analysis_set.RData'),
         opt('c', 'mixcr', 'mixcr tsv', '../data/rnaseq/mixcr_Mad2+PB.tsv'),
         opt('p', 'plotfile', 'pdf to save plot to', '/dev/null'))
@@ -103,7 +103,7 @@ if (is.null(module_name())) {
     genes = c("Mad2l1", "Trp53", "Ets1", "Erg", "Myc", "Sox4", "Il7", "Il7r", "Kit", "Irf4", "Stat1", "Stat3",
               "Ebf1", "Cd19", "Ighm", "Ikzf1", "Tcf15", "Gata2", "Cd55b", "Pax5", "Tmem184a", "Dntt", "Igll1",
               "Vpreb1", "Rag1", "Rag2")
-    eset = io$load(args$expr)
+    eset = readRDS(args$expr)
     expr = DESeq2::DESeqDataSetFromMatrix(eset$counts, data.frame(id=colnames(eset$expr)), ~1) %>%
         DESeq2::estimateSizeFactors() %>%
         DESeq2::counts(normalized=TRUE)

@@ -4,16 +4,16 @@ seq = import('seq')
 sys = import('sys')
 
 args = sys$cmd$parse(
-    opt('d', 'dna', 'copy number segments', '../ploidy_from_wgs/copy_segments.RData'),
+    opt('d', 'dna', 'copy number segments', '../ploidy_from_wgs/copy_segments.rds'),
     opt('f', 'fractions', 'fraction merge tsv', 'wgs_merge.tsv'),
-#    opt('r', 'rna', 'rna copy segments', '../ploidy_from_rnaseq/eT_ploidy.RData'),
+#    opt('r', 'rna', 'rna copy segments', '../ploidy_from_rnaseq/eT_ploidy.rds'),
 #    opt('s', 'scdna', 'single cell measures', '../data/wgs/'),
-    opt('o', 'outfile', 'results RData', 'gene_copies.RData'))
+    opt('o', 'outfile', 'results rds', 'gene_copies.rds'))
 
 fracs = io$read_table(args$fractions, header=TRUE) %>%
     select(sample, subset, weight)
 
-coords = seq$coords$gene("ensembl_gene_id", granges=TRUE,
+coords = seq$coords$gene("ensembl_gene_id", assembly="GRCm38", granges=TRUE,
     dset="mmusculus_gene_ensembl", chromosomes=c(1:19,'X'))
 
 gene_copies = readRDS(args$dna)$segments %>%

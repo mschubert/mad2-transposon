@@ -65,14 +65,15 @@ plot_distance_distr = function(meta, rn, dist) {
 
 sys$run({
     args = sys$cmd$parse(
-        opt('m', 'meta', 'meta+aneuploidy', '../ploidy_compare/analysis_set.RData'),
-        opt('p', 'poisson', 'cis assocs RData', 'poisson_epi-enhancer.RData'),
-        opt('o', 'outfile', 'external assocs RData', 'ext_epi-enhancer.RData'),
-        opt('p', 'plotfile', 'pdf', 'ext_epi-enhancer.pdf'))
+        opt('m', 'meta', 'meta+aneuploidy', '../ploidy_compare/analysis_set.rds'),
+        opt('p', 'poisson', 'cis assocs rds', 'poisson_epi/enhancer.rds'),
+        opt('o', 'outfile', 'external assocs rds', 'ext_epi/enhancer.rds'),
+        opt('p', 'plotfile', 'pdf', 'ext_epi/enhancer.pdf')
+    )
 
-    meta = io$load(args$meta) %>%
+    meta = readRDS(args$meta) %>%
         mutate(aneuploidy = pmin(aneuploidy, 0.2))
-    dset = io$load(args$poisson)
+    dset = readRDS(args$poisson)
     ids = with(dset, intersect(samples$id, result$id))
 
     aset = dset$samples %>%
@@ -108,5 +109,5 @@ sys$run({
     }
     dev.off()
 
-    save(results, file=args$outfile)
+    saveRDS(results, file=args$outfile)
 })

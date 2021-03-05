@@ -6,13 +6,14 @@ sys = import('sys')
 plt = import('plot')
 
 args = sys$cmd$parse(
-    opt('i', 'infile', 'transposon insert RData', 'analysis_set.RData'),
+    opt('i', 'infile', 'transposon insert rds', 'analysis_set.rds'),
     opt('u', 'upstream', 'bp to include before gene', '10000'),
     opt('d', 'downstream', 'bp to include after gene', '0'),
-    opt('o', 'outfile', 'insertion statistics RData', 'poisson.RData'),
-    opt('p', 'plotfile', 'volcano pdf', 'poisson.pdf'))
+    opt('o', 'outfile', 'insertion statistics rds', 'poisson.rds'),
+    opt('p', 'plotfile', 'volcano pdf', 'poisson.pdf')
+)
 
-ins = io$load(args$infile) %>%
+ins = readRDS(args$infile) %>%
     filter(chr %in% c(1:19, 'X'), !is_local) %>%
     GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns=TRUE,
         start.field="position", end.field="position")
@@ -70,4 +71,5 @@ pdf(args$plotfile)
 print(p)
 dev.off()
 
-save(samples, genes, sample_rates, result, dists, file=args$outfile)
+saveRDS(list(samples=samples, genes=genes, sample_rates=sample_rates,
+             result=result, dists=dists), file=args$outfile)

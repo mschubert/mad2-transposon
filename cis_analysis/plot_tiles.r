@@ -65,22 +65,23 @@ plot_aneup = function(aneup) {
 
 sys$run({
     args = sys$cmd$parse(
-        opt('a', 'aneup', 'sample-level aneup scores', '../ploidy_compare/analysis_set.RData'),
-        opt('i', 'ins_dna', 'all DNA insertions table', 'poisson.RData'),
+        opt('a', 'aneup', 'sample-level aneup scores', '../ploidy_compare/analysis_set.rds'),
+        opt('i', 'ins_dna', 'all DNA insertions table', 'poisson.rds'),
         opt('j', 'ins_rna', 'all RNA insertions table', '../data/rnaseq_imfusion/insertions.txt'),
-        opt('d', 'assocs_dna', 'CIS in DNA', 'ext_gene.RData'),
+        opt('d', 'assocs_dna', 'CIS in DNA', 'ext_gene.rds'),
         opt('r', 'assocs_rna', 'CTG in RNA', '../data/rnaseq_imfusion/merged_ctgs.txt'),
         opt('e', 'exons', 'exon expression table', '../data/rnaseq_imfusion/exon_counts.txt'),
         opt('n', 'n_dna', 'min number samples with ins', '5'),
         opt('m', 'n_rna', 'min number samples with ins', '2'),
-        opt('p', 'plotfile', 'pdf to plot to', 'plot_tiles.pdf'))
+        opt('p', 'plotfile', 'pdf to plot to', 'plot_tiles.pdf')
+    )
 
-    aneup_assocs = io$load(args$assocs_dna)$aneuploidy
-    aneup = io$load(args$aneup) %>%
+    aneup_assocs = readRDS(args$assocs_dna)$aneuploidy
+    aneup = readRDS(args$aneup) %>%
         arrange(aneuploidy) %>%
         mutate(sample = factor(sample, levels=sample))
 
-    cis = io$load(args$ins_dna)
+    cis = readRDS(args$ins_dna)
     cis_result = cis$result
     cis_samples = cis$samples %>%
         mutate(sample = factor(sample, levels=levels(aneup$sample)))

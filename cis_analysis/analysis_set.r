@@ -17,17 +17,18 @@ is_local_hop = function(pos, reads, wsize) {
 }
 
 args = sys$cmd$parse(
-    opt('i', 'infile', 'all samples .RData', '../data/cis/cis_per_tumor.rds'),
+    opt('i', 'infile', 'all samples rds', '../data/cis/cis_per_tumor.rds'),
     opt('r', 'reads', 'min reads to consider ins', '20'),
     opt('f', 'read_frac', 'min frac of reads for gene', '0'),
     opt('s', 'sheet', 'exclude/replace yaml', 'analysis_set.yaml'),
     opt('w', 'wsize', 'window size local hops', '0'),
-    opt('o', 'outfile', 'filtered samples & positions', 'analysis_set.RData'))
+    opt('o', 'outfile', 'filtered samples & positions', 'analysis_set.rds')
+)
 
 sheet = io$read_yaml(args$sheet)
 
 # s&t different tumors: 184, 443 (RNA also both)
-ins = io$load(args$infile) %>%
+ins = readRDS(args$infile) %>%
     dplyr::select(sample, chr, position, reads) %>% # ignore strand
     distinct() %>%
     filter(!sample %in% names(sheet$exclude)) %>%
@@ -43,4 +44,4 @@ ins = io$load(args$infile) %>%
     mutate(is_local = is_local_hop(position, reads, as.integer(args$wsize))) %>%
     ungroup()
 
-save(ins, file=args$outfile)
+saveRDS(ins, file=args$outfile)

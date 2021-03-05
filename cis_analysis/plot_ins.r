@@ -19,10 +19,11 @@ args = sys$cmd$parse(
     opt('a', 'gtf', 'assembly GTF', '../data/genome/Mus_musculus.GRCm38.92.gtf'),
     opt('g', 'gene', 'gene name to plot', 'Erg'),
     opt('f', 'flank', 'plot flank around gene', '10000'),
-    opt('p', 'plotfile', 'PDF to save to', 'Erg.pdf'))
+    opt('p', 'plotfile', 'PDF to save to', 'Erg.pdf')
+)
 
 all_genes = strsplit(args$gene, "+", fixed=TRUE)[[1]]
-meta = io$load(args$meta)
+meta = readRDS(args$meta)
 de_ctgs = io$read_table(args$ctgs, header=TRUE)
 rna_ins = io$read_table(args$rna_ins, header=TRUE)
 exons = io$read_table(args$exons, header=TRUE)
@@ -65,7 +66,7 @@ region = genes[genes$external_gene_name %in% all_genes] %>%
     anchor_3p() %>% stretch(as.integer(args$flank))
 aw = width(region) / 20
 
-dna_ins = io$load(args$dna_ins) %>%
+dna_ins = readRDS(args$dna_ins) %>%
     GenomicRanges::makeGRangesFromDataFrame(start.field="position",
         end.field="position", keep.extra.columns=TRUE) %>%
     join_overlap_intersect(region, .) %>%

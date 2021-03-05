@@ -17,7 +17,7 @@ scaled = narray::map(cpm, along=2, scale_cpm, subsets=as.character(grepl("[sS]",
     as.data.frame() %>%
     tibble::rownames_to_column("ensembl_gene_id")
 
-genes = seq$coords$gene("ensembl_gene_id", dset="mmusculus_gene_ensembl", granges=TRUE) %>%
+genes = seq$coords$gene("ensembl_gene_id", dset="mmusculus_gene_ensembl", assembly="GRCm38", granges=TRUE) %>%
     plyranges::select(ensembl_gene_id) %>%
     as.data.frame() %>%
     dplyr::inner_join(scaled) %>%
