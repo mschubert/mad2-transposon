@@ -73,9 +73,9 @@ sys$run({
     args = sys$cmd$parse(
         opt('c', 'cis', 'gene-level poisson', 'poisson.rds'),
         opt('a', 'aneup', 'aneup assocs', 'ext_gene.rds'),
-        opt('i', 'interactome', 'DLBCL|omnipath', 'DLBCL'),
-        opt('o', 'outfile', 'network data', 'bionet_DLBCL.rds'),
-        opt('p', 'plotfile', 'pdf', 'bionet_DLBCL.pdf')
+        opt('i', 'interactome', 'DLBCL|omnipath', 'omnipath'),
+        opt('o', 'outfile', 'network data', 'bionet_omnipath.rds'),
+        opt('p', 'plotfile', 'pdf', 'bionet_omnipath.pdf')
     )
 
     aneup = readRDS(args$aneup) %>%
