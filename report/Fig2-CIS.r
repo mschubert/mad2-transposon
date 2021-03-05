@@ -7,7 +7,45 @@ io = import('io')
 sys = import('sys')
 idmap = import('process/idmap')
 
-insertion_matrix = function(cis_samples, cis_stats, aneup) {
+insertion_matrix = function(cis, rna_ins, aneup, net_genes) {
+    rna_ins = rna_ins %>%
+        select(sample, external_gene_name=gene_name) %>%
+        filter(external_gene_name %in% net_genes) %>%
+        distinct() %>%
+        mutate(rna_ins = 1)
+
+    cis_result = cis$result %>%
+        filter(! external_gene_name %in% c("Sfi1", "Drg1", "Eif4enif1"), # should blacklist those when mapping
+               external_gene_name %in% net_genes) %>%
+        filter(adj.p < 0.01)
+    cis_samples = cis$samples %>%
+        filter(external_gene_name %in% cis_result$external_gene_name) %>%
+        tidyr::complete(sample, external_gene_name, fill=list(n_ins=0, reads=0)) %>%
+        group_by(sample) %>%
+        mutate(total_ins = sum(n_ins),
+               total_reads = sum(reads),
+               gene_read_frac = reads / total_reads) %>%
+        ungroup() %>%
+        left_join(rna_ins) %>%
+        mutate(has_ins = ifelse(rna_ins | n_ins != 0, TRUE, NA),
+            rna_ins = ifelse(is.na(rna_ins), 0, 1),
+            ins_type = case_when(
+                n_ins > 0 & rna_ins > 0 ~ "both",
+                n_ins > 0 & rna_ins == 0 ~ "DNA",
+                n_ins == 0 & rna_ins > 0 ~ "RNA"
+            ),
+            ins_type = factor(ins_type, levels=c("DNA", "RNA", "both"))
+        ) %>%
+        inner_join(aneup) %>%
+        inner_join(ext$aneuploidy %>% select(external_gene_name, aneup_stat=statistic)) %>%
+        mutate(sample = forcats::fct_reorder(sample, aneuploidy),
+               external_gene_name = forcats::fct_reorder(external_gene_name, aneup_stat))
+    genelvl = levels(cis_samples$external_gene_name)
+    smplvl = levels(cis_samples$sample)
+    cis_stats = cis_result %>%
+        mutate(external_gene_name = factor(external_gene_name, levels=genelvl)) %>%
+        filter(!is.na(external_gene_name))
+
     p1 = ggplot(cis_samples, aes(x=sample, y=external_gene_name)) +
         geom_tile(aes(fill=ins_type, alpha=gene_read_frac, color=has_ins)) +
         scale_fill_manual(values=c("maroon4", "navy", "springgreen4"), na.translate=FALSE) +
@@ -75,6 +113,30 @@ subtype_assocs = function(ext, net_genes) {
         labs(y = "Wald statistic")
 }
 
+bionet_combine = function(bionet) {
+    aneup_centrality = bionet$ext_nets$aneuploidy %N>%
+        select(external_gene_name) %>%
+        mutate(aneup_hub = centrality_hub()) %>%
+        arrange(-aneup_hub)
+    cnet = bionet$cis_net %N>%
+        select(external_gene_name, n_smp) %>%
+        mutate(deg = igraph::degree(.),
+               hub = centrality_hub()) %>%
+        filter(deg > 1) %>%
+        mutate(deg = igraph::degree(.)) %>%
+        filter(deg > 1) %>%
+        arrange(-hub) %>%
+        left_join(aneup_centrality, copy=TRUE) %>%
+        mutate(aneup_hub = ifelse(is.na(aneup_hub), 0, aneup_hub))
+    ggraph(cnet) +
+        geom_edge_link(alpha=0.2) +
+        geom_node_point(aes(size=hub, fill=aneup_hub), color="black", shape=21) +
+#        viridis::scale_fill_viridis() +
+        scale_fill_distiller(palette="RdPu", direction=1) +
+        geom_node_text(aes(label=external_gene_name, size=hub), repel=TRUE) +
+        scale_size(range = c(2,10))
+}
+
 sys$run({
     args = sys$cmd$parse(
         opt('a', 'aset', 'rds', '../ploidy_compare/analysis_set.rds'),
@@ -92,48 +154,14 @@ sys$run({
     bionet = readRDS(args$bionet)
     net_genes = bionet$cis_net %N>% pull(external_gene_name)
 
-    rna_ins = io$read_table(args$rna_ins, header=TRUE) %>%
-        select(sample, external_gene_name=gene_name) %>%
-        filter(external_gene_name %in% net_genes) %>%
-        distinct() %>%
-        mutate(rna_ins = 1)
-
+    # insertion processing
+    rna_ins = io$read_table(args$rna_ins, header=TRUE)
     cis = readRDS(args$poisson)
-    cis_result = cis$result %>%
-        filter(! external_gene_name %in% c("Sfi1", "Drg1", "Eif4enif1"), # should blacklist those when mapping
-               external_gene_name %in% net_genes) %>%
-#        mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
-        filter(adj.p < 0.01)
-    cis_samples = cis$samples %>%
-        filter(external_gene_name %in% cis_result$external_gene_name) %>%
-        tidyr::complete(sample, external_gene_name, fill=list(n_ins=0, reads=0)) %>%
-        group_by(sample) %>%
-        mutate(total_ins = sum(n_ins),
-               total_reads = sum(reads),
-               gene_read_frac = reads / total_reads) %>%
-        ungroup() %>%
-        left_join(rna_ins) %>%
-        mutate(has_ins = ifelse(rna_ins | n_ins != 0, TRUE, NA),
-            rna_ins = ifelse(is.na(rna_ins), 0, 1),
-            ins_type = case_when(
-                n_ins > 0 & rna_ins > 0 ~ "both",
-                n_ins > 0 & rna_ins == 0 ~ "DNA",
-                n_ins == 0 & rna_ins > 0 ~ "RNA"
-            ),
-            ins_type = factor(ins_type, levels=c("DNA", "RNA", "both"))
-        ) %>%
-        inner_join(aneup) %>%
-        inner_join(ext$aneuploidy %>% select(external_gene_name, aneup_stat=statistic)) %>%
-        mutate(sample = forcats::fct_reorder(sample, aneuploidy),
-               external_gene_name = forcats::fct_reorder(external_gene_name, aneup_stat))
-    genelvl = levels(cis_samples$external_gene_name)
-    smplvl = levels(cis_samples$sample)
-    cis_stats = cis_result %>%
-        mutate(external_gene_name = factor(external_gene_name, levels=genelvl)) %>%
-        filter(!is.na(external_gene_name))
 
-    ins_mat = insertion_matrix(cis_samples, cis_stats, aneup)
+    # create plot objects
+    ins_mat = insertion_matrix(cis, rna_ins, aneup, net_genes)
     stype = subtype_assocs(ext, net_genes)
+    bnet = bionet_combine(bionet)
 
     panelb = ins_mat
     panelc = stype
