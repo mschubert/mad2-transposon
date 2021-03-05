@@ -109,7 +109,7 @@ sys$run({
 
     cis_net = bionet(net, cis, fdr, "adj.p")
     ext_nets = lapply(aneup, bionet, g=net, thresh=0.2, var="p.value")
-    saveRDS(cis_net, file=args$outfile)
+    saveRDS(list(cis_net=cis_net, ext_nets=ext_nets), file=args$outfile)
 
     pdf(args$plotfile)
     print(plot_net(cis_net, aes(size=n_smp)))
