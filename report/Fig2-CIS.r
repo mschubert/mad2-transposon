@@ -129,12 +129,14 @@ bionet_combine = function(bionet) {
         left_join(aneup_centrality, copy=TRUE) %>%
         mutate(aneup_hub = ifelse(is.na(aneup_hub), 0, aneup_hub))
     ggraph(cnet) +
-        geom_edge_link(alpha=0.2) +
+        geom_edge_link(alpha=0.05, width=3) +
         geom_node_point(aes(size=hub, fill=aneup_hub), color="black", shape=21) +
 #        viridis::scale_fill_viridis() +
         scale_fill_distiller(palette="RdPu", direction=1) +
         geom_node_text(aes(label=external_gene_name, size=hub), repel=TRUE) +
-        scale_size(range = c(2,10))
+        scale_size(range = c(2.5,12)) +
+        guides(fill = guide_legend(title="Aneuploidy centrality", override.aes=list(size=5)),
+               size = guide_legend(title="CIS centrality"))
 }
 
 sys$run({
@@ -163,18 +165,8 @@ sys$run({
     stype = subtype_assocs(ext, net_genes)
     bnet = bionet_combine(bionet)
 
-    panelb = ins_mat
-    panelc = stype
-    panela = plot_spacer()
-
-    pdf("Fig2-CIS.pdf", 14, 12)
-    {
-        {
-            panelc + plot_spacer() + plot_layout(widths=c(1,2))
-        } /
-        {
-            panelb
-        }
-    } + plot_layout(heights=c(1,3), ncol=1, guides="collect")
+    pdf("Fig2-CIS.pdf", 16, 15)
+    (ins_mat / (stype + bnet + plot_layout(widths=c(2,7)))) +
+        plot_layout(heights=c(3,2))
     dev.off()
 })
