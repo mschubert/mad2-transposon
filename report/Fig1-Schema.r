@@ -27,6 +27,7 @@ surv = function(meta) {
     types = ggplot(tdf, aes(x="", y=frac, fill=type)) +
         geom_bar(stat="identity", width=1, color="white") +
         coord_polar("y", start=0) +
+#        geom_text(aes(y=ypos, label=frac), color = "white", size=6) +
         scale_fill_brewer(palette="Set1")
 
     splot / types & theme_void()
@@ -47,9 +48,10 @@ genotype_weights = function(meta) {
         tidyr::gather("tissue", "weight", -sample) %>%
         mutate(tissue = sub("_g$", "", tissue))
     gt = ggplot(meta %>% mutate(gt=genotype, genotype=factor("genotype")), aes(y=sample)) +
-        geom_tile(aes(x=genotype, fill=gt))
+        geom_point(aes(x=genotype, fill=gt), size=2, shape=22)
     tumors = ggplot(tw, aes(x=tissue, y=sample)) +
         geom_point(aes(size=weight), alpha=0.7) +
+        coord_cartesian(clip="off") +
         scale_size_area()
     gt + tumors + guide_area() + plot_layout(widths=c(1,2,8), guides="collect") &
         theme_minimal() &
@@ -72,8 +74,9 @@ sys$run({
 
     pdf(args$plotfile, 16, 19)
     ((cohort() | surv(meta)) + plot_layout(widths=c(3,2))) /
-        plt$text("x goes here") +
+#        plt$text("x goes here") +
         genotype_weights(meta) +
-        plot_annotation(tag_levels='a')
+        plot_annotation(tag_levels='a') +
+        plot_layout(heights=c(1,2))
     dev.off()
 })
