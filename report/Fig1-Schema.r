@@ -2,6 +2,7 @@ library(dplyr)
 library(ggplot2)
 library(patchwork)
 sys = import('sys')
+plt = import('plot')
 seq = import('seq')
 
 cohort = function() {
@@ -16,7 +17,19 @@ cohort = function() {
         plot_annotation(tag_levels='a')
 }
 
-surv = function() {
+surv = function(meta) {
+    surv = grid::rasterGrob(magick::image_read("external/Overall survival in months - age.pdf"))
+    splot = ggplot() + annotation_custom(surv)
+
+    tdf = meta %>%
+        group_by(type) %>%
+        summarize(frac = n() / nrow(.))
+    types = ggplot(tdf, aes(x="", y=frac, fill=type)) +
+        geom_bar(stat="identity", width=1, color="white") +
+        coord_polar("y", start=0) +
+        scale_fill_brewer(palette="Set1")
+
+    splot / types & theme_void()
 }
 
 chroms = function() {
@@ -57,14 +70,10 @@ sys$run({
 
     meta = readr::read_tsv(args$meta)
 
+    pdf(args$plotfile, 16, 19)
+    ((cohort() | surv(meta)) + plot_layout(widths=c(3,2))) /
+        plt$text("x goes here") +
+        genotype_weights(meta) +
+        plot_annotation(tag_levels='a')
+    dev.off()
 })
-
-
-models = models[levels(aneups$sample)]
-for (i in seq_along(models)) {
-    int = as.integer(round(gr[[models[[i]]$ID]]$ploidy))
-    cn = paste0(int, "-somy")
-    cn = factor(cn, levels=levels(models[[i]]$segments$state))
-    models[[i]]$segments$state = cn
-    models[[i]]$segments$copy.number = int
-}
