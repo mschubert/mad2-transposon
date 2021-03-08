@@ -67,7 +67,7 @@ genotype_weights = function(meta) {
         coord_cartesian(clip="off") +
         scale_size_area()
     #todo: mad2 switching in % as bar?
-    gt + tumors + guide_area() + plot_layout(widths=c(1,2,8)) &
+    gt + tumors + plot_layout(widths=c(1,2)) &
         theme_minimal() &
         theme(axis.title.x = element_blank(),
               axis.title.y = element_blank(),
@@ -90,8 +90,8 @@ sys$run({
     wgs_merge = readr::read_tsv(args$wgs_merge)
     wgs = readRDS(args$wgs)
 
-    pdf(args$plotfile, 16, 19)
-    ((cohort() | surv(meta)) + plot_layout(widths=c(3,2))) /
+    pdf(args$plotfile, 15, 19)
+    ((cohort() | surv(meta)) + plot_layout(widths=c(7,4))) /
 #        plt$text("x goes here") +
         (chroms(wgs, aset, wgs_merge) + genotype_weights(meta) + plot_layout(widths=c(5,1), guides="collect")) +
         plot_annotation(tag_levels='a') + plot_layout(heights=c(2,3))
