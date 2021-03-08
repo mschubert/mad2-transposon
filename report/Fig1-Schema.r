@@ -33,13 +33,26 @@ surv = function(meta) {
     splot / types & theme_void()
 }
 
-chroms = function() {
-    mrg = readr::read_tsv("../ploidy_compare/analysis_set_merge.tsv")
-    wgs30 = readRDS(args$wgs)$segments
+chroms = function(wgs, aset, wgs_merge) {
+    wgs30 = wgs$segments %>%
+        filter(seqnames %in% c(1:19,'X'),
+               state %in% paste0(c(1:5), "-somy")) %>%
+        mutate(start = start / 1e6,
+               end = end / 1e6)
+
     aneup = seq$aneuploidy(wgs30, assembly="GRCm38", sample="sample") %>%
         arrange(aneuploidy) %>%
-        filter(sample %in% c(aset$sample, mrg$subset)) %>%
+        filter(sample %in% c(aset$sample, wgs_merge$subset)) %>%
         mutate(sample = factor(sample, levels=sample))
+
+    ggplot(wgs30, aes(y=sample, yend=sample)) +
+        geom_segment(aes(x=start, xend=end, color=state), size=2) +
+        facet_grid(. ~ seqnames, scales="free", space="free") +
+        scale_x_continuous(breaks=c(50, 100, 150)) +
+        theme(panel.spacing.x = unit(0.5, "mm"),
+              axis.text.x = element_text(angle=60, hjust=1)) +
+        coord_cartesian(expand=FALSE) +
+        xlab("Position (Mb)")
 }
 
 genotype_weights = function(meta) {
@@ -53,7 +66,8 @@ genotype_weights = function(meta) {
         geom_point(aes(size=weight), alpha=0.7) +
         coord_cartesian(clip="off") +
         scale_size_area()
-    gt + tumors + guide_area() + plot_layout(widths=c(1,2,8), guides="collect") &
+    #todo: mad2 switching in % as bar?
+    gt + tumors + guide_area() + plot_layout(widths=c(1,2,8)) &
         theme_minimal() &
         theme(axis.title.x = element_blank(),
               axis.title.y = element_blank(),
@@ -65,18 +79,21 @@ sys$run({
         opt('m', 'meta', 'tsv', '../data/meta/meta.tsv'),
         opt('a', 'aset', 'rds', '../ploidy_compare/analysis_set.rds'),
         opt('w', 'wgs', 'rds', '../data/wgs/30cellseq.rds'),
+        opt('m', 'wgs_merge', 'rds', '../ploidy_compare/analysis_set_merge.tsv'),
 #        opt('', '', '', ''),
         opt('p', 'plotfile', 'pdf', 'Fig1-Schema.pdf')
     )
 
 
     meta = readr::read_tsv(args$meta)
+    aset = readRDS(args$aset)
+    wgs_merge = readr::read_tsv(args$wgs_merge)
+    wgs = readRDS(args$wgs)
 
     pdf(args$plotfile, 16, 19)
     ((cohort() | surv(meta)) + plot_layout(widths=c(3,2))) /
 #        plt$text("x goes here") +
-        genotype_weights(meta) +
-        plot_annotation(tag_levels='a') +
-        plot_layout(heights=c(1,2))
+        (chroms(wgs, aset, wgs_merge) + genotype_weights(meta) + plot_layout(widths=c(5,1), guides="collect")) +
+        plot_annotation(tag_levels='a') + plot_layout(heights=c(2,3))
     dev.off()
 })
