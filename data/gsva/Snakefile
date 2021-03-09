@@ -5,7 +5,8 @@ subworkflow genesets:
 
 rule all:
     input:
-        expand("{dsets}/{sets}.rds", dsets=['gdsc', 'ccle', 'tcga-brca'], sets=config['genesets'])
+        expand("{dsets}/{sets}.rds", dsets=['gdsc', 'ccle', 'tcga-brca'],
+                sets=config['genesets'] + ['stat1_ko'])
 
 rule gsva:
     input:

@@ -21,23 +21,37 @@ lm_plot = function(dset, aes, covar) {
         labs(subtitle = sprintf("p=%.2g (%.2g with %s)", m1$p.value, m2$p.value, covar))
 }
 
-args = sys$cmd$parse(
-    opt('i', 'infile', 'rds', 'dset.rds'),
-    opt('o', 'outfile', 'rds', 'brca.rds'),
-    opt('p', 'plotfile', 'pdf', 'brca.pdf')
-)
+sys$run({
+    args = sys$cmd$parse(
+        opt('i', 'infile', 'rds', 'dset.rds'),
+        opt('o', 'outfile', 'rds', 'brca.rds'),
+        opt('p', 'plotfile', 'pdf', 'brca.pdf')
+    )
 
-ds = readRDS(args$infile)
-dset = cbind(ds$meta, as.data.frame(ds$dmat))
+    ds = readRDS(args$infile)
+    dset = cbind(ds$meta, as.data.frame(ds$dmat))
 
-dens = dset %>%
-    select(Sample, purity, `Aneuploidy Score`, `Interferon Gamma Response`, `Myc Targets V2`) %>%
-    tidyr::gather("field", "value", -Sample)
+    dens = dset %>%
+        select(Sample, purity, `Aneuploidy Score`, `Interferon Gamma Response`,
+               `Myc Targets V2`, `Leukocyte Fraction`, `Stromal Fraction`, `Lymphocytes`) %>%
+        tidyr::gather("field", "value", -Sample)
 
-ggplot(dens, aes(x=value)) +
-    geom_density() +
-    facet_wrap(~ field, scales="free")
-lm_plot(dset, aes(x=`Myc Targets V2`, y=`Interferon Gamma Response`), covar="purity")
-lm_plot(dset, aes(x=`Myc Targets V2`, y=`Aneuploidy Score`), covar="purity")
-lm_plot(dset, aes(x=`Myc Targets V2`, y=purity), covar="Interferon Gamma Response")
-dev.off()
+    p1 = ggplot(dens, aes(x=value)) +
+        geom_density() +
+        facet_wrap(~ field, scales="free")
+
+    x = na.omit(data.matrix(dset[-1]))
+    pdf(args$plotfile, 8, 6)
+    corrplot::corrplot(cor(x))
+    print(p1)
+    print(lm_plot(dset, aes(x=myc_copy, y=`Myc Targets V2`), covar="purity"))
+    print(lm_plot(dset, aes(x=`Myc Targets V2`, y=`Interferon Gamma Response`), covar="purity"))
+    print(lm_plot(dset, aes(x=`Myc Targets V2`, y=`Aneuploidy Score`), covar="purity"))
+    print(lm_plot(dset, aes(x=`Aneuploidy Score`, y=`Interferon Gamma Response`), covar="Myc Targets V2"))
+    print(lm_plot(dset, aes(x=`Myc Targets V2`, y=purity), covar="Interferon Gamma Response"))
+    print(lm_plot(dset, aes(x=purity, y=`Myc Targets V2`), covar="Interferon Gamma Response"))
+    dev.off()
+
+    # split Myc targets low vs high (bimodal)
+    # split IFN response low vs high (bimodal)
+})

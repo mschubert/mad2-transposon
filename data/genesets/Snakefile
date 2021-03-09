@@ -3,6 +3,9 @@ configfile: "../../config.yaml"
 subworkflow mi_network:
     workdir: "../networks"
 
+subworkflow expr_stat1:
+    workdir: "../../expr_stat1"
+
 enrichr_sets = set(config['genesets']) - set("MILE_regulons")
 org = ['human', 'mouse']
 
@@ -40,7 +43,7 @@ rule mi_regulons:
 rule stat1_ko:
     input:
         rscript = "stat1_ko.r",
-        diff_expr = "../../expr_stat1/diff_expr.rds"
+        diff_expr = expr_stat1("diff_expr.rds")
     output:
         human = "human/stat1_ko.rds"
     shell:

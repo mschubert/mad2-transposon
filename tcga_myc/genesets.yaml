@@ -11,6 +11,12 @@ dset:
         - Myc Targets V1
         - Myc Targets V2
         - p53 Pathway
+    stat1_ko:
+        - wt_ifn2_over_dmso
+        - wt_rev24_over_dmso
+        - wt_rev48_over_dmso
+        - rev24_stat1_over_wt
+        - rev48_stat1_over_wt
 #    SPEED2:
 #        - speed2.IL-1
 #    PROGENy:

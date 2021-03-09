@@ -1,0 +1,47 @@
+configfile: "genesets.yaml"
+
+subworkflow genesets:
+    workdir: "../data/genesets"
+
+gsets = set(config['dset'].keys()) - set(['genes', 'Thorsson'])
+
+rule all:
+    input:
+        "brca.pdf"
+
+rule brca:
+    input:
+        rscript = "brca.r",
+        infile = "dset.rds"
+    output:
+#        outfile = "brca.rds",
+        plotfile = "brca.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --infile {input.infile}"
+#            " --outfile {output.outfile}"
+            " --plotfile {output.plotfile}"
+
+rule dset:
+    input:
+        rscript = "dset.r",
+        config = "genesets.yaml",
+        tcga = "tcga.rds",
+        setfiles = genesets(expand("human/{gset}.rds", gset=gsets))
+    output:
+        outfile = "dset.rds"
+    shell:
+        "Rscript {input.rscript}"
+            " --config {input.config}"
+            " --tcga {input.tcga}"
+            " --outfile {output.outfile}"
+            " {input.setfiles}"
+
+rule tcga:
+    input:
+        rscript = "tcga.r"
+    output:
+        outfile = "tcga.rds"
+    shell:
+        "Rscript {input.rscript}"
+            " --outfile {output.outfile}"
