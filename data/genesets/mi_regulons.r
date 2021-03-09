@@ -9,7 +9,8 @@ args = sys$cmd$parse(
     opt('e', 'expr', 'expression RData', '../arrayexpress/E-GEOD-13159.rds'),
     opt('n', 'network', 'aracne results RData', '../networks/E-GEOD-13159.rds'),
     opt('h', 'human', 'save to RData', 'human/KEA_2015.rds'),
-    opt('m', 'mouse', 'save to RData', 'mouse/KEA_2015.rds'))
+    opt('m', 'mouse', 'save to RData', 'mouse/KEA_2015.rds')
+)
 
 expr = Biobase::exprs(readRDS(args$expr))
 rownames(expr) = idmap$gene(rownames(expr), to="hgnc_symbol")

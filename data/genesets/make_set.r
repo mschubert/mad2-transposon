@@ -8,7 +8,8 @@ msdb = import('tools/msigdb')
 args = sys$cmd$parse(
     opt('g', 'geneset', 'Identifier of the gene set', 'KEA_2015'),
     opt('h', 'human', 'save to RData', 'human/KEA_2015.rds'),
-    opt('m', 'mouse', 'save to RData', 'mouse/KEA_2015.rds'))
+    opt('m', 'mouse', 'save to RData', 'mouse/KEA_2015.rds')
+)
 
 if (args$geneset == "GO_Biological_Process_2020") { # ontology-guided set selection
     sets = gset$go(leaf_depth=3, as_list=TRUE)
