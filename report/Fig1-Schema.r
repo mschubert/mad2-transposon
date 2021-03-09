@@ -33,6 +33,27 @@ surv = function(meta) {
     splot / types & theme_void()
 }
 
+chrom_genes = function() {
+    gen = seq$genome(assembly="GRCm38") %>%
+        GenomeInfoDb::seqlengths()
+    gen = data.frame(chromosome_name=c(1:19,'X'), len=gen[c(1:19,'X')]/1e6) %>%
+        mutate(chromosome_name = factor(chromosome_name, levels=c(1:19,'X')))
+    hlg = seq$coords$gene(dset="mmusculus_gene_ensembl", assembly="GRCm38") %>%
+        filter(external_gene_name %in% c("Trp53", "Ets1", "Erg", "Pten", "Notch1", "Myc")) %>%
+        mutate(start = start_position / 1e6,
+               end = end_position / 1e6,
+               chromosome_name = factor(chromosome_name, levels=c(1:19,'X')))
+    ggplot(hlg) +
+        geom_segment(data=gen, aes(x=1, xend=len, y=0, yend=0), size=2, alpha=0.4, lineend="round") +
+        geom_point(aes(x=start, y=0)) +
+        geom_text(aes(x=start, label=external_gene_name), y=0, vjust=2, size=3) +
+        facet_grid(. ~ chromosome_name, scales="free", space="free") +
+        coord_cartesian(clip="off") +#, expand=FALSE) +
+        theme_void() +
+        theme(strip.background = element_blank(),
+              panel.spacing.x = unit(1, "mm"))
+}
+
 chroms = function(wgs, aset, wgs_merge) {
     wgs30 = wgs$segments %>%
         filter(seqnames %in% c(1:19,'X'),
@@ -46,12 +67,18 @@ chroms = function(wgs, aset, wgs_merge) {
         mutate(sample = factor(sample, levels=sample))
 
     ggplot(wgs30, aes(y=sample, yend=sample)) +
-        geom_segment(aes(x=start, xend=end, color=state), size=2) +
+        geom_segment(aes(x=start, xend=end, color=state), size=1.5) +
         facet_grid(. ~ seqnames, scales="free", space="free") +
         scale_x_continuous(breaks=c(50, 100, 150)) +
-        theme(panel.spacing.x = unit(0.5, "mm"),
+        theme(plot.background = element_rect(fill="transparent", color=NA),
+              panel.background = element_rect(fill="transparent", color=NA),
+              strip.background = element_blank(),
+              strip.text.x = element_blank(),
+              panel.spacing.x = unit(0.5, "mm"),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
               axis.text.x = element_text(angle=60, hjust=1)) +
-        coord_cartesian(expand=FALSE) +
+        coord_cartesian(clip="off", expand=FALSE) +
         xlab("Position (Mb)")
 }
 
@@ -61,9 +88,10 @@ genotype_weights = function(meta) {
         tidyr::gather("tissue", "weight", -sample) %>%
         mutate(tissue = sub("_g$", "", tissue))
     gt = ggplot(meta %>% mutate(gt=genotype, genotype=factor("genotype")), aes(y=sample)) +
-        geom_point(aes(x=genotype, fill=gt), size=2, shape=22)
+        geom_point(aes(x=genotype, fill=gt), size=2.5, shape=22) +
+        coord_cartesian(clip="off")
     tumors = ggplot(tw, aes(x=tissue, y=sample)) +
-        geom_point(aes(size=weight), alpha=0.7) +
+        geom_point(aes(size=weight), alpha=0.4) +
         coord_cartesian(clip="off") +
         scale_size_area()
     #todo: mad2 switching in % as bar?
@@ -84,16 +112,17 @@ sys$run({
         opt('p', 'plotfile', 'pdf', 'Fig1-Schema.pdf')
     )
 
-
     meta = readr::read_tsv(args$meta)
     aset = readRDS(args$aset)
     wgs_merge = readr::read_tsv(args$wgs_merge)
     wgs = readRDS(args$wgs)
 
-    pdf(args$plotfile, 15, 19)
+    pdf(args$plotfile, 15, 14)
     ((cohort() | surv(meta)) + plot_layout(widths=c(7,4))) /
 #        plt$text("x goes here") +
-        (chroms(wgs, aset, wgs_merge) + genotype_weights(meta) + plot_layout(widths=c(5,1), guides="collect")) +
-        plot_annotation(tag_levels='a') + plot_layout(heights=c(2,3))
+        (chrom_genes() + plot_layout(widths=c(5,1)) + plot_spacer() +
+         chroms(wgs, aset, wgs_merge) + genotype_weights(meta) +
+            plot_layout(widths=c(5,1), heights=c(1,50), guides="collect")) +
+        plot_annotation(tag_levels='a') + plot_layout(heights=c(2,1.5))
     dev.off()
 })
