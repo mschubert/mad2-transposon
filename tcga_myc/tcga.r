@@ -18,7 +18,12 @@ meta = colData(eset) %>%
     as.data.frame() %>%
     as_tibble() %>%
     transmute(Sample = sample,
+              sample_type = shortLetterCode,
+              type = subtype_PAM50.mRNA,
               tumor_stage = sub("stage ", "", tumor_stage),
+              ER = subtype_ER.Status,
+              PR = subtype_PR.Status,
+              metastases = subtype_Metastasis.Coded,
 #              tumor_grade = tumor_grade, # not reported
               OS_time = pmax(days_to_death, days_to_last_follow_up, na.rm=TRUE),
               vital_status = factor(vital_status, levels=c("alive", "dead")),
