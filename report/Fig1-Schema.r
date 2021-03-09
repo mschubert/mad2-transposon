@@ -7,20 +7,15 @@ seq = import('seq')
 
 cohort = function() {
     schema = grid::rasterGrob(magick::image_read("external/MouseCohort.svg"))
-    splot1 = ggplot() + annotation_custom(schema)
-    schema2 = grid::rasterGrob(magick::image_read("external/MouseCohort_process.svg"))
-    splot2 = ggplot() + annotation_custom(schema2)
-    schema3 = grid::rasterGrob(magick::image_read("external/MouseCohort_seq.svg"))
-    splot3 = ggplot() + annotation_custom(schema3)
-
-    splot1 + splot2 + splot3 + plot_layout(ncol=1, heights=c(3,0.8,1.1)) +
-        plot_annotation(tag_levels='a')
+    ggplot() + annotation_custom(schema)
 }
 
 surv = function(meta) {
     surv = grid::rasterGrob(magick::image_read("external/Overall survival in months - age.pdf"))
-    splot = ggplot() + annotation_custom(surv)
+    ggplot() + annotation_custom(surv) + theme_void()
+}
 
+types = function(meta) {
     tdf = meta %>%
         group_by(type) %>%
         summarize(frac = n() / nrow(.))
@@ -28,9 +23,8 @@ surv = function(meta) {
         geom_bar(stat="identity", width=1, color="white") +
         coord_polar("y", start=0) +
 #        geom_text(aes(y=ypos, label=frac), color = "white", size=6) +
-        scale_fill_brewer(palette="Set1")
-
-    splot / types & theme_void()
+        scale_fill_brewer(palette="Set1") +
+        theme_void()
 }
 
 chrom_genes = function() {
@@ -91,7 +85,7 @@ genotype_weights = function(meta) {
         geom_point(aes(x=genotype, fill=gt), size=2.5, shape=22) +
         coord_cartesian(clip="off")
     tumors = ggplot(tw, aes(x=tissue, y=sample)) +
-        geom_point(aes(size=weight), alpha=0.4) +
+        geom_point(aes(size=weight), alpha=0.2) +
         coord_cartesian(clip="off") +
         scale_size_area()
     #todo: mad2 switching in % as bar?
@@ -117,12 +111,12 @@ sys$run({
     wgs_merge = readr::read_tsv(args$wgs_merge)
     wgs = readRDS(args$wgs)
 
-    pdf(args$plotfile, 15, 14)
-    ((cohort() | surv(meta)) + plot_layout(widths=c(7,4))) /
-#        plt$text("x goes here") +
+    pdf(args$plotfile, 15, 10)
+    ((cohort() | surv(meta) | types(meta)) + plot_layout(widths=c(1.8,1,1))) /
+#        plt$text("pathology imgs go here") +
         (chrom_genes() + plot_layout(widths=c(5,1)) + plot_spacer() +
          chroms(wgs, aset, wgs_merge) + genotype_weights(meta) +
             plot_layout(widths=c(5,1), heights=c(1,50), guides="collect")) +
-        plot_annotation(tag_levels='a') + plot_layout(heights=c(2,1.5))
+        plot_annotation(tag_levels='a') + plot_layout(heights=c(1,2))
     dev.off()
 })
