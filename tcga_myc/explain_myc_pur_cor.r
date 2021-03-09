@@ -20,14 +20,14 @@ test_one = function(covar) {
     full = broom::tidy(lm(purity ~ covar + `Myc Targets V2`, data=both)) %>%
         filter(term != "(Intercept)") %>%
         mutate(term = sub("`Myc Targets V2`", "Myc", term)) %>%
-        select(term, estimate, statistic, p.value) %>%
+        select(term, est=estimate, stat=statistic, p.value) %>%
         tidyr::pivot_wider(names_from=c(term), values_from=c(estimate:p.value)) %>%
-        mutate(delta_stat = red_stat - statistic_Myc)
+        mutate(delta_stat = red_stat - stat_Myc)
 }
 naive = broom::tidy(lm(purity ~ `Myc Targets V2`, data=both))
 red_stat = naive %>% filter(term == "`Myc Targets V2`") %>% pull(statistic)
 
-res = clustermq::Q(test_one, covar=narray::split(both[,-1], along=2), n_jobs=10,
+res = clustermq::Q(test_one, covar=narray::split(both[,-1], along=2), n_jobs=0,
                    export = list(naive=naive, both=both, red_stat=red_stat),
                    pkgs = c("dplyr")) %>%
     setNames(colnames(both)[-1]) %>%
@@ -35,3 +35,4 @@ res = clustermq::Q(test_one, covar=narray::split(both[,-1], along=2), n_jobs=10,
     arrange(delta_stat)
 
 res %>% filter(estimate_covar > 0) %>% select(covar, delta_stat)
+res %>% filter(estimate_covar > 0, !grepl("^GO:", covar))
