@@ -111,12 +111,14 @@ sys$run({
     wgs_merge = readr::read_tsv(args$wgs_merge)
     wgs = readRDS(args$wgs)
 
-    pdf(args$plotfile, 15, 10)
-    ((cohort() | surv(meta) | types(meta)) + plot_layout(widths=c(1.8,1,1))) /
+    asm = ((cohort() | surv(meta) | types(meta)) + plot_layout(widths=c(1.8,1,1))) /
 #        plt$text("pathology imgs go here") +
         (chrom_genes() + plot_layout(widths=c(5,1)) + plot_spacer() +
          chroms(wgs, aset, wgs_merge) + genotype_weights(meta) +
             plot_layout(widths=c(5,1), heights=c(1,50), guides="collect")) +
         plot_annotation(tag_levels='a') + plot_layout(heights=c(1,2))
+
+    pdf(args$plotfile, 15, 10)
+    print(asm)
     dev.off()
 })

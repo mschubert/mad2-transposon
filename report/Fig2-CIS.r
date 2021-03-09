@@ -2,6 +2,7 @@ library(dplyr)
 library(tidygraph)
 library(ggplot2)
 library(patchwork)
+library(ggraph)
 theme_set(cowplot::theme_cowplot())
 io = import('io')
 sys = import('sys')
@@ -53,9 +54,7 @@ insertion_matrix = function(cis, rna_ins, aneup, net_genes) {
         guides(color = FALSE,
                fill = guide_legend(title="Insert type"),
                alpha = guide_legend(title="Read fraction")) +
-        theme(axis.text.x = element_text(angle=90, vjust=0.5),
-              legend.position = "left",
-              legend.justification = "right") +
+        theme(axis.text.x = element_text(angle=90, vjust=0.5)) +
         labs(x = "Sample",
              y = "Transposon-inserted gene")
 
@@ -67,9 +66,7 @@ insertion_matrix = function(cis, rna_ins, aneup, net_genes) {
         theme(axis.title.x = element_blank(),
               axis.text.x = element_blank(),
               axis.ticks.x = element_blank(),
-              axis.line.x = element_blank(),
-              legend.position = "left",
-              legend.justification = "right") +
+              axis.line.x = element_blank()) +
         guides(fill=guide_legend(title="Cancer type")) +
         labs(y = "Aneuploidy")
 
@@ -84,7 +81,8 @@ insertion_matrix = function(cis, rna_ins, aneup, net_genes) {
               axis.line.y = element_blank()) +
         labs(y = "-log FDR")
 
-    p11 + plot_spacer() + p1 + p12 + plot_layout(widths=c(5,1), heights=c(1,5))
+    p11 + plot_spacer() + p1 + (p12 + plot_layout(tag_level="new")) +
+        plot_layout(widths=c(5,1), heights=c(1,5), guides="collect")
 }
 
 subtype_assocs = function(ext, net_genes) {
@@ -161,12 +159,20 @@ sys$run({
     cis = readRDS(args$poisson)
 
     # create plot objects
+    schema = grid::rasterGrob(magick::image_read("external/CISschema.svg"))
+    splot = ggplot() + annotation_custom(schema) +
+        theme(axis.line=element_blank())
+xp = ggplot()
     ins_mat = insertion_matrix(cis, rna_ins, aneup, net_genes)
     stype = subtype_assocs(ext, net_genes)
     bnet = bionet_combine(bionet)
 
-    pdf("Fig2-CIS.pdf", 16, 15)
-    (ins_mat / (stype + bnet + plot_layout(widths=c(2,7)))) +
-        plot_layout(heights=c(3,2))
+    asm = ((splot + xp + plot_layout(widths=c(2,3))) /
+        ins_mat /
+        (stype + bnet + plot_layout(widths=c(2,7)))) +
+            plot_layout(heights=c(1.2,3,2)) + plot_annotation(tag_levels='a')
+
+    pdf("Fig2-CIS.pdf", 16, 19)
+    print(asm)
     dev.off()
 })
