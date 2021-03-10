@@ -1,6 +1,6 @@
-library(dplyr)
-library(ggplot2)
-library(DESeq2)
+import_package("dplyr", attach=TRUE)
+import_package("ggplot2", attach=TRUE)
+import_package("DESeq2", attach=TRUE)
 plt = import('plot')
 
 plot_pcs = function(idx, pca, x, y, hl=c()) {
