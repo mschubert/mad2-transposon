@@ -28,12 +28,12 @@ rule all:
 rule diff_expr:
     input:
         rscript = "de_{eset}.r",
-        eset = "eset_{eset}.RData",
+        eset = "eset_{eset}.rds",
         config = "../config.yaml",
-        network = net("E-GEOD-13159.RData"),
-        sets = sets(expand("mouse/{sets}.RData", sets=config['genesets']))
+        network = net("aracne_E-GEOD-13159.rds"),
+        sets = sets(expand("mouse/{sets}.rds", sets=config['genesets']))
     output:
-        result = "de_{eset}.RData",
+        result = "de_{eset}.rds",
         plot = "de_{eset}.pdf"
     resources:
         mem = 8000,
@@ -51,9 +51,9 @@ rule diff_expr:
 rule eset_Mad2PBEtsErg:
     input:
         rscript = "eset_Mad2PB+EtsErg.r",
-        eset = "eset_Mad2PB.RData"
+        eset = "eset_Mad2PB.rds"
     output:
-        result = "eset_Mad2PB+EtsErg.RData",
+        result = "eset_Mad2PB+EtsErg.rds",
         plot = "eset_Mad2PB+EtsErg.pdf"
     shell:
         "Rscript {input.rscript}"
@@ -64,10 +64,10 @@ rule eset_Mad2PBEtsErg:
 rule eset_Mad2PBmultiCIS:
     input:
         rscript = "eset_Mad2PB+multiCIS.r",
-        eset = "eset_Mad2PB.RData",
-        cis = cis("poisson.RData")
+        eset = "eset_Mad2PB.rds",
+        cis = cis("poisson.rds")
     output:
-        result = "eset_Mad2PB+multiCIS.RData",
+        result = "eset_Mad2PB+multiCIS.rds",
         plot = "eset_Mad2PB+multiCIS.pdf"
     shell:
         "Rscript {input.rscript}"
@@ -79,10 +79,10 @@ rule eset_Mad2PBmultiCIS:
 rule eset_Mad2PB:
     input:
         rscript = "eset_Mad2PB.r",
-        copies = ploidy("gene_copies.RData"),
-        meta = ploidy("analysis_set.RData")
+        copies = ploidy("gene_copies.rds"),
+        meta = ploidy("analysis_set.rds")
     output:
-        result = "eset_Mad2PB.RData",
+        result = "eset_Mad2PB.rds",
         plot = "eset_Mad2PB.pdf"
     shell:
         "Rscript {input.rscript}"
@@ -94,9 +94,9 @@ rule eset_Mad2PB:
 rule eset_Mad2PBnoCopyCor:
     input:
         rscript = "eset_Mad2PB+noCopyCor.r",
-        meta = ploidy("analysis_set.RData")
+        meta = ploidy("analysis_set.rds")
     output:
-        result = "eset_Mad2PB+noCopyCor.RData",
+        result = "eset_Mad2PB+noCopyCor.rds",
         plot = "eset_Mad2PB+noCopyCor.pdf"
     shell:
         "Rscript {input.rscript}"
@@ -107,9 +107,9 @@ rule eset_Mad2PBnoCopyCor:
 rule eset_MILE:
     input:
         rscript = "eset_MILE.r",
-        mile = mile("E-GEOD-13159.RData")
+        mile = mile("E-GEOD-13159.rds")
     output:
-        result = "eset_MILE.RData",
+        result = "eset_MILE.rds",
         plot = "eset_MILE.pdf"
     shell:
         "Rscript {input.rscript}"
@@ -119,13 +119,13 @@ rule eset_MILE:
 rule de_ins:
     input:
         rscript = "{ins_type}.r",
-        eset = "eset_Mad2PB.RData",
+        eset = "eset_Mad2PB.rds",
         config = "../config.yaml",
-        cis = cis("poisson.RData"),
-        network = net("E-GEOD-13159.RData"),
-        sets = sets(expand("mouse/{sets}.RData", sets=config['genesets']))
+        cis = cis("poisson.rds"),
+        network = net("E-GEOD-13159.rds"),
+        sets = sets(expand("mouse/{sets}.rds", sets=config['genesets']))
     output:
-        result = "{ins_type}/{ins}.RData",
+        result = "{ins_type}/{ins}.rds",
         plot = "{ins_type}_plots/{ins}.pdf"
     resources:
         mem = 5000,

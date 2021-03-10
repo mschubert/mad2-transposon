@@ -1,6 +1,5 @@
 library(dplyr)
 library(ggplot2)
-io = import('io')
 sys = import('sys')
 idmap = import('process/idmap')
 gset = import('data/genesets')
@@ -69,26 +68,31 @@ plot_one = function(merged) {
         geom_vline(xintercept=0, linetype="dashed", size=2, alpha=0.3)
 }
 
-args = sys$cmd$parse(
-    opt('d', 'diff_expr', 'rds', 'diff_expr.rds'),
-    opt('a', 'diff_aneup', 'RData', '../expr_diff/de_Mad2PB.RData'),
-    opt('h', 'set_human', 'RData', '../data/genesets/human/KEA_2015.RData'),
-    opt('m', 'set_mouse', 'RData', '../data/genesets/mouse/KEA_2015.RData'),
-    opt('p', 'plotfile', 'pdf', 'sets/KEA_2015.pdf'))
+sys$run({
+    args = sys$cmd$parse(
+        opt('d', 'diff_expr', 'rds', 'diff_expr.rds'),
+        opt('a', 'diff_aneup', 'rds', '../expr_diff/de_Mad2PB.rds'),
+        opt('h', 'set_human', 'rds', '../data/genesets/human/KEA_2015.rds'),
+        opt('m', 'set_mouse', 'rds', '../data/genesets/mouse/KEA_2015.rds'),
+        opt('p', 'plotfile', 'pdf', 'sets/KEA_2015.pdf')
+    )
 
-sets_human = io$load(args$set_human) %>% gset$filter(min=5)
-sets_mouse = io$load(args$set_mouse) %>% gset$filter(min=5)
+    sets_human = readRDS(args$set_human) %>% gset$filter(min=5)
+    sets_mouse = readRDS(args$set_mouse) %>% gset$filter(min=5)
 
-stat1 = readRDS(args$diff_expr) %>%
-    lapply(util$test_gsets, set=sets_human)
-aneup = io$load(args$diff_aneup)$aneuploidy %>%
-    util$test_gsets(set=sets_mouse)
+    stat1 = readRDS(args$diff_expr) %>%
+        lapply(util$test_gsets, set=sets_human)
+    aneup = readRDS(args$diff_aneup)$aneuploidy %>%
+        util$test_gsets(set=sets_mouse)
 
-pdf(args$plotfile, 16, 14)
-plot_one(merge_one("wt_ifn2_over_dmso")) + ggtitle("wt_ifn2_over_dmso")
-plot_one(merge_one("rev24_cgas_over_wt")) + ggtitle("rev24_cgas_over_wt")
-plot_one(merge_one("rev24_stat1_over_wt")) + ggtitle("rev24_stat1_over_wt")
-plot_one(merge_one("rev48_stat1_over_wt")) + ggtitle("rev48_stat1_over_wt")
-plot_one(merge_cgas("rev24_stat1_over_wt")) + ggtitle("rev24 cgas vs stat1 KO")
-plot_one(merge_cgas("rev48_stat1_over_wt")) + ggtitle("rev24 cgas vs 48 stat1 KO")
-dev.off()
+    pdf(args$plotfile, 16, 14)
+    print(plot_one(merge_one("wt_ifn2_over_dmso")) + ggtitle("wt_ifn2_over_dmso"))
+    print(plot_one(merge_one("wt_rev24_over_dmso")) + ggtitle("wt_rev24_over_dmso"))
+    print(plot_one(merge_one("wt_rev48_over_dmso")) + ggtitle("wt_rev48_over_dmso"))
+    print(plot_one(merge_one("rev24_cgas_over_wt")) + ggtitle("rev24_cgas_over_wt"))
+    print(plot_one(merge_one("rev24_stat1_over_wt")) + ggtitle("rev24_stat1_over_wt"))
+    print(plot_one(merge_one("rev48_stat1_over_wt")) + ggtitle("rev48_stat1_over_wt"))
+    print(plot_one(merge_cgas("rev24_stat1_over_wt")) + ggtitle("rev24 cgas vs stat1 KO"))
+    print(plot_one(merge_cgas("rev48_stat1_over_wt")) + ggtitle("rev24 cgas vs 48 stat1 KO"))
+    dev.off()
+})

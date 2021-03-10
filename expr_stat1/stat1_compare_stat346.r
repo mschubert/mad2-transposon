@@ -1,15 +1,14 @@
 library(dplyr)
-io = import('io')
 st = import('stats')
 plt = import('plot')
 enr = import('tools/enrichr')
 idmap = import('process/idmap')
 
 # response signatures: Stat1 ChIP (enrichr), Ifn response
-expr = io$load("../expr_diff/eset_Mad2PB.RData")
+expr = readRDS("../expr_diff/eset_Mad2PB.rds")
 #genes = c("Stat1", "Pias1", "Mb21d1", "Ifng", "Ifngr1", "Trp53", "Wrap53")
 genes = c("Stat1", "Pias1", "Ifng", "Trp53")
-ee = io$load("../expr_diff/eset_Mad2PB.RData")$vs
+ee = readRDS("../expr_diff/eset_Mad2PB.rds")$vs
 stat1 = ee["Stat1",]
 rest = ee[-which(rownames(ee) == "Stat1"),]
 cc = data.frame(
@@ -17,11 +16,11 @@ cc = data.frame(
     cor = narray::map(rest, along=2, function(x) cor(x, stat1))
 ) %>% arrange(-cor)
 
-encc = io$load("../data/genesets/mouse/ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X.RData")
-chea = io$load("../data/genesets/mouse/ChEA_2016.RData")
-go = io$load("../data/genesets/mouse/GO_Biological_Process_2018.RData")
-hm = io$load("../data/genesets/mouse/CH.HALLMARK.RData")
-mile = io$load("../data/genesets/mouse/MILE_regulons.RData")
+encc = readRDS("../data/genesets/mouse/ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X.rds")
+chea = readRDS("../data/genesets/mouse/ChEA_2016.rds")
+go = readRDS("../data/genesets/mouse/GO_Biological_Process_2018.rds")
+hm = readRDS("../data/genesets/mouse/CH.HALLMARK.rds")
+mile = readRDS("../data/genesets/mouse/MILE_regulons.rds")
 
 sets=c(chea[c("STAT1_17558387_ChIP-Seq_HELA_Human",
               "STAT3_23295773_ChIP-Seq_U87_Human")],
@@ -61,7 +60,7 @@ gsva = GSVA::gsva(expr$vs, sets)
 scores = rbind(expr$vs[genes,], gsva)
 
 # expression changes with insertions (in different subtypes)
-cis = io$load("../cis_analysis/poisson.RData")$samples %>%
+cis = readRDS("../cis_analysis/poisson.rds")$samples %>%
     filter(external_gene_name %in% genes, sample %in% colnames(expr$vs)) %>%
     narray::construct(n_ins ~ sample + external_gene_name, data=., fill=0) %>%
     apply(1, function(x) paste(names(x)[x != 0], collapse="+"))

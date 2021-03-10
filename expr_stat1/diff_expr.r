@@ -5,7 +5,8 @@ util = import('../expr_diff/util')
 args = sys$cmd$parse(
     opt('d', 'dset', 'rds', '../data/rnaseq_stat1/dset.rds'),
     opt('o', 'outfile', 'rds', 'diff_expr.rds'),
-    opt('p', 'plotfile', 'pdf', 'diff_expr.pdf'))
+    opt('p', 'plotfile', 'pdf', 'diff_expr.pdf')
+)
 
 dset = readRDS(args$dset)
 eset = dset$eset %>%

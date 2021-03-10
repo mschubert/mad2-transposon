@@ -1,16 +1,16 @@
 library(DESeq2)
 library(dplyr)
-io = import('io')
 sys = import('sys')
 util = import('./util')
 idmap = import('process/idmap')
 
 args = sys$cmd$parse(
-    opt('e', 'eset', 'gene expression RData', 'eset_Mad2PB.RData'),
-    opt('o', 'outfile', 'results RData', 'eset_Mad2PB+EtsErg.RData'),
-    opt('p', 'plotfile', 'pdf', 'eset_Mad2PB+EtsErg.pdf'))
+    opt('e', 'eset', 'gene expression rds', 'eset_Mad2PB.rds'),
+    opt('o', 'outfile', 'results rds', 'eset_Mad2PB+EtsErg.rds'),
+    opt('p', 'plotfile', 'pdf', 'eset_Mad2PB+EtsErg.pdf')
+)
 
-eset = io$load(args$eset)$eset
+eset = readRDS(args$eset)$eset
 idx = colData(eset) %>%
     as.data.frame() %>%
     mutate(aneup0.3 = pmin(aneuploidy, 0.3),
@@ -34,4 +34,4 @@ print(util$plot_pcs(idx, pca, 3, 4))
 print(util$plot_pcs(idx, pca, 5, 6))
 dev.off()
 
-save(eset, vs, pca, file=args$outfile)
+saveRDS(list(eset=eset, vs=vs, pca=pca), file=args$outfile)

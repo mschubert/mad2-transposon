@@ -1,6 +1,5 @@
 library(dplyr)
 library(ggplot2)
-io = import('io')
 sys = import('sys')
 idmap = import('process/idmap')
 gset = import('data/genesets')
@@ -60,21 +59,24 @@ plot_one = function(merged) {
         geom_vline(xintercept=0, linetype="dashed", size=2, alpha=0.3)
 }
 
-args = sys$cmd$parse(
-    opt('d', 'diff_expr', 'rds', 'diff_expr.rds'),
-    opt('a', 'diff_aneup', 'RData', '../expr_diff/de_Mad2PB.RData'),
-    opt('p', 'plotfile', 'pdf', 'aneup_ko_cor.pdf'))
+sys$run({
+    args = sys$cmd$parse(
+        opt('d', 'diff_expr', 'rds', 'diff_expr.rds'),
+        opt('a', 'diff_aneup', 'rds', '../expr_diff/de_Mad2PB.rds'),
+        opt('p', 'plotfile', 'pdf', 'aneup_ko_cor.pdf')
+    )
 
-stat1 = readRDS(args$diff_expr)
-aneup = io$load(args$diff_aneup)$aneuploidy
-aneup$gene_name = toupper(aneup$gene_name)
-#aneup$gene_name = idmap$orthologue(aneup$gene_name, dset="mmusculus_gene_ensembl",
-#                                   from="mgi_symbol", to="hgnc_symbol")
+    stat1 = readRDS(args$diff_expr)
+    aneup = readRDS(args$diff_aneup)$aneuploidy
+    aneup$gene_name = toupper(aneup$gene_name)
+    #aneup$gene_name = idmap$orthologue(aneup$gene_name, dset="mmusculus_gene_ensembl",
+    #                                   from="mgi_symbol", to="hgnc_symbol")
 
-pdf(args$plotfile, 16, 14)
-plot_one(merge_one("rev24_cgas_over_wt")) + ggtitle("rev24_cgas_over_wt")
-plot_one(merge_one("rev24_stat1_over_wt")) + ggtitle("rev24_stat1_over_wt")
-plot_one(merge_one("rev48_stat1_over_wt")) + ggtitle("rev48_stat1_over_wt")
-plot_one(merge_cgas("rev24_stat1_over_wt")) + ggtitle("rev24 cgas vs stat1 KO")
-plot_one(merge_cgas("rev48_stat1_over_wt")) + ggtitle("rev24 cgas vs 48 stat1 KO")
-dev.off()
+    pdf(args$plotfile, 16, 14)
+    print(plot_one(merge_one("rev24_cgas_over_wt")) + ggtitle("rev24_cgas_over_wt"))
+    print(plot_one(merge_one("rev24_stat1_over_wt")) + ggtitle("rev24_stat1_over_wt"))
+    print(plot_one(merge_one("rev48_stat1_over_wt")) + ggtitle("rev48_stat1_over_wt"))
+    print(plot_one(merge_cgas("rev24_stat1_over_wt")) + ggtitle("rev24 cgas vs stat1 KO"))
+    print(plot_one(merge_cgas("rev48_stat1_over_wt")) + ggtitle("rev24 cgas vs 48 stat1 KO"))
+    dev.off()
+})

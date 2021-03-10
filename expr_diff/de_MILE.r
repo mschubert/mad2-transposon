@@ -1,27 +1,27 @@
 library(dplyr)
-io = import('io')
 sys = import('sys')
 util = import('./util')
 gset = import('data/genesets')
 viper = import('../expr_cor/viper')
 
 args = sys$cmd$parse(
-    opt('e', 'eset', 'gene expression RData', 'eset_MILE.RData'),
+    opt('e', 'eset', 'gene expression rds', 'eset_MILE.rds'),
     opt('f', 'config', 'yaml', '../config.yaml'),
-    opt('n', 'network', 'RData', '../data/networks/E-GEOD-13159.RData'),
-    opt('o', 'outfile', 'results RData', 'de_MILE.RData'),
+    opt('n', 'network', 'rds', '../data/networks/E-GEOD-13159.rds'),
+    opt('o', 'outfile', 'results rds', 'de_MILE.rds'),
     opt('p', 'plotfile', 'pdf', 'de_MILE.pdf'),
-    arg('sets', 'gene set .RData', arity='*',
-        list.files("../data/genesets/mouse", "\\.RData", full.names=TRUE)))
+    arg('sets', 'gene set .rds', arity='*',
+        list.files("../data/genesets/mouse", "\\.rds", full.names=TRUE))
+)
 
-dset = io$load(args$eset)
+dset = readRDS(args$eset)
 keep = !is.na(dset$meta$type)
 expr = dset$expr[,keep]
 type = cbind(narray::mask(dset$meta$type[keep]),
      Hyperdip = (dset$meta$annot[keep] == "ALL with hyperdiploid karyotype")) + 0
 type[,"Hyperdip"][type[,"B_like"] == 0] = NA
 aneuploidy = pmin(dset$meta$aneuploidy[keep], 0.25)
-net = io$load(args$network)
+net = readRDS(args$network)
 tf_net = filter(net, Target %in% Regulator)
 
 edf = data.frame(gene_name = rownames(expr), mean_expr = rowMeans(expr), stringsAsFactors=FALSE)
@@ -48,11 +48,11 @@ res = dplyr::bind_rows(assocs_type, assocs_aneup) %>%
 res = setNames(res$data, res$term)
 
 args$sets = sub("mouse/", "human/", args$sets)
-sets = io$load(args$sets) %>%
+sets = readRDS(args$sets) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
     lapply(function(x) gset$filter(x, min=5, valid=rownames(expr)))
 
-hl = toupper(io$read_yaml(args$config)$highlight_de)
+hl = toupper(yaml::read_yaml(args$config)$highlight_de)
 
 pdf(args$plotfile)
 for (rname in names(res)) {
@@ -80,4 +80,4 @@ for (rname in names(res)) {
 }
 dev.off()
 
-save(res, file=args$outfile)
+saveRDS(res, file=args$outfile)

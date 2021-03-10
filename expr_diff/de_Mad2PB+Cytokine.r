@@ -1,7 +1,6 @@
 library(dplyr)
 library(ggplot2)
 library(DESeq2)
-io = import('io')
 sys = import('sys')
 plt = import('plot')
 idmap = import('process/idmap')
@@ -9,24 +8,25 @@ gset = import('data/genesets')
 util = import('./util')
 
 args = sys$cmd$parse(
-    opt('e', 'eset', 'gene expression RData', 'eset_Mad2PB+Cytokine.RData'),
+    opt('e', 'eset', 'gene expression rds', 'eset_Mad2PB+Cytokine.rds'),
     opt('c', 'config', 'yaml', '../config.yaml'),
-    opt('n', 'network', 'RData', '../data/networks/E-GEOD-13159.RData'), # ignored
-    opt('o', 'outfile', 'results RData', 'de_Mad2PB+Cytokine.RData'),
+    opt('n', 'network', 'rds', '../data/networks/E-GEOD-13159.rds'), # ignored
+    opt('o', 'outfile', 'results rds', 'de_Mad2PB+Cytokine.rds'),
     opt('p', 'plotfile', 'pdf', 'de_Mad2PB+Cytokine.pdf'),
-    arg('sets', 'gene set .RData', arity='*',
-        list.files("../data/genesets/mouse", "\\.RData", full.names=TRUE)))
+    arg('sets', 'gene set .rds', arity='*',
+        list.files("../data/genesets/mouse", "\\.rds", full.names=TRUE))
+)
 
 hl = c('Ccl5', 'Cxcl10', 'Ifna1', 'Ifnb1', 'Tnf', 'Il6', 'Ccl20', 'Cxcl1', 'Ccl2', 'Il2', 'Ifng',
     'Ccr2', 'Ccr5', 'Cxcr3', 'Ifnar1', 'Ifnar2', 'Tlr3', 'Tlr4', 'Tlr7', 'Tlr8', 'Tlr9',
     'Il10ra', 'Il6ra', 'Ccr1', 'Ccr4', 'Tnfrsf1a', 'Tradd', 'Cxcr2', 'Ifngr1', 'Ifngr2',
     'Samd9l', 'Isg15', 'Ifi27l2a', 'Ifit1', 'Oas1a', 'Oas1b', 'Isg54', 'Isg56')
 
-gset = io$load(grep("HALLMARK", args$sets, value=TRUE))
+gset = readRDS(grep("HALLMARK", args$sets, value=TRUE))
 gset = unlist(gset[c('HALLMARK_INTERFERON_GAMMA_RESPONSE',
               'HALLMARK_INFLAMMATORY_RESPONSE', 'HALLMARK_TNFA_SIGNALING_VIA_NFKB')])
 gset = c(gset, hl)
-eset = io$load(args$eset)$eset
+eset = readRDS(args$eset)$eset
 eset = eset[intersect(gset, rownames(eset)),]
 
 warning("Not in eset: ", paste(hl[!hl %in% rownames(eset)], collapse=", "))
@@ -63,4 +63,4 @@ for (rname in names(res)) {
 }
 dev.off()
 
-save(res, file=args$outfile)
+saveRDS(res, file=args$outfile)

@@ -1,5 +1,4 @@
 library(dplyr)
-io = import('io')
 sys = import('sys')
 gset = import('data/genesets')
 util = import('../expr_diff/util')
@@ -7,10 +6,11 @@ util = import('../expr_diff/util')
 args = sys$cmd$parse(
     opt('d', 'diff_expr', 'rds', 'diff_expr.rds'),
     opt('s', 'setfile', 'RData', '../data/genesets/human/CH.HALLMARK.RData'),
-    opt('p', 'plotfile', 'pdf', 'stat1ko_diff_inflamm_resp.pdf'))
+    opt('p', 'plotfile', 'pdf', 'stat1ko_diff_inflamm_resp.pdf')
+)
 
 res = readRDS(args$diff_expr)
-sets = io$load(args$setfile)
+sets = readRDS(args$setfile)
 sets = sets[grepl("INTERFERON|NFKB", names(sets))]
 
 assocs = expand.grid(rname = names(res), sname=names(sets), stringsAsFactors=FALSE) %>%

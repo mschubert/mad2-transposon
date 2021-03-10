@@ -34,7 +34,7 @@ rule de_sets:
     input:
         rscript = "diff_expr_sets.r",
         diff_expr = "diff_expr.rds",
-        setfile = lambda wc: sets("human/{sets}.RData")
+        setfile = lambda wc: sets("human/{sets}.rds")
     output:
         plotfile = "diff_expr/{sets}.pdf"
     shell:
@@ -47,7 +47,7 @@ rule cor_genes:
     input:
         rscript = "aneup_ko_cor.r",
         diff_expr = "diff_expr.rds",
-        diff_aneup = expr_diff("de_Mad2PB.RData")
+        diff_aneup = expr_diff("de_Mad2PB.rds")
     output:
         plotfile = "aneup_ko_cor.pdf"
     shell:
@@ -60,9 +60,9 @@ rule cor_sets:
     input:
         rscript = "aneup_ko_cor_sets.r",
         diff_expr = "diff_expr.rds",
-        diff_aneup = expr_diff("de_Mad2PB.RData"),
-        set_human = lambda wc: sets("human/{sets}.RData"),
-        set_mouse = lambda wc: sets("mouse/{sets}.RData")
+        diff_aneup = expr_diff("de_Mad2PB.rds"),
+        set_human = lambda wc: sets("human/{sets}.rds"),
+        set_mouse = lambda wc: sets("mouse/{sets}.rds")
     output:
         plotfile = "aneup_ko_cor/{sets}.pdf"
     shell:
@@ -77,7 +77,7 @@ rule stat1ko_inflamm:
     input:
         rscript = "stat1ko_diff_inflamm_resp.r",
         de_gene = "diff_expr.rds",
-        setfile = sets("human/CH.HALLMARK.RData")
+        setfile = sets("human/MSigDB_Hallmark_2020.rds")
     output:
         plotfile = "stat1ko_diff_inflamm_resp.pdf"
     shell:

@@ -1,18 +1,18 @@
 library(dplyr)
 library(DESeq2)
-io = import('io')
 sys = import('sys')
 util = import('./util')
 idmap = import('process/idmap')
 
 args = sys$cmd$parse(
-    opt('e', 'expr', 'gene expression RData', '../data/rnaseq/assemble.RData'),
-    opt('m', 'meta', 'aneuploidy score', '../ploidy_compare/analysis_set.RData'),
-    opt('o', 'outfile', 'results RData', 'eset_Mad2PB.RData'),
-    opt('p', 'plotfile', 'pdf', 'eset_Mad2PB.pdf'))
+    opt('e', 'expr', 'gene expression rds', '../data/rnaseq/assemble.rds'),
+    opt('m', 'meta', 'aneuploidy score', '../ploidy_compare/analysis_set.rds'),
+    opt('o', 'outfile', 'results rds', 'eset_Mad2PB.rds'),
+    opt('p', 'plotfile', 'pdf', 'eset_Mad2PB.pdf')
+)
 
-exprset = io$load(args$expr)
-idx = io$load(args$meta) %>%
+exprset = readRDS(args$expr)
+idx = readRDS(args$meta) %>%
     mutate(type = ifelse(is.na(type), "unknown", type))
 colnames(idx) = sub("T-cell", "Tcell", colnames(idx))
 counts = exprset$counts
@@ -33,4 +33,4 @@ print(util$plot_pcs(idx, pca, 3, 4))
 print(util$plot_pcs(idx, pca, 5, 6))
 dev.off()
 
-save(eset, vs, pca, file=args$outfile)
+saveRDS(list(eset=eset, vs=vs, pca=pca), file=args$outfile)

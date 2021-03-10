@@ -1,7 +1,6 @@
 library(dplyr)
 library(ggplot2)
 library(DESeq2)
-io = import('io')
 sys = import('sys')
 plt = import('plot')
 idmap = import('process/idmap')
@@ -9,17 +8,18 @@ gset = import('data/genesets')
 util = import('./util')
 
 args = sys$cmd$parse(
-    opt('e', 'eset', 'gene expression RData', 'eset_Mad2PB+riobsomeBiogenesis.RData'),
+    opt('e', 'eset', 'gene expression rds', 'eset_Mad2PB+riobsomeBiogenesis.rds'),
     opt('c', 'config', 'yaml', '../config.yaml'),
-    opt('n', 'network', 'RData', '../data/networks/E-GEOD-13159.RData'), # ignored
-    opt('o', 'outfile', 'results RData', 'de_Mad2PB+riobsomeBiogenesis.RData'),
+    opt('n', 'network', 'rds', '../data/networks/E-GEOD-13159.rds'), # ignored
+    opt('o', 'outfile', 'results rds', 'de_Mad2PB+riobsomeBiogenesis.rds'),
     opt('p', 'plotfile', 'pdf', 'de_Mad2PB+riobsomeBiogenesis.pdf'),
-    arg('sets', 'gene set .RData', arity='*',
-        list.files("../data/genesets/mouse", "\\.RData", full.names=TRUE)))
+    arg('sets', 'gene set .rds', arity='*',
+        list.files("../data/genesets/mouse", "\\.rds", full.names=TRUE))
+)
 
-gset = io$load(grep("GO_Biological_Process_2018", args$sets, value=TRUE))
+gset = readRDS(grep("GO_Biological_Process_2018", args$sets, value=TRUE))
 gset = gset[["ribosome biogenesis (GO:0042254)"]]
-eset = io$load(args$eset)$eset
+eset = readRDS(args$eset)$eset
 eset = eset[intersect(gset, rownames(eset)),]
 
 # fit tissue of origin and pan-aneuploidy
@@ -47,7 +47,7 @@ aneup_tissue = function(type) {
 }
 res = c(res, setNames(lapply(ats, aneup_tissue), paste0(ats, ":aneuploidy")))
 
-hl = io$read_yaml(args$config)$highlight_de
+hl = yaml::read_yaml(args$config)$highlight_de
 
 pdf(args$plotfile)
 for (rname in names(res)) {
@@ -56,4 +56,4 @@ for (rname in names(res)) {
 }
 dev.off()
 
-save(res, file=args$outfile)
+saveRDS(res, file=args$outfile)

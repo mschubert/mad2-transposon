@@ -1,13 +1,13 @@
 library(dplyr)
 library(ggplot2)
-io = import('io')
 sys = import('sys')
 
 args = sys$cmd$parse(
-    opt('i', 'infile', 'RData', '../expr_diff/eset_MILE.RData'),
-    opt('p', 'plotfile', 'pdf', 'mile_stat-ets-erg.pdf'))
+    opt('i', 'infile', 'rds', '../expr_diff/eset_MILE.rds'),
+    opt('p', 'plotfile', 'pdf', 'mile_stat-ets-erg.pdf')
+)
 
-eset = io$load(args$infile)
+eset = readRDS(args$infile)
 dset = cbind(eset$meta, t(eset$expr[c("ETS1","ERG","STAT1"),])) %>%
     select(annot, lineage, type, ETS1, ERG, STAT1) %>%
     tidyr::gather("gene", "expr", -(annot:type))

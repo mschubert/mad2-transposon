@@ -2,20 +2,20 @@ library(dplyr)
 library(ggplot2)
 theme_set(cowplot::theme_cowplot())
 b = import('base')
-io = import('io')
 st = import('stats')
 idmap = import('process/idmap')
 sys = import('sys')
 util = import('./util')
 
 args = sys$cmd$parse(
-    opt('m', 'mile', 'expr rdata', '../data/arrayexpress/E-GEOD-13159.RData'),
-    opt('a', 'aneup', 'mile aneup rdata', '../misc/subtype_overlay/aneup_scores_mile.RData'),
-    opt('o', 'outfile', 'RData', 'eset_MILE.RData'),
-    opt('p', 'plotfile', 'pdf', 'eset_MILE.pdf'))
+    opt('m', 'mile', 'expr rdata', '../data/arrayexpress/E-GEOD-13159.rds'),
+    opt('a', 'aneup', 'mile aneup rdata', '../misc/subtype_overlay/aneup_scores_mile.rds'),
+    opt('o', 'outfile', 'rds', 'eset_MILE.rds'),
+    opt('p', 'plotfile', 'pdf', 'eset_MILE.pdf')
+)
 
-aneup = io$load(args$aneup)$aneup
-mile = io$load(args$mile)
+aneup = readRDS(args$aneup)$aneup
+mile = readRDS(args$mile)
 expr = Biobase::exprs(mile)
 
 rownames(expr) = idmap$gene(rownames(expr), to="external_gene_name")
@@ -48,4 +48,4 @@ print(util$plot_pcs(idx, pca, 3, 4))
 print(util$plot_pcs(idx, pca, 5, 6))
 dev.off()
 
-save(expr, meta, pca, file=args$outfile)
+saveRDS(list(expr=expr, meta=meta, pca=pca), file=args$outfile)
