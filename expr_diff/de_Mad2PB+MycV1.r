@@ -3,7 +3,6 @@ library(ggplot2)
 library(DESeq2)
 sys = import('sys')
 plt = import('plot')
-idmap = import('process/idmap')
 gset = import('data/genesets')
 util = import('./util')
 

@@ -2,7 +2,6 @@ library(DESeq2)
 library(dplyr)
 sys = import('sys')
 util = import('./util')
-idmap = import('process/idmap')
 
 args = sys$cmd$parse(
     opt('e', 'eset', 'gene expression rds', 'eset_Mad2PB.rds'),

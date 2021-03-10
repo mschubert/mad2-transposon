@@ -2,7 +2,6 @@ library(dplyr)
 library(DESeq2)
 sys = import('sys')
 util = import('./util')
-idmap = import('process/idmap')
 
 args = sys$cmd$parse(
     opt('e', 'expr', 'gene expression rds', '../data/rnaseq/assemble.rds'),
