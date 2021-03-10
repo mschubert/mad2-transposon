@@ -40,13 +40,19 @@ stat1_cin_cor = function(go, hm) {
             geom_hline(yintercept=0, linetype="dashed", size=1.5, alpha=0.3) +
             geom_vline(xintercept=0, linetype="dashed", size=1.5, alpha=0.3) +
             geom_smooth(color="black") +
-            ggrepel::geom_label_repel(aes(label=lab), size=3, max.iter=1e5,
+            ggrepel::geom_label_repel(aes(label=lab), size=3, max.iter=5e5,
                                       max.overlaps=Inf, segment.alpha=0.3, fill="#ffffffc0")
     }
 
-    p1 = plot_one(ifn) + labs(title="Acute inflammation", x="BT549: 2h IFN vs. DMSO", y="Aneuploidy TPS cohort")
-    p2 = plot_one(rev48) + labs(title="Acute CIN", x="BT549: 48h reversine vs. DMSO", y="Aneuploidy TPS cohort")
-    p3 = plot_one(stat48) + labs(title="Non-Stat1 CIN", x="BT549 rev: 48h STAT1 KO vs. WT", y="Aneuploidy TPS cohort")
+    p1 = plot_one(ifn) + labs(title = "Acute inflammation",
+                              x = "BT549: 2h IFN vs. DMSO (Wald st.)",
+                              y = "Aneuploidy TPS cohort (Wald st.)")
+    p2 = plot_one(rev48) + labs(title = "Acute CIN",
+                                x = "BT549: 48h reversine vs. DMSO (Wald st.)",
+                                y = "Aneuploidy TPS cohort (Wald st.)")
+    p3 = plot_one(stat48) + labs(title = "Non-Stat1 CIN",
+                                 x = "BT549 rev: 48h STAT1 KO vs. WT (Wald st.)",
+                                 y = "Aneuploidy TPS cohort (Wald st.)")
 
     p1 + p2 + p3 + plot_layout(guides="collect")
 }
