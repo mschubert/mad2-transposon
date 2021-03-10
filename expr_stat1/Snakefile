@@ -64,6 +64,7 @@ rule cor_sets:
         set_human = lambda wc: sets("human/{sets}.rds"),
         set_mouse = lambda wc: sets("mouse/{sets}.rds")
     output:
+        outfile = "aneup_ko_cor/{sets}.rds",
         plotfile = "aneup_ko_cor/{sets}.pdf"
     shell:
         "Rscript {input.rscript}"
@@ -71,6 +72,7 @@ rule cor_sets:
             " --diff_aneup {input.diff_aneup}"
             " --set_human {input.set_human}"
             " --set_mouse {input.set_mouse}"
+            " --outfile {output.outfile}"
             " --plotfile {output.plotfile}"
 
 rule stat1ko_inflamm:

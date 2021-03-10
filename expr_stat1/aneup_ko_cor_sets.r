@@ -74,7 +74,8 @@ sys$run({
         opt('a', 'diff_aneup', 'rds', '../expr_diff/de_Mad2PB.rds'),
         opt('h', 'set_human', 'rds', '../data/genesets/human/KEA_2015.rds'),
         opt('m', 'set_mouse', 'rds', '../data/genesets/mouse/KEA_2015.rds'),
-        opt('p', 'plotfile', 'pdf', 'sets/KEA_2015.pdf')
+        opt('o', 'outfile', 'rds', 'aneup_ko_cor/KEA_2015.rds'),
+        opt('p', 'plotfile', 'pdf', 'aneup_ko_cor/KEA_2015.pdf')
     )
 
     sets_human = readRDS(args$set_human) %>% gset$filter(min=5)
@@ -84,6 +85,7 @@ sys$run({
         lapply(util$test_gsets, set=sets_human)
     aneup = readRDS(args$diff_aneup)$aneuploidy %>%
         util$test_gsets(set=sets_mouse)
+    saveRDS(list(stat1=stat1, aneup=aneup), file=args$outfile)
 
     pdf(args$plotfile, 16, 14)
     print(plot_one(merge_one("wt_ifn2_over_dmso")) + ggtitle("wt_ifn2_over_dmso"))
