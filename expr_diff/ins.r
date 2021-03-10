@@ -46,7 +46,7 @@ res = DESeq2::estimateDispersions(eset) %>%
     as.data.frame() %>%
     tibble::rownames_to_column("gene_name")
 
-sets = readRDS(args$sets) %>%
+sets = lapply(args$sets, readRDS) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
     lapply(function(x) gset$filter(x, min=5, valid=rownames(eset)))
 

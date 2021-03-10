@@ -21,7 +21,7 @@ res$`T+Ets_aneup` = util$do_wald(eset[,eset$group == "Ets1:thymus"], ~ aneup0.3)
 res$`B+Ets_aneup` = util$do_wald(eset[,eset$group == "Ets1:spleen"], ~ aneup0.3)
 res$`B+Erg_aneup` = util$do_wald(eset[,eset$group == "Erg:spleen"], ~ aneup0.3)
 
-sets = readRDS(args$sets) %>%
+sets = lapply(args$sets, readRDS) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
     lapply(function(x) gset$filter(x, min=5, valid=rownames(eset)))
 

@@ -48,7 +48,7 @@ res = dplyr::bind_rows(assocs_type, assocs_aneup) %>%
 res = setNames(res$data, res$term)
 
 args$sets = sub("mouse/", "human/", args$sets)
-sets = readRDS(args$sets) %>%
+sets = lapply(args$sets, readRDS) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
     lapply(function(x) gset$filter(x, min=5, valid=rownames(expr)))
 

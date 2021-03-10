@@ -57,7 +57,7 @@ aneup_tissue = function(type) {
 }
 res = c(res, setNames(lapply(ats, aneup_tissue), paste0(ats, ":stat1act")))
 
-sets = readRDS(args$sets) %>%
+sets = lapply(args$sets, readRDS) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
     lapply(function(x) gset$filter(x, min=5, valid=rownames(eset)))
 

@@ -18,7 +18,7 @@ eset = dset$eset
 fml = paste("~", paste(c("Tcell", "Other", dset$inc_ins), collapse=" + "))
 res = util$do_wald(eset, as.formula(fml))
 
-sets = readRDS(args$sets) %>%
+sets = lapply(args$sets, readRDS) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
     lapply(function(x) gset$filter(x, min=5, valid=rownames(eset)))
 
