@@ -122,7 +122,7 @@ rule de_ins:
         eset = "eset_Mad2PB.rds",
         config = "../config.yaml",
         cis = cis("poisson.rds"),
-        network = net("E-GEOD-13159.rds"),
+        network = net("aracne_E-GEOD-13159.rds"),
         sets = sets(expand("mouse/{sets}.rds", sets=config['genesets']))
     output:
         result = "{ins_type}/{ins}.rds",
