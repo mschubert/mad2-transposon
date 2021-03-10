@@ -30,8 +30,18 @@ stat1_cin_cor = function(go, hm) {
                        lab = ifelse(rank(-score) <= 6 &
                                     (abs(statistic.x) + abs(statistic.y) > 10), label, NA)) %>%
             ungroup() %>%
-            select(-type2, -score) %>%
             mutate(lab = ifelse(type == "no change", NA, lab))
+
+        sums = merged %>%
+            filter(type != "no change") %>%
+            group_by(type2) %>%
+            summarize(n = n())
+        fet = broom::tidy(fisher.test(matrix(sums$n, ncol=2)))
+        if (fet$estimate > 1) {
+            odds = sprintf("%.0fx common enrichment", fet$estimate)
+        } else {
+            odds = sprintf("%.0fx difference enrichment", 1/fet$estimate)
+        }
 
         ggplot(merged, aes(x=statistic.x, y=statistic.y, color=type)) +
             geom_point() +
@@ -40,8 +50,10 @@ stat1_cin_cor = function(go, hm) {
             geom_hline(yintercept=0, linetype="dashed", size=1.5, alpha=0.3) +
             geom_vline(xintercept=0, linetype="dashed", size=1.5, alpha=0.3) +
             geom_smooth(color="black") +
-            ggrepel::geom_label_repel(aes(label=lab), size=3, max.iter=5e5,
-                                      max.overlaps=Inf, segment.alpha=0.3, fill="#ffffffc0")
+            ggrepel::geom_label_repel(aes(label=lab), size=3, max.iter=1e5, label.size=NA,
+                min.segment.length=0, max.overlaps=Inf, segment.alpha=0.3, fill="#ffffffc0",
+                label.padding=unit(0.2, "lines")) +
+            labs(subtitle = sprintf("%s (p=%.1g FET)", odds, fet$p.value))
     }
 
     p1 = plot_one(ifn) + labs(title = "Acute inflammation",
@@ -69,7 +81,7 @@ sys$run({
 
     expr_cor = stat1_cin_cor(go, hm)
 
-    pdf(args$plotfile, 16.5, 6)
+    pdf(args$plotfile, 17, 6)
     print(expr_cor)
     dev.off()
 })
