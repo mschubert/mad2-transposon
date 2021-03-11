@@ -91,6 +91,8 @@ sys$run({
     print(plot_one(merge_one("wt_ifn2_over_dmso")) + ggtitle("wt_ifn2_over_dmso"))
     print(plot_one(merge_one("wt_rev24_over_dmso")) + ggtitle("wt_rev24_over_dmso"))
     print(plot_one(merge_one("wt_rev48_over_dmso")) + ggtitle("wt_rev48_over_dmso"))
+    print(plot_one(merge_one("stat1_rev24_over_dmso")) + ggtitle("stat1 rev24 vs dmso"))
+    print(plot_one(merge_one("stat1_rev48_over_dmso")) + ggtitle("stat1 rev48 vs dmso"))
     print(plot_one(merge_one("rev24_cgas_over_wt")) + ggtitle("rev24_cgas_over_wt"))
     print(plot_one(merge_one("rev24_stat1_over_wt")) + ggtitle("rev24_stat1_over_wt"))
     print(plot_one(merge_one("rev48_stat1_over_wt")) + ggtitle("rev48_stat1_over_wt"))

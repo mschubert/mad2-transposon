@@ -1,3 +1,4 @@
+library(SummarizedExperiment)
 library(dplyr)
 sys = import('sys')
 util = import('../expr_diff/util')
