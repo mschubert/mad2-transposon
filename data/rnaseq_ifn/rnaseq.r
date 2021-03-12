@@ -2,9 +2,11 @@ library(dplyr)
 library(ggplot2)
 library(patchwork)
 sys = import('sys')
+plt = import('plot')
 
 plot_pca = function(eset) {
-    vst = DESeq2::varianceStabilizingTransformation(eset)
+    rc = colSums(DESeq2::counts(eset, normalized=FALSE))
+    vst = DESeq2::varianceStabilizingTransformation(eset[,rc>0])
     pcadata = DESeq2::plotPCA(vst, intgroup=c("sample_id", "mouse", "cell_type", "treatment"), returnData=TRUE) %>%
         mutate(sample_id = sub(".*_([0-9]+)$", "\\1", sample_id))
     pcavar = round(100 * attr(pcadata, "percentVar"))
@@ -20,21 +22,22 @@ file2deseq = function(fname, samples) {
     rtab = readr::read_tsv(fname)
     reads = data.matrix(rtab[-1])
     rownames(reads) = rtab$Gene
+    reads = reads[,samples$sample_id]
 
-    eset = DESeq2::DESeqDataSetFromMatrix(reads, samples, ~1) %>%
-        DESeq2::estimateSizeFactors()
+    eset = DESeq2::DESeqDataSetFromMatrix(reads, samples, ~1) #%>%
+#        DESeq2::estimateSizeFactors()
 }
 
 plot_overview = function(eset, title="") {
-    rc = tibble(sample_id = factor(sub(".*_([0-9]+)$", "\\1", colnames(eset))),
-                read_count = colSums(DESeq2::counts(eset, normalized=FALSE)))
-    levels(rc$sample_id) = gtools::mixedsort(levels(rc$sample_id))
-    prc = ggplot(rc, aes(x=sample_id, y=read_count)) +
-        geom_col() +
-        ggtitle(title)
+    rc = tibble(sample_id = sub(".*_([0-9]+)$", "\\1", colnames(eset)),
+                read_count = colSums(DESeq2::counts(eset, normalized=FALSE)),
+                gene_count = colSums(DESeq2::counts(eset, normalized=FALSE) != 0)) %>%
+        mutate(sample_id = factor(sample_id, levels=gtools::mixedsort(sample_id)))
+    prc = ggplot(rc, aes(x=sample_id, y=read_count)) + geom_col() + ggtitle(title)
+    pgc = ggplot(rc, aes(x=sample_id, y=gene_count)) + geom_col()
     ppca = plot_pca(eset)
 
-    prc | ppca
+    (prc / pgc) | ppca
 }
 
 sys$run({
@@ -47,7 +50,7 @@ sys$run({
     tab = readxl::read_excel("Total_gene_counts.xls")
     samples = readr::read_tsv(args$samples)
 
-    fnames = c(#"SCRB_CH210203_UMIcounts_only_plus.txt.gz",
+    fnames = c("SCRB_CH210203_UMIcounts_only_plus.txt.gz",
                "SCRB_CH210203_UMIcounts_only_minus.txt.gz",
                "SCRB_CH210203_UMIcounts_both_strands.txt.gz")
 
