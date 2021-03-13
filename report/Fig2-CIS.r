@@ -6,6 +6,7 @@ library(ggraph)
 theme_set(cowplot::theme_cowplot())
 io = import('io')
 sys = import('sys')
+plt = import('plot')
 idmap = import('process/idmap')
 
 insertion_matrix = function(cis, rna_ins, aneup, net_genes) {
@@ -133,8 +134,16 @@ bionet_combine = function(bionet) {
         scale_fill_distiller(palette="RdPu", direction=1) +
         geom_node_text(aes(label=external_gene_name, size=hub), repel=TRUE) +
         scale_size(range = c(2.5,12)) +
-        guides(fill = guide_legend(title="Aneuploidy centrality", override.aes=list(size=5)),
+        guides(fill = guide_legend(title="Aneuploidy\ncentrality", override.aes=list(size=5)),
                size = guide_legend(title="CIS centrality"))
+}
+
+sc_wgs = function() {
+    smps = c("401t", "419t", "413s")
+    scs = file.path("../data/wgs", paste0(smps, ".rds")) %>%
+        lapply(readRDS) %>%
+        setNames(smps)
+    plt$genome$heatmap_aneuHMM(scs) + guides(fill = guide_legend(title="Copy number"))
 }
 
 sys$run({
@@ -162,17 +171,17 @@ sys$run({
     schema = grid::rasterGrob(magick::image_read("external/CISschema.svg"))
     splot = ggplot() + annotation_custom(schema) +
         theme(axis.line=element_blank())
-xp = ggplot()
+    sc_wgs = sc_wgs()
     ins_mat = insertion_matrix(cis, rna_ins, aneup, net_genes)
     stype = subtype_assocs(ext, net_genes)
     bnet = bionet_combine(bionet)
 
-    asm = ((splot + xp + plot_layout(widths=c(2,3))) /
+    asm = ((splot + sc_wgs + plot_layout(widths=c(2,3))) /
         ins_mat /
         (stype + bnet + plot_layout(widths=c(2,7)))) +
             plot_layout(heights=c(1.2,3,2)) + plot_annotation(tag_levels='a')
 
-    pdf("Fig2-CIS.pdf", 16, 19)
+    pdf("Fig2-CIS.pdf", 14, 19)
     print(asm)
     dev.off()
 })
