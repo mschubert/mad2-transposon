@@ -57,6 +57,31 @@ sys$run({
     esets = lapply(fnames, file2deseq, samples=samples)
     plots = mapply(plot_overview, eset=esets, title=fnames, SIMPLIFY=FALSE)
 
+
+    # todo: move this into separate script
+    library(DESeq2)
+    idmap = import('process/idmap')
+    eset = esets[[1]]
+    cd = colData(eset) %>% as.data.frame() %>% mutate(short=sub(".*_([0-9]+)$", "\\1", sample_id)) %>%
+        filter(short %in% c("7", "15", "16", "11", "12"))
+    eset = eset[,cd$sample_id]
+    eset$treatment = relevel(factor(eset$treatment), "DMSO")
+    eset$cell_type = relevel(factor(eset$cell_type), "GrMac")
+    design(eset) = ~ cell_type + cell_type:treatment
+    res = DESeq(eset)
+    ifn = list(
+        GrMac = results(res, name="cell_typeGrMac.treatmentIFNa") %>% as.data.frame() %>%
+            tibble::rownames_to_column("ensembl_gene_id") %>% as_tibble() %>% arrange(pvalue) %>%
+            mutate(gene_name = idmap$gene(ensembl_gene_id, to="mgi_symbol")),
+        cKit = results(res, name="cell_typecKit.treatmentIFNa") %>% as.data.frame() %>%
+            tibble::rownames_to_column("ensembl_gene_id") %>% as_tibble() %>% arrange(pvalue) %>%
+            mutate(gene_name = idmap$gene(ensembl_gene_id, to="mgi_symbol"))
+    )
+    hms = readRDS("../genesets/mouse/MSigDB_Hallmark_2020.rds")
+    gset = import('genesets')
+    lapply(ifn, gset$test, sets=hms, stat="log2FoldChange")
+    # </todo>
+
     pdf(args$plotfile, 12, 7)
     print(ggplot() + annotation_custom(gridExtra::tableGrob(samples)))
     for (p in plots)
