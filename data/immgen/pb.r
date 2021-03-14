@@ -16,17 +16,17 @@ expr = dset$expr
 narray::intersect(expr, meta$fname, along=2)
 
 ## select informative genes for lineages
-#gene_variances = matrixStats::rowVars(expr)
-#hivar = head(order(gene_variances, decreasing=TRUE), 1000)
-#expr = expr[hivar,]
-x = readr::read_tsv("mart_export.txt") %>%
-    filter(`GO term accession` == "GO:0003700") %>%
-    pull(`Gene stable ID`) %>%
-    intersect(rownames(expr))
-expr = expr[x,]
+gene_variances = matrixStats::rowVars(expr)
+hivar = head(order(gene_variances, decreasing=TRUE), 1000)
+expr = expr[hivar,]
+#x = readr::read_tsv("mart_export.txt") %>%
+#    filter(`GO term accession` == "GO:0003700") %>%
+#    pull(`Gene stable ID`) %>%
+#    intersect(rownames(expr))
+#expr = expr[x,]
 
 # batch-correct mouse tumors
-tps = io$load("../rnaseq/assemble.RData")
+tps = readRDS("../rnaseq/assemble.rds")
 tpse = tps$expr
 tpsm = tps$idx
 
