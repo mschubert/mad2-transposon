@@ -1,6 +1,7 @@
 import_package("dplyr", attach=TRUE)
 import_package("ggplot2", attach=TRUE)
 import_package("DESeq2", attach=TRUE)
+gset = import('genesets')
 plt = import('plot')
 
 plot_pcs = function(idx, pca, x, y, hl=c()) {
@@ -67,32 +68,11 @@ do_lrt = function(eset, fml, red) {
         arrange(padj, pvalue)
 }
 
-test_gset = function(res, set) {
-    if ("log2FoldChange" %in% colnames(res))
-        cur = res %>% mutate(stat = log2FoldChange / lfcSE)
-    else
-        cur = res %>% mutate(stat = statistic)
-    fdata = mutate(cur, in_set = gene_name %in% set)
-    mod = try(lm(stat ~ in_set, data=fdata))
-    if (class(mod) == "try-error")
-        return()
-    broom::tidy(mod) %>%
-        filter(term == "in_setTRUE") %>%
-        select(-term) %>%
-        mutate(size = sum(fdata$in_set, na.rm=TRUE))
-}
-
-test_gsets = function(res, sets) {
-    result = lapply(sets, test_gset, res=res) %>%
-        setNames(names(sets)) %>%
-        dplyr::bind_rows(.id="label") %>%
-        mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
-        arrange(adj.p, p.value)
-}
-
 plot_gset = function(res, sets, highlight=NULL, fdr=0.1, base.size=0.1,
                      label_top=30, repel=TRUE) {
-    p = test_gsets(res, sets) %>%
+    p = res %>%
+        mutate(stat = log2FoldChange / lfcSE) %>%
+        gset$test(sets) %>%
         plt$p_effect("adj.p", thresh=fdr) %>%
         plt$volcano(p=fdr, base.size=base.size, label_top=label_top,
                     repel=repel, text.size=2)
