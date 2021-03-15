@@ -13,7 +13,7 @@ rule all:
     input:
         expand("{org}/{geneset}.rds", org=org, geneset=enrichr_sets),
         expand("{org}/MILE_regulons.rds", org=org),
-        "human/stat_ko.rds"
+        expand("{org}/stat_ko.rds", org=org)
 
 rule enrichr:
     input:
@@ -45,8 +45,10 @@ rule stat1_ko:
         rscript = "stat1_ko.r",
         diff_expr = expr_stat1("diff_expr.rds")
     output:
-        human = "human/stat1_ko.rds"
+        human = "human/stat1_ko.rds",
+        mouse = "mouse/stat1_ko.rds"
     shell:
         "Rscript {input.rscript}"
             " --diff_expr {input.diff_expr}"
             " --human {output.human}"
+            " --mouse {output.mouse}"
