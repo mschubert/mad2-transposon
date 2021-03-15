@@ -3,15 +3,22 @@ configfile: "../../config.yaml"
 subworkflow genesets:
     workdir: "../genesets"
 
+def gs(wc):
+    org = "human"
+    if wc.dset == "mad2pb":
+        org = "mouse"
+    return org + "/" + wc.sets + ".rds"
+
+dsets = [ 'gdsc', 'ccle', 'tcga-brca', 'mad2pb' ]
+
 rule all:
     input:
-        expand("{dsets}/{sets}.rds", dsets=['gdsc', 'ccle', 'tcga-brca'],
-                sets=config['genesets'] + ['stat1_ko'])
+        expand("{dset}/{sets}.rds", dset=dsets, sets=config['genesets'] + ['stat1_ko'])
 
 rule gsva:
     input:
         rscript = "{dset}.r",
-        setfile = genesets("human/{sets}.rds")
+        setfile = lambda wc: genesets(gs(wc))
     output:
         outfile = "{dset}/{sets}.rds"
     threads: 12
