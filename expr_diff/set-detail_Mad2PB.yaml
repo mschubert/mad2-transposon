@@ -1,0 +1,52 @@
+Cytokine:
+#    genes: [ ]
+    MSigDB_Hallmark_2020:
+        - Inflammatory Response
+        - Interferon Gamma Response
+        - Interferon Alpha Response
+        - TNF-alpha Signaling via NF-kB
+
+DNArepair:
+    MSigDB_Hallmark_2020:
+        - DNA Repair
+
+MycV1:
+    MSigDB_Hallmark_2020:
+        - Myc Targets V1
+
+MycV2:
+    MSigDB_Hallmark_2020:
+        - Myc Targets V2
+
+oxphos:
+    MSigDB_Hallmark_2020:
+        - Oxidative phosporylation
+
+mtRespiration:
+    GO_Biological_Process_2020:
+        - GO:0033108 mitochondrial respiratory chain complex assembly
+
+mtTranslation:
+    GO_Biological_Process_2020:
+        - GO:0032543 mitochondrial translation
+
+RibosomeBiogenesis:
+    GO_Biological_Process_2020:
+        - GO:0042254 ribosome biogenesis
+
+tRNAaa:
+    GO_Biological_Process_2020:
+        - GO:0043039 tRNA aminoacylation
+
+Stat1:
+    ChEA_2016:
+        - STAT1_17558387_ChIP-Seq_HELA_Human
+
+#Stat1Act:
+#    - c
+#        - s
+#
+#Stat1ActAnp:
+#    - c
+#        - s
+#        - s
