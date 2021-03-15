@@ -23,7 +23,7 @@ MycV2:
 
 oxphos:
     MSigDB_Hallmark_2020:
-        - Oxidative phosporylation
+        - Oxidative Phosphorylation
 
 mtRespiration:
     GO_Biological_Process_2020:
@@ -32,6 +32,8 @@ mtRespiration:
 mtTranslation:
     GO_Biological_Process_2020:
         - GO:0032543 mitochondrial translation
+        - GO:0070125 mitochondrial translational elongation
+        - GO:0070126 mitochondrial translational termination
 
 RibosomeBiogenesis:
     GO_Biological_Process_2020:
@@ -42,8 +44,8 @@ tRNAaa:
         - GO:0043039 tRNA aminoacylation
 
 Stat1:
-    ChEA_2016:
-        - STAT1_17558387_ChIP-Seq_HELA_Human
+    DoRothEA:
+        - STAT1 (a)
 
 #Stat1Act:
 #    - c

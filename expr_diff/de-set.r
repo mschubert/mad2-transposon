@@ -17,8 +17,9 @@ hl = yaml::read_yaml(args$config)$highlight_de
 eset = readRDS(args$eset)$eset
 res = readRDS(args$diff_expr)
 
-sets = readRDS(args$setfile) %>%
-    gset$filter(min=5, valid=rownames(eset))
+sname = basename(args$setfile) %>% tools::file_path_sans_ext()
+sets = gset$get_mouse(sname) %>%
+    gset$filter(min=3, valid=rownames(eset))
 
 pdf(args$plotfile)
 for (rname in names(res))

@@ -10,7 +10,7 @@ name2genes = function(cn) {
 }
 
 args = sys$cmd$parse(
-    opt('c', 'config', 'yaml', 'set-detail_Mad2PB.yaml'),
+    opt('c', 'config', 'yaml', 'de-detail_Mad2PB.yaml'),
     opt('d', 'de_obj', 'rds', 'de_Mad2PB.rds'),
     opt('k', 'key', 'key in config', 'DNArepair'),
     opt('p', 'plotfile', 'pdf', 'de_Mad2PB_set-detail/MycV1.pdf')
