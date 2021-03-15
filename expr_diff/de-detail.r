@@ -21,6 +21,9 @@ colls = gset$get_mouse(names(cfg), drop=FALSE)
 genes = lapply(names(colls), name2genes) %>%
     unlist() %>% unique()
 
+if (length(genes) == 0)
+    stop("no genes selected")
+
 res = readRDS(args$de_obj) %>%
     lapply(. %>%
         filter(gene_name %in% genes) %>%
