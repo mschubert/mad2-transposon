@@ -22,7 +22,9 @@ genes = lapply(names(colls), name2genes) %>%
     unlist() %>% unique()
 
 res = readRDS(args$de_obj) %>%
-    lapply(. %>% filter(gene_name %in% genes))
+    lapply(. %>%
+        filter(gene_name %in% genes) %>%
+        mutate(padj = p.adjust(pvalue, method="fdr")))
 
 pdf(args$plotfile)
 for (rname in names(res))

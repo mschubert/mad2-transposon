@@ -23,8 +23,9 @@ extract_coef = function(res, coef, type="apeglm") {
     DESeq2::lfcShrink(res, coef=coef, type=type) %>%
         as.data.frame() %>%
         tibble::rownames_to_column("gene_name") %>%
-        tbl_df() %>%
-        arrange(pvalue)
+        as_tibble() %>%
+        mutate(stat = log2FoldChange / lfcSE) %>%
+        arrange(padj, pvalue)
 }
 
 plot_volcano = function(res, highlight=NULL) {
@@ -71,7 +72,6 @@ do_lrt = function(eset, fml, red) {
 plot_gset = function(res, sets, highlight=NULL, fdr=0.1, base.size=0.1,
                      label_top=30, repel=TRUE) {
     p = res %>%
-        mutate(stat = log2FoldChange / lfcSE) %>%
         gset$test(sets) %>%
         plt$p_effect("adj.p", thresh=fdr) %>%
         plt$volcano(p=fdr, base.size=base.size, label_top=label_top,

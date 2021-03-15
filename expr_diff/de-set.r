@@ -15,7 +15,7 @@ args = sys$cmd$parse(
 
 hl = yaml::read_yaml(args$config)$highlight_de
 eset = readRDS(args$eset)$eset
-res = readRDS("de_Mad2PB.rds")
+res = readRDS(args$diff_expr)
 
 sets = readRDS(args$setfile) %>%
     gset$filter(min=5, valid=rownames(eset))
