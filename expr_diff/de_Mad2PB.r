@@ -12,7 +12,7 @@ de_type = function(eset, ats=c("Tcell", "Myeloid", "Other")) {
             DESeq2::nbinomWaldTest(maxit=1000) %>%
             util$extract_coef(term)
     }
-    sapply(ats, cancer_type, simplify=FALSE)
+    c(res, sapply(ats, cancer_type, simplify=FALSE))
 }
 
 #' Fit aneuploidy within cancer types
