@@ -7,16 +7,16 @@ plt = import('plot')
 idmap = import('process/idmap')
 
 args = sys$cmd$parse(
-    opt('e', 'expr', 'gene expression RData', '../data/rnaseq/assemble.RData'),
-    opt('m', 'meta', 'sample .RData', '../ploidy_compare/analysis_set.RData'),
+    opt('e', 'expr', 'gene expression rds', '../data/rnaseq/assemble.rds'),
+    opt('m', 'meta', 'sample rds', '../ploidy_compare/analysis_set.rds'),
     opt('p', 'plotfile', 'pdf to save plot to', '/dev/null'))
 
 genes = c("Mad2l1", "Trp53", "Ets1", "Erg", "Myc", "Sox4", "Il7", "Il7r", "Kit", "Irf4", "Stat1", "Stat3", "Bcl6",
           "Ebf1", "Cd19", "Ighm", "Ikzf1", "Tcf15", "Gata2", "Cd55b", "Pax5", "Tmem184a", "Dntt", "Igll1", "Runx1",
-          "Vpreb1", "Rag1", "Rag2", "Xrcc6", "Cd34", "Cd3g", "Cd3e", "Klrb1c", "Tacr1", "Itgam", "Ly6a", "Ptprc")
+          "Vpreb1", "Rag1", "Rag2", "Xrcc6", "Cd34", "Cd3g", "Cd3e", "Klrb1c", "Tacr1", "Itgam", "Ly6a", "Ly6g", "Ptprc")
 
-meta = io$load(args$meta)
-counts = io$load(args$expr)$counts
+meta = readRDS(args$meta)
+counts = readRDS(args$expr)$counts
 rownames(counts) = idmap$gene(rownames(counts), to="mgi_symbol", dset="mmusculus_gene_ensembl")
 counts = counts[rowSums(counts) > 0 & !is.na(rownames(counts)),]
 narray::intersect(meta$sample, counts, along=2)
@@ -27,7 +27,7 @@ reads = DESeq2::counts(eset, normalized=TRUE)
 expr = DESeq2::varianceStabilizingTransformation(eset)
 
 exp1 = t(assay(expr[genes,]))
-meta2 = meta %>% filter(type %in% c("Myeloid", "Other"))
+meta2 = meta %>% filter(type %in% c("Myeloid", "Other") | sample == "449s")
 exp2 = t(assay(expr[genes, meta2$sample]))
 pr = prcomp(exp1)
 umap = uwot::umap(exp1)
@@ -39,8 +39,16 @@ clust2 = igraph::cluster_louvain(scran::buildSNNGraph(t(exp2), k=5))
 umap = cbind(meta, umap, clust=factor(clust1$membership))
 umap2 = cbind(meta2, umap2, clust=factor(clust2$membership))
 
+meta21 = meta2 %>% mutate(cl = clust2$membership) %>% filter(! cl %in% c(1,2))
+exp21 = t(assay(expr[genes, meta21$sample]))
+pr21 = prcomp(exp21)
+clust21 = igraph::cluster_louvain(scran::buildSNNGraph(t(exp21), k=5))
+umap21 = uwot::umap(exp21)
+colnames(umap21) = c("umap1", "umap2")
+umap21 = cbind(meta21, umap21, clust=factor(clust21$membership))
+
 diffg = c("Cd34", "Ptprc", "Ly6a", "Kit")
-meta3 = meta %>% filter(type %in% c("Myeloid", "Other"))
+meta3 = meta2
 exp3 = t(assay(expr[diffg, meta3$sample]))
 pr3 = prcomp(exp3)
 
@@ -75,6 +83,16 @@ ggplot(umap2, aes(x=umap1, y=umap2)) +
     geom_point(aes(size=aneuploidy, shape=clust, color=type)) +
     ggrepel::geom_text_repel(aes(label=sample), size=2) +
     theme_classic()
+
+plt$pca(pr21, aes(x=PC1, y=PC2), annot=meta21, biplot=TRUE, bi_color="black", bi_size=3) +
+    geom_point(aes(size=aneuploidy, color=type)) +
+    geom_text(aes(label=sample), size=2) +
+    theme_classic()
+
+#ggplot(umap21, aes(x=umap1, y=umap2)) +
+#    geom_point(aes(size=aneuploidy, shape=clust, color=type)) +
+#    ggrepel::geom_text_repel(aes(label=sample), size=2) +
+#    theme_classic()
 
 cbind(umap2, t(reads[genes,meta2$sample])) %>%
     tidyr::gather("gene", "reads", -(aneup_src:clust)) %>%
