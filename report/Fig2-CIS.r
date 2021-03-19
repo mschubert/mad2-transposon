@@ -49,7 +49,7 @@ insertion_matrix = function(cis, rna_ins, aneup, net_genes) {
         filter(!is.na(external_gene_name))
 
     p1 = ggplot(cis_samples, aes(x=sample, y=external_gene_name)) +
-        geom_tile(aes(fill=ins_type, alpha=gene_read_frac, color=has_ins)) +
+        geom_tile(aes(fill=ins_type, alpha=gene_read_frac, color=has_ins), size=0.2) +
         scale_fill_manual(values=c("maroon4", "navy", "springgreen4"), na.translate=FALSE) +
         scale_color_manual(values="#565656ff") +
         guides(color = FALSE,
@@ -57,25 +57,39 @@ insertion_matrix = function(cis, rna_ins, aneup, net_genes) {
                alpha = guide_legend(title="Read fraction")) +
         theme(axis.text.x = element_text(angle=90, vjust=0.5)) +
         labs(x = "Sample",
-             y = "Transposon-inserted gene")
+             y = "Transposon-inserted gene") +
+        coord_cartesian(expand=FALSE)
 
     p11 = mutate(aneup, sample=factor(sample, smplvl)) %>%
         filter(!is.na(sample)) %>%
         ggplot(aes(x=sample, y=aneuploidy, fill=type)) +
-        geom_bar(stat="identity") +
-        geom_hline(yintercept=0.2, color="grey", linetype="dotted") +
-        theme(axis.title.x = element_blank(),
-              axis.text.x = element_blank(),
-              axis.ticks.x = element_blank(),
-              axis.line.x = element_blank()) +
-        guides(fill=guide_legend(title="Cancer type")) +
-        labs(y = "Aneuploidy") +
-        theme(plot.tag.position = c(0, 1.2))
+            geom_bar(stat="identity") +
+            geom_hline(yintercept=0.2, color="grey", linetype="dotted") +
+            theme(axis.title.x = element_blank(),
+                  axis.text.x = element_blank(),
+                  axis.ticks.x = element_blank(),
+                  axis.line.x = element_blank()) +
+            guides(fill=guide_legend(title="Cancer type")) +
+            labs(y = "Aneuploidy") +
+            theme(plot.tag.position = c(0, 1.2)) +
+            coord_cartesian(expand=FALSE)
 
-    p12 = ggplot(cis_stats, aes(x=external_gene_name, y=-log10(adj.p))) +
+    p12 = mutate(aneup, sample=factor(sample, smplvl)) %>%
+        filter(!is.na(sample)) %>%
+        ggplot(aes(x=sample, y=1)) +
+            geom_tile(aes(fill=genotype), color="black", size=0.2) +
+            theme(axis.text = element_blank(),
+                  axis.title = element_blank(),
+                  axis.ticks = element_blank(),
+                  axis.line = element_blank()) +
+            guides(fill=guide_legend(title="Genotype")) +
+            scale_fill_manual(values=c("Mad2 PB Mx1-Cre"="darkorchid", "PB Mx1-Cre"="white")) +
+            coord_cartesian(expand=FALSE)
+
+    p13 = ggplot(cis_stats, aes(x=external_gene_name, y=-log10(adj.p))) +
         geom_bar(stat="identity") +
         scale_x_discrete(position="top") +
-        coord_flip() +
+        coord_flip(expand=FALSE) +
         geom_hline(yintercept=-log10(0.01), color="grey", linetype="dotted") +
         theme(axis.title.y = element_blank(),
               axis.text.y = element_blank(),
@@ -83,8 +97,10 @@ insertion_matrix = function(cis, rna_ins, aneup, net_genes) {
               axis.line.y = element_blank()) +
         labs(y = "-log FDR")
 
-    p11 + plot_spacer() + p1 + (p12 + plot_layout(tag_level="new")) +
-        plot_layout(widths=c(5,1), heights=c(1,5), guides="collect")
+    p11 + plot_spacer() + (p12 + plot_layout(tag_level="new")) + plot_spacer() +
+        p1 + (p13 + plot_layout(tag_level="new")) +
+        plot_layout(widths=c(5,1), heights=c(1,0.1,5), guides="collect") &
+        theme(plot.margin=margin(0.25, 0, 0.25, 2, "mm"))
 }
 
 subtype_assocs = function(ext, net_genes) {
@@ -131,10 +147,9 @@ bionet_combine = function(bionet) {
     ggraph(cnet) +
         geom_edge_link(alpha=0.05, width=3) +
         geom_node_point(aes(size=hub, fill=aneup_hub), color="black", shape=21) +
-#        viridis::scale_fill_viridis() +
         scale_fill_distiller(palette="RdPu", direction=1) +
         geom_node_label(aes(label=external_gene_name, size=hub), repel=TRUE,
-                        label.size=NA, segment.alpha=0.3, fill="#ffffff50") +
+                        label.size=NA, segment.alpha=0.3, fill="#ffffff40") +
         scale_size(range = c(2.5,12)) +
         guides(fill = guide_legend(title="Aneuploidy\ncentrality", override.aes=list(size=5)),
                size = guide_legend(title="CIS centrality"))
@@ -158,7 +173,7 @@ sys$run({
     )
 
     aneup = readRDS(args$aset) %>%
-        select(sample, type, aneuploidy) %>%
+        select(genotype, sample, type, aneuploidy) %>%
         mutate(type = factor(type))
     levels(aneup$type)[levels(aneup$type) == "Other"] = "B-like"
     ext = readRDS(args$ext)
