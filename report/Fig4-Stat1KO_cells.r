@@ -53,6 +53,7 @@ stat1_cin_cor = function(go, hm) {
             ggrepel::geom_label_repel(aes(label=lab), size=3, max.iter=1e5, label.size=NA,
                 min.segment.length=0, max.overlaps=Inf, segment.alpha=0.3, fill="#ffffffc0",
                 label.padding=unit(0.2, "lines")) +
+            coord_cartesian(clip="off") +
             labs(subtitle = sprintf("%s (p=%.1g FET)", odds, fet$p.value))
     }
 
@@ -81,7 +82,7 @@ sys$run({
 
     expr_cor = stat1_cin_cor(go, hm)
 
-    pdf(args$plotfile, 17, 6)
+    pdf(args$plotfile, 16, 5)
     print(expr_cor)
     dev.off()
 })

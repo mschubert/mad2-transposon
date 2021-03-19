@@ -69,7 +69,8 @@ insertion_matrix = function(cis, rna_ins, aneup, net_genes) {
               axis.ticks.x = element_blank(),
               axis.line.x = element_blank()) +
         guides(fill=guide_legend(title="Cancer type")) +
-        labs(y = "Aneuploidy")
+        labs(y = "Aneuploidy") +
+        theme(plot.tag.position = c(0, 1.2))
 
     p12 = ggplot(cis_stats, aes(x=external_gene_name, y=-log10(adj.p))) +
         geom_bar(stat="identity") +
@@ -132,7 +133,8 @@ bionet_combine = function(bionet) {
         geom_node_point(aes(size=hub, fill=aneup_hub), color="black", shape=21) +
 #        viridis::scale_fill_viridis() +
         scale_fill_distiller(palette="RdPu", direction=1) +
-        geom_node_text(aes(label=external_gene_name, size=hub), repel=TRUE) +
+        geom_node_label(aes(label=external_gene_name, size=hub), repel=TRUE,
+                        label.size=NA, segment.alpha=0.3, fill="#ffffff50") +
         scale_size(range = c(2.5,12)) +
         guides(fill = guide_legend(title="Aneuploidy\ncentrality", override.aes=list(size=5)),
                size = guide_legend(title="CIS centrality"))
@@ -179,7 +181,8 @@ sys$run({
     asm = ((splot + sc_wgs + plot_layout(widths=c(2,3))) /
         ins_mat /
         (stype + bnet + plot_layout(widths=c(2,7)))) +
-            plot_layout(heights=c(1.2,3,2)) + plot_annotation(tag_levels='a')
+            plot_layout(heights=c(1.2,3,2)) + plot_annotation(tag_levels='a') &
+        theme(plot.tag = element_text(size=18, face="bold"))
 
     pdf("Fig2-CIS.pdf", 14, 19)
     print(asm)

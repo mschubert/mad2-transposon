@@ -116,7 +116,8 @@ sys$run({
         (chrom_genes() + plot_layout(widths=c(5,1)) + plot_spacer() +
          chroms(wgs, aset, wgs_merge) + genotype_weights(meta) +
             plot_layout(widths=c(5,1), heights=c(1,50), guides="collect")) +
-        plot_annotation(tag_levels='a') + plot_layout(heights=c(1,2))
+        plot_annotation(tag_levels='a') + plot_layout(heights=c(1,2)) &
+        theme(plot.tag = element_text(size=18, face="bold"))
 
     pdf(args$plotfile, 15, 10)
     print(asm)

@@ -61,7 +61,7 @@ aneup_volcano = function(diff_expr) {
                 pos_label_bias=1.5, x_label_bias=0.4, base.size=0.5, text.size=4) +
         xlab("Mean log2 fold change in set") +
         ylab("adjusted p-value (FDR) Wald change)") +
-        theme(axis.line.y = element_blank(),
+        theme(#axis.line.y = element_blank(),
               panel.grid.major = element_line(color="#efefef", size=0.5))
 }
 
@@ -85,6 +85,7 @@ sys$run({
 
     pdf(args$plotfile, 16, 14)
     umap / (volc2 + plot_spacer() + plot_layout(widths=c(1,1.5))) +
-        plot_layout(heights=c(1,2)) + plot_annotation(tag_levels='a')
+        plot_layout(heights=c(1,2)) + plot_annotation(tag_levels='a') &
+        theme(plot.tag = element_text(size=18, face="bold"))
     dev.off()
 })
