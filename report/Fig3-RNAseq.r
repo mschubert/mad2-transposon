@@ -17,7 +17,7 @@ umap_types = function(em) {
 
     p1 = ggplot(dset, aes(x=umap1, y=umap2)) +
         geom_point(aes(color=type, size=aneuploidy), alpha=0.8) +
-        ggrepel::geom_text_repel(aes(label=sample), size=3)
+        ggrepel::geom_text_repel(aes(label=sample), size=3, segment.alpha=0.3)
 
     markers = c("Cd3g", "Ebf1", "Kit", "Ighm", "Ly6g", "Ets1", "Erg", "Stat1")
     reads = em$reads[markers,]
@@ -72,10 +72,10 @@ sys$run({
         opt('p', 'plotfile', 'pdf', 'Fig3-RNAseq.pdf')
     )
 
-    meta = readRDS("../ploidy_compare/analysis_set.rds")
-    gsva = readRDS("../data/gsva/mad2pb/MSigDB_Hallmark_2020.rds") %>% t()
-    narray::intersect(meta$sample, gsva, along=1)
-    st$lm(gsva ~ aneuploidy, data=meta)
+#    meta = readRDS("../ploidy_compare/analysis_set.rds")
+#    gsva = readRDS("../data/gsva/mad2pb/MSigDB_Hallmark_2020.rds") %>% t()
+#    narray::intersect(meta$sample, gsva, along=1)
+#    st$lm(gsva ~ aneuploidy, data=meta)
 
     markers = readRDS("../expr_markers/markers.rds")
     diff_expr = readRDS(args$expr)
@@ -83,9 +83,11 @@ sys$run({
     umap = umap_types(markers)
     volc2 = aneup_volcano(diff_expr)
 
-    pdf(args$plotfile, 16, 14)
-    umap / (volc2 + plot_spacer() + plot_layout(widths=c(1,1.5))) +
+    asm = umap / (volc2 + plot_spacer() + plot_layout(widths=c(1,1.5))) +
         plot_layout(heights=c(1,2)) + plot_annotation(tag_levels='a') &
         theme(plot.tag = element_text(size=18, face="bold"))
+
+    pdf(args$plotfile, 16, 14)
+    print(asm)
     dev.off()
 })
