@@ -7,12 +7,12 @@ annot = as.data.frame(SummarizedExperiment::colData(mad2pb$eset))
 mile = io$load("../expr_diff/eset_MILE.RData")#$expr # is there a coarse def?
 meta = mile$meta
 
-genes = c("Ets1", "Erg", "Stat1", "Pias1", "Stat3", "Pten", "Notch1")
+genes = c("Ets1", "Erg", "Stat1", "Pias1", "Ifng")#, "Stat3", "Pten", "Notch1")
 c1 = cor(t(mad2pb$vs[genes, annot$type=="Myeloid"]))
 c2 = cor(t(mad2pb$vs[genes, annot$type=="Other"]))
 c3 = cor(t(mad2pb$vs[genes, annot$type=="T-cell"]))
 
-genes = c("ETS1", "ERG", "STAT1", "PIAS1", "STAT3", "PTEN", "NOTCH1")
+genes = c("ETS1", "ERG", "STAT1", "PIAS1", "Ifng")#, "STAT3", "PTEN", "NOTCH1")
 m1 = cor(t(mile$expr[genes, !is.na(meta$type) & meta$type=="Myeloid"]))
 m2 = cor(t(mile$expr[genes, !is.na(meta$type) & meta$type=="B_like"]))
 m3 = cor(t(mile$expr[genes, !is.na(meta$type) & meta$type=="T_ALL"]))
