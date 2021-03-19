@@ -82,14 +82,17 @@ genotype_weights = function(meta) {
         tidyr::gather("tissue", "weight", -sample) %>%
         mutate(tissue = sub("_g$", "", tissue))
     gt = ggplot(meta %>% mutate(gt=genotype, genotype=factor("genotype")), aes(y=sample)) +
-        geom_point(aes(x=genotype, fill=gt), size=2.5, shape=22) +
-        coord_cartesian(clip="off")
+        geom_tile(aes(x=genotype, fill=gt), color="black", size=0.2) +
+        guides(fill=guide_legend(title="Genotype")) +
+        scale_fill_manual(values=c("Mad2 PB Mx1-Cre"="darkorchid", "PB Mx1-Cre"="white")) +
+        coord_fixed(clip="off")
     tumors = ggplot(tw, aes(x=tissue, y=sample)) +
         geom_point(aes(size=weight), alpha=0.2) +
         coord_cartesian(clip="off") +
+        guides(size=guide_legend(title="Weight (grams)")) +
         scale_size_area()
     #todo: mad2 switching in % as bar?
-    gt + tumors + plot_layout(widths=c(1,2)) &
+    gt + tumors + plot_layout(widths=c(1,2), tag_level="new") &
         theme_minimal() &
         theme(axis.title.x = element_blank(),
               axis.title.y = element_blank(),
@@ -115,9 +118,10 @@ sys$run({
 #        plt$text("pathology imgs go here") +
         (chrom_genes() + plot_layout(widths=c(5,1)) + plot_spacer() +
          chroms(wgs, aset, wgs_merge) + genotype_weights(meta) +
-            plot_layout(widths=c(5,1), heights=c(1,50), guides="collect")) +
+            plot_layout(widths=c(10,1), heights=c(1,50), guides="collect")) +
         plot_annotation(tag_levels='a') + plot_layout(heights=c(1,2)) &
-        theme(plot.tag = element_text(size=18, face="bold"))
+        theme(plot.margin=margin(0.25, 0.25, 0.25, 0.25, "mm"),
+              plot.tag = element_text(size=18, face="bold"))
 
     pdf(args$plotfile, 15, 10)
     print(asm)
