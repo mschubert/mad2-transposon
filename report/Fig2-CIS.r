@@ -115,7 +115,7 @@ subtype_assocs = function(ext, net_genes) {
     types$subset = unname(lvl[types$subset])
     types$subset = factor(types$subset, levels=unname(lvl))
 
-    ggplot(types, aes(x=forcats::fct_reorder(external_gene_name, statistic), y=statistic)) +
+    p = ggplot(types, aes(x=forcats::fct_reorder(external_gene_name, statistic), y=statistic)) +
         geom_hline(yintercept=0, color="grey", linetype="dashed") +
         geom_bar(aes(fill=subset), stat="identity") +
         geom_text(aes(label=external_gene_name, y=statistic/2)) +
@@ -127,6 +127,7 @@ subtype_assocs = function(ext, net_genes) {
               axis.ticks.y = element_blank()) +
         guides(fill = FALSE) +
         labs(y = "Wald statistic")
+    wrap_elements(p)
 }
 
 bionet_combine = function(bionet) {
@@ -149,7 +150,7 @@ bionet_combine = function(bionet) {
         geom_node_point(aes(size=hub, fill=aneup_hub), color="black", shape=21) +
         scale_fill_distiller(palette="RdPu", direction=1) +
         geom_node_label(aes(label=external_gene_name, size=hub), repel=TRUE,
-                        label.size=NA, segment.alpha=0.3, fill="#ffffff40") +
+                        label.size=NA, segment.alpha=0.3, fill="#ffffff00") +
         scale_size(range = c(2.5,12)) +
         guides(fill = guide_legend(title="Aneuploidy\ncentrality", override.aes=list(size=5)),
                size = guide_legend(title="CIS centrality"))
