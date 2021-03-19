@@ -1,5 +1,9 @@
 configfile: "../config.yaml"
 
+import yaml
+with open("de-detail_Mad2PB.yaml") as f:
+    detail = yaml.safe_load(f)
+
 subworkflow rnaseq:
     workdir: "../data/rnaseq"
 
@@ -18,35 +22,68 @@ subworkflow sets:
 subworkflow net:
     workdir: "../data/networks"
 
+esets = ['Mad2PB'] #, 'Mad2PB+EtsErg', 'Mad2PB+noCopyCor', 'Mad2PB+multiCIS', 'MILE']
+
 rule all:
     input:
-        expand("de_{eset}.pdf", eset=['Mad2PB', 'Mad2PB+EtsErg', 'Mad2PB+noCopyCor',
-            'Mad2PB+multiCIS', 'MILE']),
-        expand("{ins_type}_plots/{ins}.pdf", ins=config['ins_plots'],
-                ins_type=['ins', 'ins+aneup', 'ins-over-expr', 'ins-under-expr'])
+        expand("de_{eset}.pdf", eset=esets),
+        expand("de_{eset}/{set}.pdf", eset=esets, set=config['genesets']),
+        expand("de_{eset}-detail/{key}.pdf", eset=esets, key=detail.keys()),
+#        expand("{ins_type}_plots/{ins}.pdf", ins=config['ins_plots'],
+#                ins_type=['ins', 'ins+aneup', 'ins-over-expr', 'ins-under-expr'])
 
 rule diff_expr:
     input:
         rscript = "de_{eset}.r",
         eset = "eset_{eset}.rds",
         config = "../config.yaml",
-        network = net("aracne_E-GEOD-13159.rds"),
-        sets = sets(expand("mouse/{sets}.rds", sets=config['genesets']))
+        network = net("aracne_E-GEOD-13159.rds")
     output:
-        result = "de_{eset}.rds",
-        plot = "de_{eset}.pdf"
+        outfile = "de_{eset}.rds",
+        plotfile = "de_{eset}.pdf"
     resources:
-        mem = 8000,
-        walltime = 600
+        mem = 4096,
+        walltime = 120
     shell:
         "Rscript {input.rscript}"
             " --eset {input.eset}"
             " --config {input.config}"
             " --network {input.network}"
-            " --outfile {output.result}"
-            " --plotfile {output.plot}"
-            " {input.sets}"
+            " --outfile {output.outfile}"
+            " --plotfile {output.plotfile}"
 
+rule set_expr:
+    input:
+        rscript = "de-set.r",
+        config = "../config.yaml",
+        eset = "eset_{eset}.rds",
+        diff_expr = "de_{eset}.rds",
+        setfile = sets("mouse/{set}.rds")
+    output:
+        outfile = "de_{eset}/{set}.rds",
+        plotfile = "de_{eset}/{set}.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --config {input.config}"
+            " --eset {input.eset}"
+            " --diff_expr {input.diff_expr}"
+            " --setfile {input.setfile}"
+            " --outfile {output.outfile}"
+            " --plotfile {output.plotfile}"
+
+rule set_detail:
+    input:
+        rscript = "de-detail.r",
+        config = "de-detail_{eset}.yaml",
+        de_obj = "de_{eset}.rds",
+    output:
+        plotfile = "de_{eset}-detail/{key}.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --config {input.config}"
+            " --de_obj {input.de_obj}"
+            " --key {wildcards.key}"
+            " --plotfile {output.plotfile}"
 
 rule eset_Mad2PBEtsErg:
     input:

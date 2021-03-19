@@ -1,0 +1,57 @@
+Cytokine:
+#    genes: [ Ccl5, Cxcl10, Ifna1, Ifnb1, Tnf, Il6, Ccl20, Cxcl1, Ccl2, Il2, Ifng,
+#             Ccr2, Ccr5, Cxcr3, Ifnar1, Ifnar2, Tlr3, Tlr4, Tlr7, Tlr8, Tlr,
+#             Il10ra, Il6ra, Ccr1, Ccr4, Tnfrsf1a, Tradd, Cxcr2, Ifngr1, Ifngr2,
+#             Samd9l, Isg15, Ifi27l2a, Ifit1, Oas1a, Oas1b, Isg54, Isg56 ]
+    MSigDB_Hallmark_2020:
+        - Inflammatory Response
+        - Interferon Gamma Response
+        - Interferon Alpha Response
+        - TNF-alpha Signaling via NF-kB
+
+DNArepair:
+    MSigDB_Hallmark_2020:
+        - DNA Repair
+
+MycV1:
+    MSigDB_Hallmark_2020:
+        - Myc Targets V1
+
+MycV2:
+    MSigDB_Hallmark_2020:
+        - Myc Targets V2
+
+oxphos:
+    MSigDB_Hallmark_2020:
+        - Oxidative Phosphorylation
+
+mtRespiration:
+    GO_Biological_Process_2020:
+        - GO:0033108 mitochondrial respiratory chain complex assembly
+
+mtTranslation:
+    GO_Biological_Process_2020:
+        - GO:0032543 mitochondrial translation
+        - GO:0070125 mitochondrial translational elongation
+        - GO:0070126 mitochondrial translational termination
+
+RibosomeBiogenesis:
+    GO_Biological_Process_2020:
+        - GO:0042254 ribosome biogenesis
+
+tRNAaa:
+    GO_Biological_Process_2020:
+        - GO:0043039 tRNA aminoacylation
+
+Stat1:
+    DoRothEA:
+        - STAT1 (a)
+
+#Stat1Act:
+#    - c
+#        - s
+#
+#Stat1ActAnp:
+#    - c
+#        - s
+#        - s
