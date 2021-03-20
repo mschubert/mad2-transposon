@@ -33,7 +33,7 @@ chrom_genes = function() {
     gen = data.frame(chromosome_name=c(1:19,'X'), len=gen[c(1:19,'X')]/1e6) %>%
         mutate(chromosome_name = factor(chromosome_name, levels=c(1:19,'X')))
     hlg = seq$coords$gene(dset="mmusculus_gene_ensembl", assembly="GRCm38") %>%
-        filter(external_gene_name %in% c("Trp53", "Ets1", "Erg", "Pten", "Notch1", "Myc")) %>%
+        filter(external_gene_name %in% c("Trp53", "Ets1", "Erg", "Pten", "Notch1", "Myc", "Kras")) %>%
         mutate(start = start_position / 1e6,
                end = end_position / 1e6,
                chromosome_name = factor(chromosome_name, levels=c(1:19,'X')))
@@ -93,6 +93,10 @@ genotype_weights = function(aset) {
         select(sample, spleen_g, thymus_g) %>%
         tidyr::gather("tissue", "weight", -sample) %>%
         mutate(tissue = sub("_g$", "", tissue))
+    sex = ggplot(aset %>% mutate(Sex=sex, sex=factor("sex")), aes(y=sample)) +
+        geom_tile(aes(x=sex, fill=Sex), color="black", size=0.2) +
+        scale_fill_manual(values=c("f"="#7570b3", "m"="#e6ab02")) +
+        coord_fixed(clip="off")
     gt = ggplot(aset %>% mutate(gt=genotype, genotype=factor("genotype")), aes(y=sample)) +
         geom_tile(aes(x=genotype, fill=gt), color="black", size=0.2) +
         guides(fill=guide_legend(title="Genotype")) +
@@ -104,7 +108,7 @@ genotype_weights = function(aset) {
         guides(size=guide_legend(title="Weight (grams)")) +
         scale_size_area()
     #todo: mad2 switching in % as bar?
-    gt + tumors + plot_layout(widths=c(1,2), tag_level="new") &
+    sex + gt + tumors + plot_layout(widths=c(1,1,3), tag_level="new") &
         theme_minimal() &
         theme(axis.title.x = element_blank(),
               axis.title.y = element_blank(),

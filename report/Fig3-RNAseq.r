@@ -19,7 +19,7 @@ umap_types = function(em) {
         geom_point(aes(color=type, size=aneuploidy), alpha=0.8) +
         ggrepel::geom_text_repel(aes(label=sample), size=3, segment.alpha=0.3)
 
-    markers = c("Cd3g", "Ebf1", "Kit", "Ighm", "Ly6g", "Ets1", "Erg", "Stat1")
+    markers = c("Cd3g", "Ly6g", "Ebf1", "Ighm", "Kit", "Ets1", "Erg", "Stat1")
     reads = em$reads[markers,]
     reads["Ighm",] = reads["Ighm",] / 100
     reads["Ly6g",] = reads["Ly6g",] * 10

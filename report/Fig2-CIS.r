@@ -99,7 +99,7 @@ insertion_matrix = function(cis, rna_ins, aneup, net_genes) {
 
     p11 + plot_spacer() + (p12 + plot_layout(tag_level="new")) + plot_spacer() +
         p1 + (p13 + plot_layout(tag_level="new")) +
-        plot_layout(widths=c(5,1), heights=c(1,0.1,5), guides="collect") &
+        plot_layout(widths=c(6,1), heights=c(1,0.1,5), guides="collect") &
         theme(plot.margin=margin(0.25, 0, 0.25, 2, "mm"))
 }
 
