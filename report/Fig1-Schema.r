@@ -1,6 +1,7 @@
 library(dplyr)
 library(ggplot2)
 library(patchwork)
+library(plyranges)
 sys = import('sys')
 plt = import('plot')
 seq = import('seq')
@@ -49,19 +50,33 @@ chrom_genes = function() {
 }
 
 chroms = function(wgs, aset, wgs_merge) {
+    merge_interval = function(smp) {
+        if (length(unique(smp$subset)) == 1)
+            return(smp %>% select(seqnames, start, end, copy.number))
+        smp = GenomicRanges::makeGRangesListFromDataFrame(smp, "subset", keep.extra.columns=TRUE)
+        plyranges::join_overlap_intersect(smp[[1]], smp[[2]]) %>%
+            as.data.frame() %>% as_tibble() %>%
+            mutate(copy.number = (copy.number.x * weight.x + copy.number.y * weight.y) / (weight.x + weight.y)) %>%
+            select(seqnames, start, end, copy.number)
+    }
     wgs30 = wgs$segments %>%
-        filter(seqnames %in% c(1:19,'X'),
-               state %in% paste0(c(1:5), "-somy")) %>%
-        mutate(start = start / 1e6,
-               end = end / 1e6)
-
-    aneup = seq$aneuploidy(wgs30, assembly="GRCm38", sample="sample") %>%
-        arrange(aneuploidy) %>%
-        filter(sample %in% c(aset$sample, wgs_merge$subset)) %>%
-        mutate(sample = factor(sample, levels=sample))
+        as_tibble() %>%
+        filter(seqnames %in% c(1:19,'X')) %>%
+        dplyr::rename(subset = sample) %>%
+        left_join(wgs_merge %>% select(-comment), by="subset") %>%
+        mutate(sample = ifelse(is.na(sample), subset, sample)) %>%
+        group_by(sample) %>%
+            tidyr::nest() %>%
+            mutate(joined = purrr::map(data, merge_interval)) %>%
+        ungroup() %>%
+        select(-data) %>%
+        tidyr::unnest("joined") %>%
+        inner_join(aset %>% select(sample, aneuploidy)) %>%
+        mutate(copy.number = factor(round(copy.number)),
+               sample = forcats::fct_reorder(sample, aneuploidy))
 
     ggplot(wgs30, aes(y=sample, yend=sample)) +
-        geom_segment(aes(x=start, xend=end, color=state), size=1.5) +
+        geom_segment(aes(x=start, xend=end, color=copy.number), size=1.5) +
         facet_grid(. ~ seqnames, scales="free", space="free") +
         scale_x_continuous(breaks=c(50, 100, 150)) +
         theme(plot.background = element_rect(fill="transparent", color=NA),
