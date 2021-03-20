@@ -1,7 +1,6 @@
 library(dplyr)
 library(ggplot2)
 library(patchwork)
-library(plyranges)
 sys = import('sys')
 plt = import('plot')
 seq = import('seq')
@@ -11,13 +10,13 @@ cohort = function() {
     ggplot() + annotation_custom(schema)
 }
 
-surv = function(meta) {
+surv = function(aset) {
     surv = grid::rasterGrob(magick::image_read("external/Overall survival in months - age.pdf"))
     ggplot() + annotation_custom(surv) + theme_void()
 }
 
-types = function(meta) {
-    tdf = meta %>%
+types = function(aset) {
+    tdf = aset %>%
         group_by(type) %>%
         summarize(frac = n() / nrow(.))
     types = ggplot(tdf, aes(x="", y=frac, fill=type)) +
@@ -73,12 +72,10 @@ chroms = function(wgs, aset, wgs_merge) {
         tidyr::unnest("joined") %>%
         inner_join(aset %>% select(sample, aneuploidy)) %>%
         mutate(copy.number = factor(round(copy.number)),
-               sample = forcats::fct_reorder(sample, aneuploidy))
+               cell = forcats::fct_reorder(sample, aneuploidy))
 
-    ggplot(wgs30, aes(y=sample, yend=sample)) +
-        geom_segment(aes(x=start, xend=end, color=copy.number), size=1.5) +
-        facet_grid(. ~ seqnames, scales="free", space="free") +
-        scale_x_continuous(breaks=c(50, 100, 150)) +
+    plt$genome$heatmap(wgs30) +
+        guides(fill=guide_legend(title="Copy number")) +
         theme(plot.background = element_rect(fill="transparent", color=NA),
               panel.background = element_rect(fill="transparent", color=NA),
               strip.background = element_blank(),
@@ -86,17 +83,17 @@ chroms = function(wgs, aset, wgs_merge) {
               panel.spacing.x = unit(0.5, "mm"),
               panel.grid.major = element_blank(),
               panel.grid.minor = element_blank(),
-              axis.text.x = element_text(angle=60, hjust=1)) +
-        coord_cartesian(clip="off", expand=FALSE) +
-        xlab("Position (Mb)")
+              axis.text.x = element_text(angle=60, hjust=1),
+              axis.text.y = element_text(size=5.5)) +
+        coord_cartesian(clip="off", expand=FALSE)
 }
 
-genotype_weights = function(meta) {
-    tw = meta %>%
+genotype_weights = function(aset) {
+    tw = aset %>%
         select(sample, spleen_g, thymus_g) %>%
         tidyr::gather("tissue", "weight", -sample) %>%
         mutate(tissue = sub("_g$", "", tissue))
-    gt = ggplot(meta %>% mutate(gt=genotype, genotype=factor("genotype")), aes(y=sample)) +
+    gt = ggplot(aset %>% mutate(gt=genotype, genotype=factor("genotype")), aes(y=sample)) +
         geom_tile(aes(x=genotype, fill=gt), color="black", size=0.2) +
         guides(fill=guide_legend(title="Genotype")) +
         scale_fill_manual(values=c("Mad2 PB Mx1-Cre"="darkorchid", "PB Mx1-Cre"="white")) +
@@ -111,12 +108,12 @@ genotype_weights = function(meta) {
         theme_minimal() &
         theme(axis.title.x = element_blank(),
               axis.title.y = element_blank(),
+              axis.text.y = element_blank(),
               axis.text.x = element_text(angle=60, hjust=1))
 }
 
 sys$run({
     args = sys$cmd$parse(
-        opt('m', 'meta', 'tsv', '../data/meta/meta.tsv'),
         opt('a', 'aset', 'rds', '../ploidy_compare/analysis_set.rds'),
         opt('w', 'wgs', 'rds', '../data/wgs/30cellseq.rds'),
         opt('m', 'wgs_merge', 'rds', '../ploidy_compare/analysis_set_merge.tsv'),
@@ -124,15 +121,16 @@ sys$run({
         opt('p', 'plotfile', 'pdf', 'Fig1-Schema.pdf')
     )
 
-    meta = readr::read_tsv(args$meta)
-    aset = readRDS(args$aset)
     wgs_merge = readr::read_tsv(args$wgs_merge)
     wgs = readRDS(args$wgs)
+    aset = readRDS(args$aset) %>%
+        filter(sample %in% sub("-(high|low)$", "", wgs$segments$sample)) %>%
+        mutate(sample = forcats::fct_reorder(sample, aneuploidy))
 
-    asm = ((cohort() | surv(meta) | types(meta)) + plot_layout(widths=c(1.8,1,1))) /
+    asm = ((cohort() | surv(aset) | types(aset)) + plot_layout(widths=c(1.8,1,1))) /
 #        plt$text("pathology imgs go here") +
         (chrom_genes() + plot_layout(widths=c(5,1)) + plot_spacer() +
-         chroms(wgs, aset, wgs_merge) + genotype_weights(meta) +
+         chroms(wgs, aset, wgs_merge) + genotype_weights(aset) +
             plot_layout(widths=c(10,1), heights=c(1,50), guides="collect")) +
         plot_annotation(tag_levels='a') + plot_layout(heights=c(1,2)) &
         theme(plot.margin=margin(0.25, 0.25, 0.25, 0.25, "mm"),
