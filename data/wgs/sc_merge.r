@@ -9,6 +9,7 @@ args = sys$cmd$parse(
 )
 
 merged = lapply(args$infiles, readRDS) %>%
+    setNames(tools::file_path_sans_ext(args$infiles)) %>%
     lapply(aneuf$consensus_ploidy) %>%
     dplyr::bind_rows(.id = "sample")
 
