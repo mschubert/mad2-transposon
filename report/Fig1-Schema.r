@@ -10,13 +10,13 @@ cohort = function() {
     ggplot() + annotation_custom(schema)
 }
 
-surv = function(aset) {
+surv = function(meta) {
     surv = grid::rasterGrob(magick::image_read("external/Overall survival in months - age.pdf"))
     ggplot() + annotation_custom(surv) + theme_void()
 }
 
-types = function(aset) {
-    tdf = aset %>%
+types = function(meta) {
+    tdf = meta %>%
         group_by(type) %>%
         summarize(frac = n() / nrow(.))
     types = ggplot(tdf, aes(x="", y=frac, fill=type)) +
@@ -48,31 +48,13 @@ chrom_genes = function() {
               panel.spacing.x = unit(1, "mm"))
 }
 
-chroms = function(wgs, aset, wgs_merge) {
-    merge_interval = function(smp) {
-        if (length(unique(smp$subset)) == 1)
-            return(smp %>% select(seqnames, start, end, copy.number))
-        smp = GenomicRanges::makeGRangesListFromDataFrame(smp, "subset", keep.extra.columns=TRUE)
-        plyranges::join_overlap_intersect(smp[[1]], smp[[2]]) %>%
-            as.data.frame() %>% as_tibble() %>%
-            mutate(copy.number = (copy.number.x * weight.x + copy.number.y * weight.y) / (weight.x + weight.y)) %>%
-            select(seqnames, start, end, copy.number)
-    }
-    wgs30 = wgs$segments %>%
-        as_tibble() %>%
-        filter(seqnames %in% c(1:19,'X')) %>%
-        dplyr::rename(subset = sample) %>%
-        left_join(wgs_merge %>% select(-comment), by="subset") %>%
-        mutate(sample = ifelse(is.na(sample), subset, sample)) %>%
-        group_by(sample) %>%
-            tidyr::nest() %>%
-            mutate(joined = purrr::map(data, merge_interval)) %>%
-        ungroup() %>%
-        select(-data) %>%
-        tidyr::unnest("joined") %>%
-        inner_join(aset %>% select(sample, aneuploidy)) %>%
-        mutate(copy.number = factor(round(copy.number)),
-               cell = forcats::fct_reorder(sample, aneuploidy))
+chroms = function(segs, meta) {
+    wgs30 = segs %>%
+        mutate(seqnames = factor(seqnames, levels=c(1:19,'X')),
+               sample = factor(sample, levels=levels(meta$sample))) %>%
+        inner_join(meta %>% select(sample, aneuploidy)) %>%
+        mutate(copy.number = factor(round(ploidy)),
+               cell = sample)
 
     plt$genome$heatmap(wgs30) +
         guides(fill=guide_legend(title="Copy number")) +
@@ -88,16 +70,16 @@ chroms = function(wgs, aset, wgs_merge) {
         coord_cartesian(clip="off", expand=FALSE)
 }
 
-genotype_weights = function(aset) {
-    tw = aset %>%
+genotype_weights = function(meta) {
+    tw = meta %>%
         select(sample, spleen_g, thymus_g) %>%
         tidyr::gather("tissue", "weight", -sample) %>%
         mutate(tissue = sub("_g$", "", tissue))
-    sex = ggplot(aset %>% mutate(Sex=sex, sex=factor("sex")), aes(y=sample)) +
+    sex = ggplot(meta %>% mutate(Sex=sex, sex=factor("sex")), aes(y=sample)) +
         geom_tile(aes(x=sex, fill=Sex), color="black", size=0.2) +
         scale_fill_manual(values=c("f"="#7570b3", "m"="#e6ab02")) +
         coord_fixed(clip="off")
-    gt = ggplot(aset %>% mutate(gt=genotype, genotype=factor("genotype")), aes(y=sample)) +
+    gt = ggplot(meta %>% mutate(gt=genotype, genotype=factor("genotype")), aes(y=sample)) +
         geom_tile(aes(x=genotype, fill=gt), color="black", size=0.2) +
         guides(fill=guide_legend(title="Genotype")) +
         scale_fill_manual(values=c("Mad2 PB Mx1-Cre"="darkorchid", "PB Mx1-Cre"="white")) +
@@ -119,22 +101,21 @@ genotype_weights = function(aset) {
 sys$run({
     args = sys$cmd$parse(
         opt('a', 'aset', 'rds', '../ploidy_compare/analysis_set.rds'),
-        opt('w', 'wgs', 'rds', '../data/wgs/30cellseq.rds'),
-        opt('m', 'wgs_merge', 'rds', '../ploidy_compare/analysis_set_merge.tsv'),
 #        opt('', '', '', ''),
         opt('p', 'plotfile', 'pdf', 'Fig1-Schema.pdf')
     )
 
-    wgs_merge = readr::read_tsv(args$wgs_merge)
-    wgs = readRDS(args$wgs)
-    aset = readRDS(args$aset) %>%
-        filter(sample %in% sub("-(high|low)$", "", wgs$segments$sample)) %>%
+    aset = readRDS(args$aset)
+    meta = aset$meta %>%
+        filter(!is.na(aneuploidy)) %>%
         mutate(sample = forcats::fct_reorder(sample, aneuploidy))
+    segs = aset$segs %>%
+        filter(is_pref_src)
 
-    asm = ((cohort() | surv(aset) | types(aset)) + plot_layout(widths=c(1.8,1,1))) /
+    asm = ((cohort() | surv(meta) | types(meta)) + plot_layout(widths=c(1.8,1,1))) /
 #        plt$text("pathology imgs go here") +
         (chrom_genes() + plot_layout(widths=c(5,1)) + plot_spacer() +
-         chroms(wgs, aset, wgs_merge) + genotype_weights(aset) +
+         chroms(segs, meta) + genotype_weights(meta) +
             plot_layout(widths=c(10,1), heights=c(1,50), guides="collect")) +
         plot_annotation(tag_levels='a') + plot_layout(heights=c(1,2)) &
         theme(plot.margin=margin(0.25, 0.25, 0.25, 0.25, "mm"),
