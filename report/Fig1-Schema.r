@@ -75,6 +75,11 @@ genotype_weights = function(meta) {
         select(sample, spleen_g, thymus_g) %>%
         tidyr::gather("tissue", "weight", -sample) %>%
         mutate(tissue = sub("_g$", "", tissue))
+    ct = ggplot(meta, aes(y=sample)) +
+        geom_tile(aes(x="type", fill=type), color="black", size=0.2) +
+#        scale_fill_manual(values=c("f"="#7570b3", "m"="#e6ab02")) +
+        coord_fixed(clip="off") +
+        guides(fill=FALSE)
     sex = ggplot(meta %>% mutate(Sex=sex, sex=factor("sex")), aes(y=sample)) +
         geom_tile(aes(x=sex, fill=Sex), color="black", size=0.2) +
         scale_fill_manual(values=c("f"="#7570b3", "m"="#e6ab02")) +
@@ -90,7 +95,7 @@ genotype_weights = function(meta) {
         guides(size=guide_legend(title="Weight (grams)")) +
         scale_size_area()
     #todo: mad2 switching in % as bar?
-    sex + gt + tumors + plot_layout(widths=c(1,1,3), tag_level="new") &
+    ct + sex + gt + tumors + plot_layout(widths=c(1,1,1,3), tag_level="new") &
         theme_minimal() &
         theme(axis.title.x = element_blank(),
               axis.title.y = element_blank(),
