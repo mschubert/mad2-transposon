@@ -24,6 +24,8 @@ MycV2:
 oxphos:
     MSigDB_Hallmark_2020:
         - Oxidative Phosphorylation
+    KEGG_2016:
+        - Oxidative phosphorylation Homo sapiens hsa00190
 
 mtRespiration:
     GO_Biological_Process_2020:
@@ -38,10 +40,20 @@ mtTranslation:
 RibosomeBiogenesis:
     GO_Biological_Process_2020:
         - GO:0042254 ribosome biogenesis
+    KEGG_2016:
+        - Ribosome biogenesis in eukaryotes Homo sapiens hsa03008
+    Reactome_2016:
+        - rRNA processing Homo sapiens R-HSA-72312
+        - Major pathway of rRNA processing in the nucleolus Homo sapiens R-HSA-6791226
+        - rRNA modification in the nucleus Homo sapiens R-HSA-6790901
 
 tRNAaa:
     GO_Biological_Process_2020:
         - GO:0043039 tRNA aminoacylation
+    KEGG_2016:
+        - Aminoacyl-tRNA biosynthesis Homo sapiens hsa00970
+    Reactome_2016:
+        - tRNA Aminoacylation Homo sapiens R-HSA-379724
 
 Stat1:
     DoRothEA:
