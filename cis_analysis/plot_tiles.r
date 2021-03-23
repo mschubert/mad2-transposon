@@ -77,7 +77,7 @@ sys$run({
     )
 
     aneup_assocs = readRDS(args$assocs_dna)$aneuploidy
-    aneup = readRDS(args$aneup) %>%
+    aneup = readRDS(args$aneup)$meta %>%
         arrange(aneuploidy) %>%
         mutate(sample = factor(sample, levels=sample))
 

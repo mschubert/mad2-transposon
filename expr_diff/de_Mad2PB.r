@@ -5,14 +5,17 @@ util = import('./util')
 
 #' Fit tissue of origin (vs. mean) and pan-aneuploidy (tissue and type-corrected)
 de_type = function(eset, ats=c("Tcell", "Myeloid", "Other")) {
-    res = util$do_wald(eset, ~ tissue + type + aneuploidy, ex="tissue|aneuploidy")
+    res0 = util$do_wald(eset, ~ aneuploidy, ex="aneuploidy", drop=FALSE)
+    res1 = util$do_wald(eset, ~ tissue + aneuploidy, ex="aneuploidy", drop=FALSE)
+    res2 = util$do_wald(eset, ~ tissue + type + aneuploidy, ex="tissue|aneuploidy")
     cancer_type = function(term) {
         DESeq2::design(eset) = formula(paste("~ tissue + ", term))
         DESeq2::estimateDispersions(eset) %>%
             DESeq2::nbinomWaldTest(maxit=1000) %>%
             util$extract_coef(term)
     }
-    c(res, sapply(ats, cancer_type, simplify=FALSE))
+    res3 = sapply(ats, cancer_type, simplify=FALSE)
+    c(aneuploidy_naive=res0, aneuploidy_tissue=res1, res2, res3)
 }
 
 #' Fit aneuploidy within cancer types
