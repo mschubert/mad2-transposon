@@ -65,25 +65,73 @@ aneup_volcano = function(diff_expr) {
               panel.grid.major = element_line(color="#efefef", size=0.5))
 }
 
+gset_cor = function(meta) {
+    meta2 = meta %>%
+        filter(!is.na(type))
+
+    p1 = ggplot(meta2, aes(x=`Interferon Gamma Response`, y=aneuploidy)) +
+        geom_point(aes(color=type, size=STAT1), alpha=0.5) +
+        geom_smooth(aes(color=type), method="lm", se=FALSE) +
+        geom_smooth(method="lm", se=FALSE, color="black") +
+        plot_layout(tag_level="new")
+    d1 = ggplot(meta2, aes(x=type, y=`Interferon Gamma Response`)) +
+        geom_boxplot(aes(fill=type)) +
+        coord_flip() +
+        theme(axis.text = element_blank(),
+              axis.title = element_blank(),
+              legend.position = "none")
+    p2 = ggplot(meta2, aes(x=`Myc Targets V1`, y=aneuploidy)) +
+        geom_point(aes(color=type, size=STAT1), alpha=0.5) +
+        geom_smooth(aes(color=type), method="lm", se=FALSE) +
+        geom_smooth(method="lm", se=FALSE, color="black") +
+        theme(axis.title.y = element_blank()) +
+        plot_layout(tag_level="new")
+    d2 = ggplot(meta2, aes(x=type, y=`Myc Targets V1`)) +
+        geom_boxplot(aes(fill=type)) +
+        coord_flip() +
+        theme(axis.text = element_blank(),
+              axis.title = element_blank(),
+              legend.position = "none")
+    d3 = ggplot(meta2, aes(x=type, y=aneuploidy)) +
+        geom_boxplot(aes(fill=type)) +
+        theme(axis.text = element_blank(),
+              axis.title = element_blank(),
+              legend.position = "none") +
+        plot_layout(tag_level="new")
+
+    d1 + d2 + plot_spacer() + p1 + p2 + d3 +
+        plot_layout(widths=c(5,5,1), heights=c(1,5), guides="collect")
+}
+
 sys$run({
     args = sys$cmd$parse(
+        opt('a', 'aset', 'rds', '../ploidy_compare/analysis_set.rds'),
         opt('e', 'expr', 'rds', '../expr_diff/de_Mad2PB.rds'),
-#        opt('', '', '', ''),
+        opt('h', 'gsva_hm', 'rds', '../data/gsva/mad2pb/MSigDB_Hallmark_2020.rds'),
+        opt('d', 'gsva_dorothea', 'rds', '../data/gsva/mad2pb/DoRothEA.rds'),
         opt('p', 'plotfile', 'pdf', 'Fig3-RNAseq.pdf')
     )
 
-#    meta = readRDS("../ploidy_compare/analysis_set.rds")
-#    gsva = readRDS("../data/gsva/mad2pb/MSigDB_Hallmark_2020.rds") %>% t()
-#    narray::intersect(meta$sample, gsva, along=1)
-#    st$lm(gsva ~ aneuploidy, data=meta)
+    ghm = readRDS(args$gsva_hm)
+    gdo = readRDS(args$gsva_dorothea)
+    narray::intersect(ghm, gdo, along=2)
+    sets = tibble(sample = colnames(ghm),
+                  `Myc Targets V1` = ghm["Myc Targets V1",],
+                  `Interferon Gamma Response` = ghm["Interferon Gamma Response",],
+                  STAT1 = gdo["STAT1 (a)",])
+
+    aset = readRDS(args$aset)
+    meta = aset$meta %>%
+        left_join(sets)
 
     markers = readRDS("../expr_markers/markers.rds")
     diff_expr = readRDS(args$expr)
 
     umap = umap_types(markers)
     volc2 = aneup_volcano(diff_expr)
+    gsc = gset_cor(meta)
 
-    asm = umap / (volc2 + plot_spacer() + plot_layout(widths=c(1,1.5))) +
+    asm = umap / (volc2 + (gsc / plot_spacer() + plot_layout(heights=c(1.2,1))) + plot_layout(widths=c(1,1.5))) +
         plot_layout(heights=c(1,2)) + plot_annotation(tag_levels='a') &
         theme(plot.tag = element_text(size=18, face="bold"))
 
