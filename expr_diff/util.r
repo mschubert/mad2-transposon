@@ -45,7 +45,7 @@ plot_volcano = function(res, highlight=NULL) {
     plt$volcano(df, p=0.1, base.size=5, label_top=30, repel=TRUE)
 }
 
-do_wald = function(eset, fml, ex=NULL) {
+do_wald = function(eset, fml, ex=NULL, drop=TRUE) {
     design(eset) = fml
     res = DESeq2::estimateDispersions(eset) %>%
         DESeq2::nbinomWaldTest(maxit=1000)
@@ -54,7 +54,7 @@ do_wald = function(eset, fml, ex=NULL) {
     else
         ex = grep(ex, DESeq2::resultsNames(res), value=TRUE)
     res = sapply(ex, extract_coef, res=res, simplify=FALSE)
-    if (length(res) == 1)
+    if (length(res) == 1 && drop)
         res = res[[1]]
     res
 }
