@@ -71,7 +71,7 @@ sys$run({
         opt('p', 'plotfile', 'pdf', 'ext_epi/enhancer.pdf')
     )
 
-    meta = readRDS(args$meta) %>%
+    meta = readRDS(args$meta)$meta %>%
         mutate(aneuploidy = pmin(aneuploidy, 0.2))
     dset = readRDS(args$poisson)
     ids = with(dset, intersect(samples$id, result$id))

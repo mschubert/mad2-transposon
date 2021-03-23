@@ -173,7 +173,7 @@ sys$run({
         opt('r', 'rna_ins', 'txt', '../data/rnaseq_imfusion/insertions.txt')
     )
 
-    aneup = readRDS(args$aset) %>%
+    aneup = readRDS(args$aset)$meta %>%
         select(genotype, sample, type, aneuploidy) %>%
         mutate(type = factor(type))
     levels(aneup$type)[levels(aneup$type) == "Other"] = "B-like"

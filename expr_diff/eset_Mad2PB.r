@@ -14,7 +14,7 @@ args = sys$cmd$parse(
 
 gene_copies = readRDS(args$copies)
 exprset = readRDS(args$expr)
-idx = readRDS(args$meta) %>%
+idx = readRDS(args$meta)$meta %>%
     mutate(type = ifelse(is.na(type), "unknown", type))
 colnames(idx) = sub("T-cell", "Tcell", colnames(idx))
 counts = exprset$counts

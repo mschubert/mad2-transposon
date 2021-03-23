@@ -23,7 +23,7 @@ args = sys$cmd$parse(
 )
 
 all_genes = strsplit(args$gene, "+", fixed=TRUE)[[1]]
-meta = readRDS(args$meta)
+meta = readRDS(args$meta)$meta
 de_ctgs = io$read_table(args$ctgs, header=TRUE)
 rna_ins = io$read_table(args$rna_ins, header=TRUE)
 exons = io$read_table(args$exons, header=TRUE)

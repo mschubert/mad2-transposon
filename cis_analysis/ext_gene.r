@@ -71,7 +71,7 @@ sys$run({
         opt('p', 'plotfile', 'pdf', 'ext_gene.pdf')
     )
 
-    meta = readRDS(args$meta) %>%
+    meta = readRDS(args$meta)$meta %>%
         mutate(aneuploidy = pmin(aneuploidy, 0.2))
     dset = readRDS(args$poisson)
     genes = with(dset, intersect(samples$external_gene_name,

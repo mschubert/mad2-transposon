@@ -15,7 +15,7 @@ genes = c("Mad2l1", "Trp53", "Ets1", "Erg", "Myc", "Sox4", "Il7", "Il7r", "Kit",
           "Ebf1", "Cd19", "Ighm", "Ikzf1", "Tcf15", "Gata2", "Cd55b", "Pax5", "Tmem184a", "Dntt", "Igll1", "Runx1",
           "Vpreb1", "Rag1", "Rag2", "Xrcc6", "Cd34", "Cd3g", "Cd3e", "Klrb1c", "Tacr1", "Itgam", "Ly6a", "Ly6g", "Ptprc")
 
-meta = readRDS(args$meta)
+meta = readRDS(args$meta)$meta
 counts = readRDS(args$expr)$counts
 rownames(counts) = idmap$gene(rownames(counts), to="mgi_symbol", dset="mmusculus_gene_ensembl")
 counts = counts[rowSums(counts) > 0 & !is.na(rownames(counts)),]
