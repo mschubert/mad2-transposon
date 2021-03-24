@@ -22,16 +22,20 @@ umap_types = function(em) {
     markers = c("Cd3g", "Ly6g", "Ebf1", "Ighm", "Kit", "Ets1", "Erg", "Stat1")
     reads = em$reads[markers,]
     reads["Ighm",] = reads["Ighm",] / 100
-    reads["Ly6g",] = reads["Ly6g",] * 10
+#    reads["Ly6g",] = reads["Ly6g",] * 10
     reads = reads %>%
         reshape2::melt() %>%
         as_tibble() %>%
         dplyr::rename(gene=Var1, sample=Var2, reads=value) %>%
+        group_by(gene) %>%
+            mutate(reads_scaled = reads / max(reads)) %>%
+        ungroup() %>%
         inner_join(dset %>% select(sample, umap1, umap2, aneuploidy))
     p2 = ggplot(reads, aes(x=umap1, y=umap2)) +
-        geom_point(aes(fill=reads, size=aneuploidy), color="black", alpha=0.8, shape=21) +
+        geom_point(aes(fill=reads, size=reads_scaled), color="black", alpha=0.8, shape=21) +
         facet_wrap(~gene, nrow=2) +
         scale_fill_distiller(palette="Spectral", trans="log10") +
+        coord_cartesian(clip="off") +
         theme(strip.background = element_rect(fill="#efefef"))
     p1 + p2 + plot_layout(nrow=1, widths=c(1.1,2))
 }
@@ -106,6 +110,7 @@ gset_cor = function(meta) {
 sys$run({
     args = sys$cmd$parse(
         opt('a', 'aset', 'rds', '../ploidy_compare/analysis_set.rds'),
+        opt('c', 'cis', 'rds', '../cis_analysis/poisson.rds'),
         opt('e', 'expr', 'rds', '../expr_diff/de_Mad2PB.rds'),
         opt('h', 'gsva_hm', 'rds', '../data/gsva/mad2pb/MSigDB_Hallmark_2020.rds'),
         opt('d', 'gsva_dorothea', 'rds', '../data/gsva/mad2pb/DoRothEA.rds'),
@@ -119,6 +124,8 @@ sys$run({
                   `Myc Targets V1` = ghm["Myc Targets V1",],
                   `Interferon Gamma Response` = ghm["Interferon Gamma Response",],
                   STAT1 = gdo["STAT1 (a)",])
+
+    cis = readRDS(args$cis)$samples # todo: add stat1 ins to lm plot
 
     aset = readRDS(args$aset)
     meta = aset$meta %>%
