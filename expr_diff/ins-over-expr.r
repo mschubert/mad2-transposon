@@ -41,12 +41,13 @@ idx = colData(eset) %>%
            ins = ifelse(is.na(ins), 0, 1))
 eset@colData = DataFrame(idx)
 
-design(eset) = ~ tissue + type + expr + ins
-res = DESeq2::estimateDispersions(eset) %>%
-    DESeq2::nbinomLRT(reduced=~ tissue + type + expr, maxit=1000) %>%
-    DESeq2::results() %>%
-    as.data.frame() %>%
-    tibble::rownames_to_column("gene_name")
+res = util$do_wald(eset, ~ tissue + type + expr + ins, ex="ins")
+#design(eset) = ~ tissue + type + expr + ins
+#res = DESeq2::estimateDispersions(eset) %>%
+#    DESeq2::nbinomLRT(reduced=~ tissue + type + expr, maxit=1000) %>%
+#    DESeq2::results() %>%
+#    as.data.frame() %>%
+#    tibble::rownames_to_column("gene_name")
 
 sets = lapply(args$sets, readRDS) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
