@@ -70,9 +70,12 @@ do_lrt = function(eset, fml, red) {
 }
 
 plot_gset = function(res, sets, highlight=NULL, fdr=0.1, base.size=0.1,
-                     label_top=30, repel=TRUE) {
+                     label_top=30, repel=TRUE, stat="stat") {
+    #todo: it seems better to do gset$test with stat=log2FoldChange if the
+    # FCs were shrunk before; otherwise, for a Wald test stat=stat looks better
+    # and for an LRT sign(lfc)*stat
     p = res %>%
-        gset$test(sets) %>%
+        gset$test(sets, stat=stat) %>%
         plt$p_effect("adj.p", thresh=fdr) %>%
         plt$volcano(p=fdr, base.size=base.size, label_top=label_top,
                     repel=repel, text.size=2)

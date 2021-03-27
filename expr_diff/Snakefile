@@ -29,15 +29,16 @@ rule all:
         expand("de_{eset}.pdf", eset=esets),
         expand("de_{eset}/{set}.pdf", eset=esets, set=config['genesets']),
         expand("de_{eset}-detail/{key}.pdf", eset=esets, key=detail.keys()),
-#        expand("{ins_type}_plots/{ins}.pdf", ins=config['ins_plots'],
-#                ins_type=['ins', 'ins+aneup', 'ins-over-expr', 'ins-under-expr'])
+        expand("{ins_type}_plots/{ins}.pdf", ins=config['ins_plots'],
+                ins_type=['ins', 'ins+aneup', 'ins-over-expr', 'ins-under-expr'])
 
 rule diff_expr:
     input:
         rscript = "de_{eset}.r",
         eset = "eset_{eset}.rds",
         config = "../config.yaml",
-        network = net("aracne_E-GEOD-13159.rds")
+        network = net("aracne_E-GEOD-13159.rds"),
+        sets = sets(expand("mouse/{sets}.rds", sets=config['genesets']))
     output:
         outfile = "de_{eset}.rds",
         plotfile = "de_{eset}.pdf"
@@ -51,6 +52,7 @@ rule diff_expr:
             " --network {input.network}"
             " --outfile {output.outfile}"
             " --plotfile {output.plotfile}"
+            " {input.sets}"
 
 rule set_expr:
     input:
