@@ -6,7 +6,6 @@ theme_set(cowplot::theme_cowplot())
 sys = import('sys')
 gset = import('genesets')
 plt = import('plot')
-gnet = import('tools/genenet')
 
 umap_types = function(em) {
     set.seed(15209)
@@ -173,6 +172,7 @@ sys$run({
         t(gdo[c("STAT1 (a)", "TP53 (a)"),])
     ) %>% as_tibble() %>% na.omit()
 
+    #todo: move the subtype annotations to the actual metadata
     gdf = sets %>%
         mutate(subtype = case_when(
             sample %in% c("157s", "404s", "411s", "412s", "416s", "424s", "425s", "428s",
@@ -190,11 +190,19 @@ sys$run({
     markers = readRDS("../expr_markers/markers.rds")
     diff_expr = readRDS(args$expr)
 
+    #TODO:
+    # quant cor black line +/- tissue adjustment
+    # cor plot annotate insertions
+    # volcano condition on STAT+Ifn (?)
+    # volcano different colors for HMs, dorothea
+    # switch Ighm for monocyte marker?
+    # myc copies -> myc targets? (maybe: does Myc targets assoc drop when conditioning on copies) [could do xy instead of @volc]
+
     umap = umap_types(markers)
     volc2 = aneup_volcano(diff_expr)
-    gsa = set_tissue(gdf) / gset_aneup(gdf) + plot_layout(heights=c(1,1,1.8))
+    gsa = set_tissue(gdf) / gset_aneup(gdf) + plot_layout(heights=c(1,1,2))
 
-    asm = umap / (volc2 | gsa) +
+    asm = umap / (volc2 + gsa + plot_layout(widths=c(2,3))) +
         plot_layout(heights=c(1,2)) + plot_annotation(tag_levels='a') &
         theme(plot.tag = element_text(size=18, face="bold"))
 
