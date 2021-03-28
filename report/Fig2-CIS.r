@@ -4,10 +4,8 @@ library(ggplot2)
 library(patchwork)
 library(ggraph)
 theme_set(cowplot::theme_cowplot())
-io = import('io')
 sys = import('sys')
 plt = import('plot')
-idmap = import('process/idmap')
 
 insertion_matrix = function(cis, rna_ins, aneup, net_genes) {
     rna_ins = rna_ins %>%
@@ -183,7 +181,7 @@ sys$run({
     net_genes = bionet$cis_net %N>% pull(external_gene_name)
 
     # insertion processing
-    rna_ins = io$read_table(args$rna_ins, header=TRUE)
+    rna_ins = readr::read_tsv(args$rna_ins)
     cis = readRDS(args$poisson)
 
     # create plot objects
