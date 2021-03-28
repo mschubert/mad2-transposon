@@ -82,6 +82,57 @@ cor_net = function(sets, cis) {
     gnet$plot_bootstrapped_pcor(smat5, fdr=0.5, n=500, show_edge_if=50, layout="stress")
 }
 
+#fixme: defunct
+EtsErg_TPS = function() {
+    genes = c("Ets1", "Erg", "Stat1", "Pias1")
+    dset = io$load("../expr_diff/eset_Mad2PB.RData")
+
+    meta = as.data.frame(SummarizedExperiment::colData(dset$eset))
+
+    expr = reshape2::melt(dset$vs[genes,]) %>%
+        dplyr::rename(gene=Var1, sample=Var2, expr=value) %>%
+        inner_join(meta %>% select(sample, type)) %>%
+        filter(type != "unknown") %>%
+        mutate(type = as.character(type))
+
+    eplot = ggplot(expr, aes(x=type, y=expr)) +
+        geom_boxplot(aes(fill=type), outlier.shape=NA) +
+        facet_wrap(~ gene, scales="free_y", ncol=1)
+
+    #FIXME: annoying empty plots
+    c1 = corrplot::corrplot(cor(t(dset$vs[genes, meta$type == "Myeloid"])), main="Myeloid")
+    c2 = corrplot::corrplot(cor(t(dset$vs[genes, meta$type == "Other"])), main="B-like")
+    c3 = corrplot::corrplot(cor(t(dset$vs[genes, meta$type == "T-cell"])), main="T-ALL")
+    #{ c1 + c2 + c3 + plot_layout(ncol=1) } + { eplot } + plot_layout(nrow=1)
+}
+
+#fixme: defunct
+EtsErg_MILE = function() {
+    mad2pb = io$load("../expr_diff/eset_Mad2PB.RData")
+    annot = as.data.frame(SummarizedExperiment::colData(mad2pb$eset))
+
+    mile = io$load("../expr_diff/eset_MILE.RData")#$expr # is there a coarse def?
+    meta = mile$meta
+
+    genes = c("Ets1", "Erg", "Stat1", "Pias1", "Ifng")#, "Stat3", "Pten", "Notch1")
+    c1 = cor(t(mad2pb$vs[genes, annot$type=="Myeloid"]))
+    c2 = cor(t(mad2pb$vs[genes, annot$type=="Other"]))
+    c3 = cor(t(mad2pb$vs[genes, annot$type=="T-cell"]))
+
+    genes = c("ETS1", "ERG", "STAT1", "PIAS1", "Ifng")#, "STAT3", "PTEN", "NOTCH1")
+    m1 = cor(t(mile$expr[genes, !is.na(meta$type) & meta$type=="Myeloid"]))
+    m2 = cor(t(mile$expr[genes, !is.na(meta$type) & meta$type=="B_like"]))
+    m3 = cor(t(mile$expr[genes, !is.na(meta$type) & meta$type=="T_ALL"]))
+
+    corrplot::corrplot(c1, tl.cex=2, tl.col="black")
+    corrplot::corrplot(c2, tl.cex=2, tl.col="black")
+    corrplot::corrplot(c3, tl.cex=2, tl.col="black")
+
+    corrplot::corrplot(m1, tl.cex=2, tl.col="black")
+    corrplot::corrplot(m2, tl.cex=2, tl.col="black")
+    corrplot::corrplot(m3, tl.cex=2, tl.col="black")
+}
+
 sys$run({
     args = sys$cmd$parse(
         opt('a', 'aset', 'rds', '../ploidy_compare/analysis_set.rds'),

@@ -127,7 +127,7 @@ subtype_assocs = function(ext, net_genes) {
               axis.ticks.y = element_blank()) +
         guides(fill = FALSE) +
         labs(y = "Wald statistic")
-    wrap_elements(p)
+    wrap_plots(wrap_elements(p))
 }
 
 bionet_combine = function(bionet) {
@@ -145,7 +145,7 @@ bionet_combine = function(bionet) {
         arrange(-hub) %>%
         left_join(aneup_centrality, copy=TRUE) %>%
         mutate(aneup_hub = ifelse(is.na(aneup_hub), 0, aneup_hub))
-    ggraph(cnet) +
+    p = ggraph(cnet) +
         geom_edge_link(alpha=0.05, width=3) +
         geom_node_point(aes(size=hub, fill=aneup_hub), color="black", shape=21) +
         scale_fill_distiller(palette="RdPu", direction=1) +
@@ -154,6 +154,7 @@ bionet_combine = function(bionet) {
         scale_size(range = c(2.5,12)) +
         guides(fill = guide_legend(title="Aneuploidy\ncentrality", override.aes=list(size=5)),
                size = guide_legend(title="CIS centrality"))
+    wrap_plots(p)
 }
 
 sc_wgs = function() {
