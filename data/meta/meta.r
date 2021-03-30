@@ -1,24 +1,33 @@
 library(dplyr)
+#library(googlesheets4) # why do we need auth?
 io = import('io')
 sys = import('sys')
 
 args = sys$cmd$parse(
-    opt('i', 'infile', 'xls read', 'Final table mice.xlsx'),
-    opt('o', 'outfile', 'tsv', 'meta.tsv'))
+    opt('i', 'infile', 'xls read', 'TPS_screen_MasterList.xlsx'),
+    opt('a', 'aneup', '../ploidy_compare/analysis_set.rds', NA),
+    opt('o', 'outfile', 'tsv', 'meta_base.tsv')
+)
 
 tab = readxl::read_excel(args$infile, na="n.a.") %>%
-    filter(!is.na(Mouse)) %>%
-    transmute(mouse = Mouse,
+    transmute(mouse = `Mouse no`,
               genotype = Genotype,
-              sex = Gender,
+              sex = Sex,
               months_injection = `Time after poly (I:C) (m)`,
               months_death = `Age at death (m)`,
               tissue = tolower(`Primary affected organ`),
               hist_nr = `Hist nr.`,
-              sample = paste0(hist_nr, substr(tissue, 0, 1)),
-              wbc_per_nl = as.numeric(ifelse(`WBC (·109/L)` == ">100", 100, `WBC (·109/L)`)),
+              sample = `Sample ID`,
+#              wbc_per_nl = as.numeric(ifelse(`WBC (1e9/L)` == ">100", 100, `WBC (1e9/L)`)),
               spleen_g = `Spleen (mg)` / 1000,
               thymus_g = `Thymus (mg)` / 1000,
-              type = factor(sub("^([^ ]+).*", "\\1", Pathology), levels=c("Myeloid", "T-cell", "Other")))
+              type = factor(`Consensus type`, levels=c("Myeloid", "B-like", "T-cell")),
+              subtype = Subtype,
+              analysis_set = !is.na(`Analysis set`) & `Analysis set` == "y")
+
+if (!is.na(args$aneup)) {
+    aneup = readRDS(args$aneup)
+    # add aneuploidy
+}
 
 io$write_table(tab, file=args$outfile)

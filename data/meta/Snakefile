@@ -1,8 +1,25 @@
+subworkflow ploidy:
+    workdir: "../ploidy_compare"
+
+rule all:
+    input:
+        "meta.tsv"
+
 rule meta:
     input:
         rscript = "meta.r",
-        xlsx = "Final table mice (1).xlsx",
+        xlsx = "TPS_screen_MasterList.xlsx"
     output:
         tsv = "meta.tsv"
+    shell:
+        "Rscript {input.rscript} --infile '{input.xlsx}' --outfile {output.tsv}"
+
+rule aset:
+    input:
+        rscript = "meta.r",
+        xlsx = "TPS_screen_MasterList.xlsx",
+        aneup = ploidy("analysis_set.rds")
+    output:
+        tsv = "meta_aset.tsv"
     shell:
         "Rscript {input.rscript} --infile '{input.xlsx}' --outfile {output.tsv}"
