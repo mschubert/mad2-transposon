@@ -1,6 +1,3 @@
-subworkflow meta:
-    workdir: "../meta"
-
 import os
 from glob import glob
 files = glob("**/*.yaml", recursive=True)
