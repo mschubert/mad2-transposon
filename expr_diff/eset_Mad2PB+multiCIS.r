@@ -4,15 +4,14 @@ sys = import('sys')
 util = import('./util')
 
 args = sys$cmd$parse(
+    opt('f', 'config', 'yaml', '../config.yaml'),
     opt('e', 'eset', 'mad2pb eset', 'eset_Mad2PB.rds'),
     opt('c', 'cis', 'poisson result', '../cis_analysis/poisson.rds'),
     opt('o', 'outfile', 'results rds', 'eset_Mad2PB+multiCIS.rds'),
     opt('p', 'plotfile', 'pdf', 'eset_Mad2PB+multiCIS.pdf')
 )
 
-inc_ins = c("Ets1", "Erg", "Stat1", "Pias1", "Mb21d1", "Ifngr1",
-            "Ikzf1", "Trp53", "Rapgef6", "Pten", "Foxn3", "Crebbp",
-            "Rpl5", "Cbx5", "Sp3", "Xrcc6", "Notch1")
+inc_ins = yaml::read_yaml(args$config)$de_ins
 
 cis = readRDS(args$cis)$samples %>%
     filter(external_gene_name %in% inc_ins) %>%
@@ -30,7 +29,7 @@ idx = cbind(meta[keep,], cis)
 
 vs = dset$vs[,keep]
 eset = dset$eset[,keep]
-eset@colData = DataFrame(idx)
+colData(eset) = DataFrame(idx)
 
 pdf(args$plotfile)
 pca = prcomp(t(vs[apply(vs, 1, var) > 0,]), center=TRUE, scale=FALSE)
@@ -39,4 +38,4 @@ print(util$plot_pcs(idx, pca, 3, 4))
 print(util$plot_pcs(idx, pca, 5, 6))
 dev.off()
 
-saveRDS(list(eset=eset, vs=vs, pca=pca, cis=cis, ins_ins=inc_ins), file=args$outfile)
+saveRDS(list(eset=eset, vs=vs, pca=pca, cis=cis, inc_ins=inc_ins), file=args$outfile)

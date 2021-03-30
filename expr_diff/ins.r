@@ -33,19 +33,24 @@ cis = readRDS(args$cis)$samples %>%
 
 dset = readRDS(args$eset)
 eset = dset$eset
-idx = colData(eset) %>%
-    as.data.frame() %>%
-    left_join(cis) %>%
-    mutate(ins = ifelse(is.na(ins), 0, 1))
-eset@colData = DataFrame(idx)
+eset$ins = ifelse(eset$sample %in% cis$sample, 1, 0)
+eset$aneup0.2 = pmin(eset$aneuploidy, 0.2)
+idx = as.data.frame(colData(eset))
 
-res = util$do_wald(eset, ~ tissue + type + ins, ex="ins")
-#design(eset) = ~ tissue + type + ins
+design(eset) = ~ tissue + type * aneup0.2 + ins
+res = DESeq2::DESeq(eset) %>%
+    DESeq2::results(name="ins") %>%
+    as.data.frame() %>%
+    tibble::rownames_to_column("gene_name") %>%
+    as_tibble() %>%
+    arrange(padj, pvalue)
+#design(eset) = ~ tissue + type + aneup0.2 + ins
 #res = DESeq2::estimateDispersions(eset) %>%
-#    DESeq2::nbinomLRT(reduced=~ tissue + type, maxit=1000) %>%
+#    DESeq2::nbinomLRT(reduced=~ tissue + type + aneup0.2, maxit=1000) %>%
 #    DESeq2::results() %>%
 #    as.data.frame() %>%
-#    tibble::rownames_to_column("gene_name")
+#    tibble::rownames_to_column("gene_name") %>%
+#    mutate(stat = sign(log2FoldChange) * stat)
 
 sets = lapply(args$sets, readRDS) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%

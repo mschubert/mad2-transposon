@@ -26,7 +26,7 @@ args$sets = "../data/genesets/mouse/MSigDB_Hallmark_2020.rds"
 
 dset = readRDS(args$eset)
 eset = dset$eset
-fml = paste("~", paste(c("Tcell", "Other", dset$inc_ins), collapse=" + "))
+fml = paste("~", paste(dset$inc_ins, collapse=" + "))
 res = util$do_wald(eset, as.formula(fml))
 #eset = DESeq2::DESeqDataSetFromMatrix(counts(eset), colData(eset), as.formula(fml)) # DE error otherwise
 #res = DESeq2::DESeq(eset)

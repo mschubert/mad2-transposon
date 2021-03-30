@@ -40,13 +40,14 @@ idx = colData(eset) %>%
            aneup0.2 = pmin(aneuploidy, 0.2))
 eset@colData = DataFrame(idx)
 
-design(eset) = ~ tissue + type + type:aneup0.2 + ins + ins:aneup0.2
-res = DESeq2::estimateDispersions(eset) %>%
-    DESeq2::nbinomLRT(reduced=~ tissue + type + type:aneup0.2 + ins, maxit=1000) %>%
-    DESeq2::results() %>%
-    as.data.frame() %>%
-    tibble::rownames_to_column("gene_name") %>%
-    arrange(padj, pvalue)
+res = util$do_wald(eset, ~ tissue + type:aneup0.2 + ins + ins:aneup0.2, ex="aneup0.2.ins")
+#design(eset) = ~ tissue + type + type:aneup0.2 + ins + ins:aneup0.2
+#res = DESeq2::estimateDispersions(eset) %>%
+#    DESeq2::nbinomLRT(reduced=~ tissue + type + type:aneup0.2 + ins, maxit=1000) %>%
+#    DESeq2::results() %>%
+#    as.data.frame() %>%
+#    tibble::rownames_to_column("gene_name") %>%
+#    arrange(padj, pvalue)
 
 sets = lapply(args$sets, readRDS) %>%
     setNames(tools::file_path_sans_ext(basename(args$sets))) %>%
