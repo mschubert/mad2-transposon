@@ -8,10 +8,11 @@ gset = import('genesets')
 plt = import('plot')
 
 umap_types = function(em) {
-    set.seed(15209)
-    vst = as.matrix(SummarizedExperiment::assay(em$vst))
+    set.seed(15208)
+    meta = em$meta %>% filter(analysis_set & !is.na(type))
+    vst = as.matrix(SummarizedExperiment::assay(em$vst[,meta$sample]))
     umap2 = uwot::umap(t(vst), n_components=2)
-    dset = em$meta %>%
+    dset = meta %>%
         mutate(umap1 = umap2[,1],
                umap2 = umap2[,2])
 
@@ -19,10 +20,8 @@ umap_types = function(em) {
         geom_point(aes(color=type, size=aneuploidy), alpha=0.8) +
         ggrepel::geom_text_repel(aes(label=sample), size=3, segment.alpha=0.3)
 
-    markers = c("Cd3g", "Ly6g", "Ebf1", "Ighm", "Kit", "Ets1", "Erg", "Stat1")
+    markers = c("Cd3g", "Ly6g", "Lyz1", "Ebf1", "Kit", "Ets1", "Erg", "Stat1")
     reads = em$reads[markers,]
-    reads["Ighm",] = reads["Ighm",] / 100
-#    reads["Ly6g",] = reads["Ly6g",] * 10
     reads = reads %>%
         reshape2::melt() %>%
         as_tibble() %>%
@@ -137,6 +136,15 @@ set_tissue = function(gdf) {
         ggbeeswarm::geom_quasirandom(color="black", alpha=0.3, shape=21, dodge.width=.75, size=2.5, width=0.05) +
         scale_fill_manual(values=c("Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3"))
     p1 / p2
+}
+
+ifn_myc_condition = function(sets, ghm, gdo) {
+    narray::intersect(sets$sample, ghm, gdo, along=2)
+    gsva = t(rbind(ghm, gdo))
+
+    #todo: (1) aneup ~ Stat1_Ifn + gsva_cats
+    #      (2) aneup ~ Myc_copies + gsva_cats
+    # (3) plot wald stats on x/y, show that Ifn does not explain myc but copies do more
 }
 
 sys$run({

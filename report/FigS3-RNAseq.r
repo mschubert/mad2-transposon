@@ -13,13 +13,12 @@ marker_pca = function(markers) {
         plt$pca(prcomp(mm[smps,]), aes(x=PC1, y=PC2), annot=meta[smps,],
                 biplot=TRUE, bi_size=3.5, bi_color="black") +
             geom_point(aes(color=type, size=aneuploidy), alpha=0.8) +
-            ggrepel::geom_text_repel(aes(label=sample), size=2) +
+            ggrepel::geom_text_repel(aes(label=sample), size=2, segment.alpha=0.3) +
             scale_color_discrete(drop=FALSE) +
             theme_classic()
     }
     meta = markers$meta %>%
-        mutate(type = factor(type),
-               aneuploidy = pmin(aneuploidy, 0.3))
+        mutate(aneuploidy = pmin(aneuploidy, 0.3))
     mmat = t(SummarizedExperiment::assay(markers$vst))
 
     # separate T-cells
@@ -28,12 +27,12 @@ marker_pca = function(markers) {
     p1 = one_pca(mm1, TRUE)
 
     # separate myeloid from B-like
-    smps = !is.na(meta$type) & meta$type != "T-cell"
+    smps = is.na(meta$type) | meta$type != "T-cell"
     mm2 = mmat[,c("Ebf1", "Myc", "Ly6a", "Ly6g", "Cd14", "Nkg7", "Ms4a1", "Cd34", "Lyz1", "Ms4a7")]
     p2 = one_pca(mm2, smps)
 
     # separate Ets-Erg-Myc-Cd19 axis
-    smps = !is.na(meta$type) & meta$type %in% "Other"
+    smps = is.na(meta$type) | meta$type %in% "B-like"
     mm3 = mmat[,c("Ebf1", "Ets1", "Erg", "Myc", "Stat1", "Kit", "Tmem184a", "Cd34", "Pax5", "Cd19")]
     p3 = one_pca(mm3, smps)
 
@@ -95,7 +94,7 @@ cor_net = function(sets, cis) {
         mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
         arrange(adj.p, p.value)
 
-    x = res2 %>% filter(! smat %in% c("Other", "T-cell", "Myeloid"))
+    x = res2 %>% filter(! smat %in% c("B-like", "T-cell", "Myeloid"))
     ggplot(x, aes(x=smat, y=types, fill=estimate)) +
         geom_tile() +
         scale_fill_distiller(palette="RdBu", lim=c(-1,1)) +
@@ -130,7 +129,7 @@ EtsErg_TPS = function() {
 
     #FIXME: annoying empty plots
     c1 = corrplot::corrplot(cor(t(dset$vs[genes, meta$type == "Myeloid"])), main="Myeloid")
-    c2 = corrplot::corrplot(cor(t(dset$vs[genes, meta$type == "Other"])), main="B-like")
+    c2 = corrplot::corrplot(cor(t(dset$vs[genes, meta$type == "B-like"])), main="B-like")
     c3 = corrplot::corrplot(cor(t(dset$vs[genes, meta$type == "T-cell"])), main="T-ALL")
     #{ c1 + c2 + c3 + plot_layout(ncol=1) } + { eplot } + plot_layout(nrow=1)
 }
@@ -145,7 +144,7 @@ EtsErg_MILE = function() {
 
     genes = c("Ets1", "Erg", "Stat1", "Pias1", "Ifng")#, "Stat3", "Pten", "Notch1")
     c1 = cor(t(mad2pb$vs[genes, annot$type=="Myeloid"]))
-    c2 = cor(t(mad2pb$vs[genes, annot$type=="Other"]))
+    c2 = cor(t(mad2pb$vs[genes, annot$type=="B-like"]))
     c3 = cor(t(mad2pb$vs[genes, annot$type=="T-cell"]))
 
     genes = c("ETS1", "ERG", "STAT1", "PIAS1", "Ifng")#, "STAT3", "PTEN", "NOTCH1")
@@ -185,6 +184,7 @@ sys$run({
     sets = cbind.data.frame(
         sample = colnames(ghm),
         type = meta$type[match(colnames(ghm), meta$sample)],
+        subtype = meta$subtype[match(colnames(ghm), meta$sample)],
         Myc_expr = gex["Myc", match(colnames(ghm), colnames(gex))],
         Myc_copies = pmin(gcs["ENSMUSG00000022346", match(colnames(ghm), colnames(gcs))], 3),
         Aneuploidy = pmin(meta$aneuploidy[match(colnames(ghm), meta$sample)], 0.2),
@@ -194,19 +194,6 @@ sys$run({
                 "Mitotic Spindle", "TGF-beta Signaling"),]),
         t(gdo[c("STAT1 (a)", "TP53 (a)"),])
     ) %>% as_tibble() %>% na.omit()
-
-    #todo: move the subtype annotations to the actual metadata
-    gdf = sets %>%
-        mutate(subtype = case_when(
-            sample %in% c("157s", "404s", "411s", "412s", "416s", "424s", "425s", "428s",
-                          "432s", "437s", "461s", "476s", "482s", "627s", "632s") ~ "Ets1",
-            sample %in% c("402s", "405s", "409s", "413s", "417s", "422s", "429s", "431s",
-                          "434s", "435s", "442s") ~ "Erg",
-            sample %in% c("421s", "467s", "485s", "609s", "613t", "620s", "622s") ~ "Ebf1",
-            TRUE ~ NA_character_
-        )) %>%
-        mutate(subtype = factor(subtype, levels=c("Ebf1", "Ets1", "Erg"))) %>%
-        select(sample, subtype, everything())
 
     cis = readRDS(args$cis)$samples # todo: add stat1 ins to lm plot
 

@@ -7,7 +7,9 @@ theme_set(cowplot::theme_cowplot())
 sys = import('sys')
 plt = import('plot')
 
-insertion_matrix = function(cis, rna_ins, aneup, net_genes) {
+insertion_matrix = function(cis, rna_ins, cis_aneup, aneup, net_genes) {
+    cis_aneup = cis_aneup %>%
+        filter(p.value < 0.1)
     rna_ins = rna_ins %>%
         select(sample, external_gene_name=gene_name) %>%
         filter(external_gene_name %in% net_genes) %>%
@@ -15,9 +17,9 @@ insertion_matrix = function(cis, rna_ins, aneup, net_genes) {
         mutate(rna_ins = 1)
 
     cis_result = cis$result %>%
-        filter(! external_gene_name %in% c("Sfi1", "Drg1", "Eif4enif1"), # should blacklist those when mapping
+        filter(! external_gene_name %in% c("Sfi1", "Drg1", "Eif4enif1", "Wrap53"), # should blacklist those when mapping
                external_gene_name %in% net_genes) %>%
-        filter(adj.p < 0.01)
+        filter(adj.p < 0.01 | (adj.p < 0.05 & external_gene_name %in% cis_aneup$external_gene_name))
     cis_samples = cis$samples %>%
         filter(external_gene_name %in% cis_result$external_gene_name) %>%
         tidyr::complete(sample, external_gene_name, fill=list(n_ins=0, reads=0)) %>%
@@ -189,7 +191,7 @@ sys$run({
     splot = ggplot() + annotation_custom(schema) +
         theme(axis.line=element_blank())
     sc_wgs = sc_wgs()
-    ins_mat = insertion_matrix(cis, rna_ins, aneup, net_genes)
+    ins_mat = insertion_matrix(cis, rna_ins, ext$aneuploidy, aneup, net_genes)
     stype = subtype_assocs(ext, net_genes)
     bnet = bionet_combine(bionet)
 
