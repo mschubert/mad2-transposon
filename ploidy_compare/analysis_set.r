@@ -66,7 +66,7 @@ merge_pops = function(segs, wgs_merge) {
 
 sys$run({
     args = sys$cmd$parse(
-        opt('m', 'meta', 'metadata table', '../data/meta/meta.tsv'),
+        opt('m', 'meta', 'metadata table', '../data/meta/meta.rds'),
         opt('d', 'dna_seq', 'wgs ploidy', '../data/wgs/30cellseq.rds'),
         opt('r', 'rna_seq', 'eT ploidy', '../ploidy_from_rnaseq/eT_ploidy.rds'),
         opt('g', 'merge', 'fractions of high/low', 'analysis_set_merge.tsv'),
@@ -75,7 +75,7 @@ sys$run({
         opt('p', 'plotfile', 'pdf', 'analysis_set.pdf')
     )
 
-    meta_old = readr::read_tsv(args$meta)
+    meta_old = readRDS(args$meta)
     rna = readRDS(args$rna_seq)$segments
     sc_wgs = readRDS(args$sc_seq) %>%
         mutate(start=1, end=length) %>% # todo: actually get segments + merge here
@@ -110,10 +110,10 @@ sys$run({
         select(-smp_src)
 
     meta = meta_old %>%
-        left_join(aneups %>% filter(is_pref_src) %>% select(sample, aneuploidy, ploidy_src)) %>%
+        inner_join(aneups %>% filter(is_pref_src) %>% select(sample, aneuploidy, ploidy_src)) %>%
         mutate(`T-cell` = (type == "T-cell" & !is.na(type)) + 0,
                Myeloid = (type == "Myeloid" & !is.na(type)) + 0,
-               Other = (type == "Other" & !is.na(type)) + 0) %>%
+               `B-like` = (type == "B-like" & !is.na(type)) + 0) %>%
         select(sample, everything())
 
     pdf(8, 10, file=args$plotfile)

@@ -10,9 +10,9 @@ rule meta:
         rscript = "meta.r",
         xlsx = "TPS_screen_MasterList.xlsx"
     output:
-        tsv = "meta.tsv"
+        outfile = "meta.rds"
     shell:
-        "Rscript {input.rscript} --infile '{input.xlsx}' --outfile {output.tsv}"
+        "Rscript {input.rscript} --infile '{input.xlsx}' --outfile {output.outfile}"
 
 rule aset:
     input:

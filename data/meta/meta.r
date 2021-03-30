@@ -1,12 +1,11 @@
 library(dplyr)
 #library(googlesheets4) # why do we need auth?
-io = import('io')
 sys = import('sys')
 
 args = sys$cmd$parse(
     opt('i', 'infile', 'xls read', 'TPS_screen_MasterList.xlsx'),
     opt('a', 'aneup', '../ploidy_compare/analysis_set.rds', NA),
-    opt('o', 'outfile', 'tsv', 'meta_base.tsv')
+    opt('o', 'outfile', 'rds', 'meta.rds')
 )
 
 tab = readxl::read_excel(args$infile, na="n.a.") %>%
@@ -22,7 +21,7 @@ tab = readxl::read_excel(args$infile, na="n.a.") %>%
               spleen_g = `Spleen (mg)` / 1000,
               thymus_g = `Thymus (mg)` / 1000,
               type = factor(`Consensus type`, levels=c("Myeloid", "B-like", "T-cell")),
-              subtype = Subtype,
+              subtype = factor(Subtype, levels=c("Ebf1", "Ets1", "Erg")),
               analysis_set = !is.na(`Analysis set`) & `Analysis set` == "y")
 
 if (!is.na(args$aneup)) {
@@ -30,4 +29,4 @@ if (!is.na(args$aneup)) {
     # add aneuploidy
 }
 
-io$write_table(tab, file=args$outfile)
+saveRDS(meta, args=file$outfile)
