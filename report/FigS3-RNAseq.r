@@ -8,7 +8,35 @@ gset = import('genesets')
 plt = import('plot')
 gnet = import('tools/genenet')
 
-marker_pca = function() {
+marker_pca = function(markers) {
+    one_pca = function(mm, smps) {
+        plt$pca(prcomp(mm[smps,]), aes(x=PC1, y=PC2), annot=meta[smps,], biplot=TRUE, bi_color="black") +
+            geom_point(aes(color=type, size=aneuploidy)) +
+            geom_text(aes(label=sample), size=2) +
+            scale_color_discrete(drop=FALSE) +
+            theme_classic()
+    }
+    meta = markers$meta %>%
+        mutate(type = factor(type),
+               aneuploidy = pmin(aneuploidy, 0.3))
+    mmat = t(SummarizedExperiment::assay(markers$vst))
+
+    # separate T-cells
+    mm1 = mmat[,c("Cd3g", "Cd3e", "Rag1", "Sox4", "Dntt", "Xrcc6", "Notch1", "Ly6a",
+                  "Myc", "Cd4", "Cd8a", "Il7", "Cd34")]
+    p1 = one_pca(mm1, TRUE)
+
+    # separate myeloid from B-like
+    smps = !is.na(meta$type) & meta$type != "T-cell"
+    mm2 = mmat[,c("Ebf1", "Myc", "Ly6a", "Ly6g", "Cd14", "Nkg7", "Ms4a1", "Cd34", "Lyz1", "Ms4a7")]
+    p2 = one_pca(mm2, smps)
+
+    # separate Ets-Erg-Myc-Cd19 axis
+    smps = !is.na(meta$type) & meta$type %in% "Other"
+    mm3 = mmat[,c("Ebf1", "Ets1", "Erg", "Myc", "Stat1", "Kit", "Tmem184a", "Cd34", "Pax5", "Cd19")]
+    p3 = one_pca(mm3, smps)
+
+    p1 + p2 + p3 + plot_layout(nrow=1, guides="collect")
 }
 
 set_cor = function(sets) {
@@ -192,7 +220,9 @@ sys$run({
     # switch Ighm for monocyte marker?
     # myc copies -> myc targets? (maybe: does Myc targets assoc drop when conditioning on copies) [could do xy instead of @volc]
 
-    pdf(args$plotfile, 16, 15)
-#    print(asm)
+    asm = marker_pca(markers)
+
+    pdf(args$plotfile, 16, 5)
+    print(asm)
     dev.off()
 })
