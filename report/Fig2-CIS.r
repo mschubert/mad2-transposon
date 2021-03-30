@@ -4,10 +4,8 @@ library(ggplot2)
 library(patchwork)
 library(ggraph)
 theme_set(cowplot::theme_cowplot())
-io = import('io')
 sys = import('sys')
 plt = import('plot')
-idmap = import('process/idmap')
 
 insertion_matrix = function(cis, rna_ins, aneup, net_genes) {
     rna_ins = rna_ins %>%
@@ -127,7 +125,7 @@ subtype_assocs = function(ext, net_genes) {
               axis.ticks.y = element_blank()) +
         guides(fill = FALSE) +
         labs(y = "Wald statistic")
-    wrap_elements(p)
+    wrap_plots(wrap_elements(p))
 }
 
 bionet_combine = function(bionet) {
@@ -145,7 +143,7 @@ bionet_combine = function(bionet) {
         arrange(-hub) %>%
         left_join(aneup_centrality, copy=TRUE) %>%
         mutate(aneup_hub = ifelse(is.na(aneup_hub), 0, aneup_hub))
-    ggraph(cnet) +
+    p = ggraph(cnet) +
         geom_edge_link(alpha=0.05, width=3) +
         geom_node_point(aes(size=hub, fill=aneup_hub), color="black", shape=21) +
         scale_fill_distiller(palette="RdPu", direction=1) +
@@ -154,6 +152,7 @@ bionet_combine = function(bionet) {
         scale_size(range = c(2.5,12)) +
         guides(fill = guide_legend(title="Aneuploidy\ncentrality", override.aes=list(size=5)),
                size = guide_legend(title="CIS centrality"))
+    wrap_plots(p)
 }
 
 sc_wgs = function() {
@@ -182,7 +181,7 @@ sys$run({
     net_genes = bionet$cis_net %N>% pull(external_gene_name)
 
     # insertion processing
-    rna_ins = io$read_table(args$rna_ins, header=TRUE)
+    rna_ins = readr::read_tsv(args$rna_ins)
     cis = readRDS(args$poisson)
 
     # create plot objects
