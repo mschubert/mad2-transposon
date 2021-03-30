@@ -61,7 +61,7 @@ sys$run({
     args = sys$cmd$parse(
         opt('i', 'infile', 'read count tsv', 'Mad2+PB_batch3.tsv'),
         opt('s', 'stats', 'STAR summary file', 'Mad2+PB_batch3.tsv.summary'),
-        opt('m', 'meta', 'sample metadata', '../meta/meta.tsv'),
+        opt('m', 'meta', 'sample metadata', '../meta/meta.rds'),
         opt('o', 'outfile', 'save results to rds', 'Mad2+PB_batch3.rds'),
         opt('p', 'plotfile', 'qc plot pdf', 'Mad2+PB_batch3.pdf'))
 
@@ -72,7 +72,7 @@ sys$run({
     colnames(counts) = tools::file_path_sans_ext(basename(colnames(counts)))
     rownames(counts) = edf$Geneid
 
-    idx = io$read_table(args$meta, header=TRUE)
+    idx = readRDS(args$meta)
     if (!(grepl("PB", args$infile)))
         idx = data.frame(sample = colnames(counts),
             tissue = tolower(gsub("[^stST]", "", colnames(counts))))

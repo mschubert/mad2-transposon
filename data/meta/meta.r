@@ -29,4 +29,4 @@ if (!is.na(args$aneup)) {
     # add aneuploidy
 }
 
-saveRDS(meta, args=file$outfile)
+saveRDS(meta, file=args$outfile)

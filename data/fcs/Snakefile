@@ -32,7 +32,7 @@ rule plot:
 rule summarize:
     input:
         rscript = "summarize.r",
-        meta = meta("meta.tsv"),
+        meta = meta("meta.rds"),
         infiles = expand("{dir}.rds", dir=dirs)
     output:
         outfile = "summarize.rds",

@@ -40,7 +40,7 @@ rule qc_rnaseq:
         rscript = "qc_rnaseq.r",
         counts = "{sset}.tsv",
         stats = "{sset}.tsv.summary",
-        meta = meta("meta.tsv")
+        meta = meta("meta.rds")
     output:
         expr = "{sset}.rds",
         plot = "{sset}.pdf"
