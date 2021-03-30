@@ -3,7 +3,7 @@ subworkflow ploidy:
 
 rule all:
     input:
-        "meta.tsv"
+        "meta.rds"
 
 rule meta:
     input:
@@ -20,6 +20,6 @@ rule aset:
         xlsx = "TPS_screen_MasterList.xlsx",
         aneup = ploidy("analysis_set.rds")
     output:
-        tsv = "meta_aset.tsv"
+        tsv = "meta_aset.rds"
     shell:
         "Rscript {input.rscript} --infile '{input.xlsx}' --outfile {output.tsv}"

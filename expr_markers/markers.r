@@ -9,7 +9,9 @@ idmap = import('process/idmap')
 args = sys$cmd$parse(
     opt('e', 'expr', 'gene expression rds', '../data/rnaseq/assemble.rds'),
     opt('m', 'meta', 'sample rds', '../ploidy_compare/analysis_set.rds'),
-    opt('p', 'plotfile', 'pdf to save plot to', '/dev/null'))
+    opt('o', 'outfile', 'rds', 'markers.rds'),
+    opt('p', 'plotfile', 'pdf to save plot to', 'markers.pdf')
+)
 
 genes = c("Mad2l1", "Trp53", "Ets1", "Erg", "Myc", "Sox4", "Il7", "Il7r", "Kit", "Irf4", "Stat1", "Stat3", "Bcl6",
           "Ebf1", "Cd19", "Ighm", "Ikzf1", "Tcf15", "Gata2", "Cd55b", "Pax5", "Tmem184a", "Dntt", "Igll1", "Runx1",
@@ -26,8 +28,10 @@ eset = DESeq2::DESeqDataSetFromMatrix(counts, meta, ~1) %>%
 reads = DESeq2::counts(eset, normalized=TRUE)
 expr = DESeq2::varianceStabilizingTransformation(eset)
 
+saveRDS(list(meta=meta, reads=reads, vst=expr, genes=genes), file=args$outfile)
+
 exp1 = t(assay(expr[genes,]))
-meta2 = meta %>% filter(type %in% c("Myeloid", "Other") | sample == "449s")
+meta2 = meta %>% filter(type %in% c("Myeloid", "B-like") | sample == "449s")
 exp2 = t(assay(expr[genes, meta2$sample]))
 pr = prcomp(exp1)
 umap = uwot::umap(exp1)
@@ -53,11 +57,11 @@ exp3 = t(assay(expr[diffg, meta3$sample]))
 pr3 = prcomp(exp3)
 
 g4 = c("Ets1", "Erg", "Kit")
-meta4 = meta #%>% filter(type %in% c("Myeloid", "Other"))
+meta4 = meta #%>% filter(type %in% c("Myeloid", "B-like"))
 exp4 = t(assay(expr[g4, meta4$sample]))
 pr4 = prcomp(exp4)
 
-pdf("Rplots.pdf", 10, 8)
+pdf(args$plotfile, 10, 8)
 plt$pca(pr, aes(x=PC1, y=PC2), annot=meta, biplot=TRUE, bi_color="black", bi_size=3) +
     geom_point(aes(color=type, size=aneuploidy)) +
     geom_text(aes(label=sample), size=2) +
@@ -68,8 +72,8 @@ ggplot(umap, aes(x=umap1, y=umap2)) +
     ggrepel::geom_text_repel(aes(label=sample), size=2) +
     theme_classic()
 
-cbind(umap, t(reads[genes,])) %>%
-    tidyr::gather("gene", "reads", -(aneup_src:clust)) %>%
+cbind(umap, t(reads[genes,])) %>% # todo: better to melt reads, then join
+    tidyr::gather("gene", "reads", -(sample:clust)) %>%
     ggplot(aes(x=clust, y=log10(reads+1), group=clust)) +
         geom_point(aes(color=type, size=aneuploidy), alpha=0.3) +
         facet_wrap(~ gene, scales="free_y")
@@ -95,7 +99,7 @@ plt$pca(pr21, aes(x=PC1, y=PC2), annot=meta21, biplot=TRUE, bi_color="black", bi
 #    theme_classic()
 
 cbind(umap2, t(reads[genes,meta2$sample])) %>%
-    tidyr::gather("gene", "reads", -(aneup_src:clust)) %>%
+    tidyr::gather("gene", "reads", -(sample:clust)) %>%
     ggplot(aes(x=clust, y=log10(reads+1), group=clust)) +
         geom_point(aes(size=aneuploidy, color=type), alpha=0.3) +
         facet_wrap(~ gene, scales="free_y")

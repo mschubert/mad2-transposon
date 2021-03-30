@@ -34,7 +34,7 @@ rule gene_copies:
 rule analysis_set:
     input:
         rscript = "analysis_set.r",
-        meta = meta("meta.tsv"),
+        meta = meta("meta.rds"),
         dna_seq = ploidy_wgs("30cellseq.rds"),
         rna_seq = ploidy_rnaseq("eT_ploidy.rds"),
         sc_seq = ploidy_wgs("sc_merge.rds"),
