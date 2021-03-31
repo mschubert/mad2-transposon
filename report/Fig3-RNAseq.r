@@ -118,44 +118,73 @@ gset_aneup = function(gdf) {
 }
 
 set_tissue = function(sets) {
-#    ins = reshape2::melt(cis2) %>%
-#        as_tibble()
+    tsets = sets %>% filter(!is.na(Type))
+    subsets = sets %>% filter(!is.na(Subtype))
     keep = c("Interferon Gamma Response", "TNF-alpha Signaling via NF-kB", "STAT1 (a)",
              "TP53 (a)", "Oxidative Phosphorylation", "DNA Repair", "Myc Targets V1")
     keepn = c("Ifn Gamma\nResponse", "TNFa\nvia NF-kB", "STAT1 (a)",
               "TP53 (a)", "Oxidative\nPhosphorylation", "DNA Repair", "Myc\nTargets V1")
-    gdf = sets %>% #todo: this + mutates above should be in metadata table
+    gdf = tsets %>%
         tidyr::gather("Gene set", "GSVA", -(sample:Aneuploidy)) %>%
-        filter(`Gene set` %in% keep) %>%
+        filter(!is.na(Type),
+               `Gene set` %in% keep) %>%
         mutate(`Gene set` = factor(`Gene set`, levels=keep, ordered=TRUE))
     levels(gdf$`Gene set`) = keepn
+    sdf = gdf %>% filter(!is.na(Subtype))
 
-#    sigs = data.frame(x1=)
+    stars = c("<0.15"="⋅", "<0.05"="▪", "<0.001"="٭", "n.s."="")
+    a_v_b = function(x, y, a, b) {
+        x1 = rep(NA, length(y))
+        x1[x == a] = 0
+        x1[x == b] = 1
+        lm(y ~ x1) %>% broom::tidy() %>% filter(term == "x1") %>% pull(p.value)
+    }
+    get_p = function(df, var, t1, t2, t3, x="Gene set", y="GSVA") df %>%
+        group_by(!!rlang::sym(x)) %>%
+        summarize(l_vs_m = a_v_b(!!rlang::sym(var), !!rlang::sym(y), t1, t2),
+                  m_vs_r = a_v_b(!!rlang::sym(var), !!rlang::sym(y), t2, t3)) %>%
+        tidyr::gather("cmp", "p", -(!!rlang::sym(x))) %>%
+        mutate(cmp = as.integer(factor(cmp, levels=c("l_vs_m", "m_vs_r"), ordered=TRUE)) - 1.5,
+               !!rlang::sym(x) := as.integer(!!rlang::sym(x)) + sign(cmp)*0.15,
+               sig = case_when(p<1e-3 ~ "<0.001", p<0.05 ~ "<0.05", p<0.15 ~ "<0.15", TRUE ~ "n.s."),
+               sig = factor(sig, levels=names(stars)))
+    sigs_type = get_p(gdf, "Type", "Myeloid", "B-like", "T-cell")
+    aneup_type = get_p(tsets %>% mutate(x="1"), "Type", "Myeloid", "B-like", "T-cell", x="x", y="Aneuploidy")
+    sigs_sub = get_p(sdf, "Subtype", "Ebf1", "Ets1", "Erg")
+    aneup_sub = get_p(subsets %>% mutate(x="1"), "Subtype", "Ebf1", "Ets1", "Erg", x="x", y="Aneuploidy")
 
-    p1 = ggplot(sets %>% filter(!is.na(Type)), aes(x="Aneuploidy", y=Aneuploidy, fill=Type)) +
+    p1 = ggplot(tsets, aes(x="Aneuploidy", y=Aneuploidy, fill=Type)) +
         geom_boxplot(outlier.shape=NA) +
         ggbeeswarm::geom_quasirandom(color="black", alpha=0.3, shape=21, dodge.width=.75, size=2.5, width=0.05) +
+        geom_text(data=aneup_type, aes(x=x, label=sig), y=0.57, hjust=0.5, vjust=0.5, inherit.aes=FALSE) +
+        scale_discrete_manual("label", values=stars, drop=FALSE, name="p-value") +
         theme(axis.title.x = element_blank())
-    p2 = ggplot(gdf %>% filter(!is.na(Type)), aes(x=`Gene set`, y=GSVA, fill=Type)) +
+    p2 = ggplot(gdf, aes(x=`Gene set`, y=GSVA, fill=Type)) +
         geom_hline(yintercept=0, linetype="dashed", size=1, color="grey") +
         geom_boxplot(outlier.shape=NA) +
         ggbeeswarm::geom_quasirandom(color="black", alpha=0.3, shape=21, dodge.width=.75, size=2.5, width=0.05) +
         theme(axis.title.x = element_blank()) +
+        geom_text(data=sigs_type, aes(x=`Gene set`, label=sig), y=0.7, hjust=0.5, vjust=0.5, inherit.aes=FALSE) +
+        scale_discrete_manual("label", values=stars, drop=FALSE, name="p-value") +
         plot_layout(tag_level="new")
-    p3 = ggplot(sets %>% filter(!is.na(Subtype)), aes(x="Aneuploidy", y=Aneuploidy, fill=Subtype)) +
+    p3 = ggplot(subsets, aes(x="Aneuploidy", y=Aneuploidy, fill=Subtype)) +
         geom_boxplot(outlier.shape=NA) +
         ggbeeswarm::geom_quasirandom(color="black", alpha=0.3, shape=21, dodge.width=.75, size=2.5, width=0.05) +
         theme(axis.title.x = element_blank()) +
+        geom_text(data=aneup_sub, aes(x=x, label=sig), y=0.4, hjust=0.5, vjust=0.5, inherit.aes=FALSE) +
+        scale_discrete_manual("label", values=stars, drop=FALSE, name="p-value") +
         scale_fill_manual(values=c("Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3"))
-    p4 = ggplot(gdf %>% filter(!is.na(Subtype)), aes(x=`Gene set`, y=GSVA, fill=Subtype)) +
+    p4 = ggplot(sdf, aes(x=`Gene set`, y=GSVA, fill=Subtype)) +
         geom_hline(yintercept=0, linetype="dashed", size=1, color="grey") +
         geom_boxplot(outlier.shape=NA) +
         ggbeeswarm::geom_quasirandom(color="black", alpha=0.3, shape=21, dodge.width=.75, size=2.5, width=0.05) +
         scale_fill_manual(values=c("Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3")) +
+        geom_text(data=sigs_sub, aes(x=`Gene set`, label=sig), y=0.7, hjust=0.5, vjust=0.5, inherit.aes=FALSE) +
+        scale_discrete_manual("label", values=stars, drop=FALSE, name="p-value") +
         plot_layout(tag_level="new")
-    top = p1 + p2 + plot_layout(widths=c(1,6.5), guides="collect")
-    btm = p3 + p4 + plot_layout(widths=c(1,6.5), guides="collect")
-    top / btm
+    top = p1 + p2 + plot_layout(widths=c(1,6.5))
+    btm = p3 + p4 + plot_layout(widths=c(1,6.5))
+    (top / btm) + plot_layout(guides="collect")
 }
 
 ifn_myc_condition = function(sets, ghm, gdo) {
@@ -224,7 +253,7 @@ sys$run({
         plot_layout(heights=c(1,2)) + plot_annotation(tag_levels='a') &
         theme(plot.tag = element_text(size=18, face="bold"))
 
-    pdf(args$plotfile, 16.5, 15)
+    cairo_pdf(args$plotfile, 16.5, 15)
     print(asm)
     dev.off()
 })
