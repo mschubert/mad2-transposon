@@ -67,7 +67,7 @@ aneup_volcano = function(diff_expr) {
     plt$volcano(both, label_top=20, repel=TRUE, max.overlaps=Inf,
                 pos_label_bias=1.5, x_label_bias=0.4, base.size=0.5, text.size=4) +
         xlab("Mean log2 fold change in set") +
-        ylab("adjusted p-value (FDR) Wald change)") +
+        ylab("adjusted p-value (FDR) Wald change") +
         theme(#axis.line.y = element_blank(),
               panel.grid.major = element_line(color="#efefef", size=0.5))
 }
@@ -150,7 +150,8 @@ set_tissue = function(sets) {
                sig = factor(sig, levels=names(stars)))
     sigs_type = get_p(gdf, "Type", "Myeloid", "B-like", "T-cell")
     aneup_type = get_p(tsets %>% mutate(x="1"), "Type", "Myeloid", "B-like", "T-cell", x="x", y="Aneuploidy")
-    sigs_sub = get_p(sdf, "Subtype", "Ebf1", "Ets1", "Erg")
+    sigs_sub = get_p(sdf, "Subtype", "Ebf1", "Ets1", "Erg") %>%
+        mutate(y = ifelse(`Gene set` > 6.5, -0.35, 0.7))
     aneup_sub = get_p(subsets %>% mutate(x="1"), "Subtype", "Ebf1", "Ets1", "Erg", x="x", y="Aneuploidy")
 
     common = list(
@@ -162,21 +163,21 @@ set_tissue = function(sets) {
     )
     p1 = ggplot(tsets, aes(x="Aneuploidy", y=Aneuploidy, fill=Type)) +
         common +
-        geom_text(data=aneup_type, aes(x=x, label=sig), y=0.57, hjust=0.5, vjust=0.5, inherit.aes=FALSE)
+        geom_text(data=aneup_type, aes(x=x, label=sig), y=0.57, size=5, hjust=0.5, vjust=0.5, inherit.aes=FALSE)
     p2 = ggplot(gdf, aes(x=`Gene set`, y=GSVA, fill=Type)) +
         geom_hline(yintercept=0, linetype="dashed", size=1, color="grey") +
         common +
-        geom_text(data=sigs_type, aes(x=`Gene set`, label=sig), y=0.7, hjust=0.5, vjust=0.5, inherit.aes=FALSE) +
+        geom_text(data=sigs_type, aes(x=`Gene set`, label=sig), y=0.7, size=5, hjust=0.5, vjust=0.5, inherit.aes=FALSE) +
         plot_layout(tag_level="new")
     p3 = ggplot(subsets, aes(x="Aneuploidy", y=Aneuploidy, fill=Subtype)) +
         common +
-        geom_text(data=aneup_sub, aes(x=x, label=sig), y=0.4, hjust=0.5, vjust=0.5, inherit.aes=FALSE) +
+        geom_text(data=aneup_sub, aes(x=x, label=sig), y=0.4, size=5, hjust=0.5, vjust=0.5, inherit.aes=FALSE) +
         scale_fill_manual(values=c("Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3")) +
         guides(label=FALSE)
     p4 = ggplot(sdf, aes(x=`Gene set`, y=GSVA, fill=Subtype)) +
         geom_hline(yintercept=0, linetype="dashed", size=1, color="grey") +
         common +
-        geom_text(data=sigs_sub, aes(x=`Gene set`, label=sig), y=0.7, hjust=0.5, vjust=0.5, inherit.aes=FALSE) +
+        geom_text(data=sigs_sub, aes(x=`Gene set`, label=sig, y=y), size=5, hjust=0.5, vjust=0.5, inherit.aes=FALSE) +
         scale_fill_manual(values=c("Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3")) +
         guides(label=FALSE) +
         plot_layout(tag_level="new")
