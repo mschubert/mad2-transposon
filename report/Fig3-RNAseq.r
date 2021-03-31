@@ -74,11 +74,12 @@ gset_aneup = function(gdf) {
     gdf = gdf %>%
         mutate(subtype = ifelse(is.na(subtype), as.character(type), as.character(subtype))) %>%
         filter(subtype != "Other") # rare B-like
-    p1 = ggplot(gdf, aes(x=`Interferon Gamma Response`, y=Aneuploidy)) +
+    p1 = ggplot(gdf, aes(x=`Interferon Gamma Response`, y=Aneuploidy0.2)) +
         geom_point(aes(color=subtype, size=`STAT1 (a)`), alpha=0.5) +
         geom_smooth(aes(color=subtype), method="lm", se=FALSE) +
         geom_smooth(method="lm", se=FALSE, color="black") +
         scale_color_manual(values=cols) +
+        ylab("Aneuploidy") +
         plot_layout(tag_level="new")
     d1 = ggplot(gdf, aes(x=type, y=`Interferon Gamma Response`)) +
         geom_boxplot(aes(fill=type)) +
@@ -86,12 +87,13 @@ gset_aneup = function(gdf) {
         theme(axis.text = element_blank(),
               axis.title = element_blank(),
               legend.position = "none")
-    p2 = ggplot(gdf, aes(x=`Myc Targets V1`, y=Aneuploidy)) +
+    p2 = ggplot(gdf, aes(x=`Myc Targets V1`, y=Aneuploidy0.2)) +
         geom_point(aes(color=subtype, size=`STAT1 (a)`), alpha=0.5) +
         geom_smooth(aes(color=subtype), method="lm", se=FALSE) +
         geom_smooth(method="lm", se=FALSE, color="black") +
         theme(axis.title.y = element_blank()) +
         scale_color_manual(values=cols) +
+        ylab("Aneuploidy") +
         plot_layout(tag_level="new")
     d2 = ggplot(gdf, aes(x=type, y=`Myc Targets V1`)) +
         geom_boxplot(aes(fill=type)) +
@@ -99,25 +101,26 @@ gset_aneup = function(gdf) {
         theme(axis.text = element_blank(),
               axis.title = element_blank(),
               legend.position = "none")
-    d3 = ggplot(gdf, aes(x=type, y=Aneuploidy)) +
+    d3 = ggplot(gdf, aes(x=type, y=Aneuploidy0.2)) +
         geom_boxplot(aes(fill=type)) +
         theme(axis.text = element_blank(),
               axis.title = element_blank(),
               legend.position = "none") +
+        ylab("Aneuploidy") +
         plot_layout(tag_level="new")
 
     d1 + d2 + plot_spacer() + p1 + p2 + d3 +
         plot_layout(widths=c(5,5,1), heights=c(1,5), guides="collect")
 }
 
-set_tissue = function(gdf) {
+set_tissue = function(sets) {
 #    ins = reshape2::melt(cis2) %>%
 #        as_tibble()
     keep = c("Interferon Gamma Response", "TNF-alpha Signaling via NF-kB", "STAT1 (a)",
              "TP53 (a)", "Oxidative Phosphorylation", "DNA Repair", "Myc Targets V1")
-    keepn = c("Interferon Gamma\nResponse", "TNF-alpha\nvia NF-kB", "STAT1 (a)",
-              "TP53 (a)", "Oxidative\nPhosphorylation", "DNA Repair", "Myc Targets V1")
-    gdf = gdf %>% #todo: this + mutates above should be in metadata table
+    keepn = c("Ifn Gamma\nResponse", "TNFa\nvia NF-kB", "STAT1 (a)",
+              "TP53 (a)", "Oxidative\nPhosphorylation", "DNA Repair", "Myc\nTargets V1")
+    gdf = sets %>% #todo: this + mutates above should be in metadata table
         tidyr::gather("Gene set", "GSVA", -(sample:Aneuploidy)) %>%
         filter(`Gene set` %in% keep) %>%
         mutate(`Gene set` = factor(`Gene set`, levels=keep, ordered=TRUE))
@@ -125,17 +128,30 @@ set_tissue = function(gdf) {
 
 #    sigs = data.frame(x1=)
 
-    p1 = ggplot(gdf, aes(x=`Gene set`, y=GSVA, fill=type)) +
-        geom_hline(yintercept=0, linetype="dashed", size=1, color="grey") +
+    p1 = ggplot(sets %>% filter(!is.na(type)), aes(x="Aneuploidy", y=Aneuploidy, fill=type)) +
         geom_boxplot(outlier.shape=NA) +
         ggbeeswarm::geom_quasirandom(color="black", alpha=0.3, shape=21, dodge.width=.75, size=2.5, width=0.05) +
         theme(axis.title.x = element_blank())
-    p2 = ggplot(gdf %>% filter(!is.na(subtype)), aes(x=`Gene set`, y=GSVA, fill=subtype)) +
+    p2 = ggplot(gdf %>% filter(!is.na(type)), aes(x=`Gene set`, y=GSVA, fill=type)) +
         geom_hline(yintercept=0, linetype="dashed", size=1, color="grey") +
         geom_boxplot(outlier.shape=NA) +
         ggbeeswarm::geom_quasirandom(color="black", alpha=0.3, shape=21, dodge.width=.75, size=2.5, width=0.05) +
+        theme(axis.title.x = element_blank()) +
+        plot_layout(tag_level="new")
+    p3 = ggplot(sets %>% filter(!is.na(subtype)), aes(x="Aneuploidy", y=Aneuploidy, fill=subtype)) +
+        geom_boxplot(outlier.shape=NA) +
+        ggbeeswarm::geom_quasirandom(color="black", alpha=0.3, shape=21, dodge.width=.75, size=2.5, width=0.05) +
+        theme(axis.title.x = element_blank()) +
         scale_fill_manual(values=c("Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3"))
-    p1 / p2
+    p4 = ggplot(gdf %>% filter(!is.na(subtype)), aes(x=`Gene set`, y=GSVA, fill=subtype)) +
+        geom_hline(yintercept=0, linetype="dashed", size=1, color="grey") +
+        geom_boxplot(outlier.shape=NA) +
+        ggbeeswarm::geom_quasirandom(color="black", alpha=0.3, shape=21, dodge.width=.75, size=2.5, width=0.05) +
+        scale_fill_manual(values=c("Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3")) +
+        plot_layout(tag_level="new")
+    top = p1 + p2 + plot_layout(widths=c(1,6.5), guides="collect")
+    btm = p3 + p4 + plot_layout(widths=c(1,6.5), guides="collect")
+    top / btm
 }
 
 ifn_myc_condition = function(sets, ghm, gdo) {
@@ -170,29 +186,19 @@ sys$run({
     sets = cbind.data.frame(
         sample = colnames(ghm),
         type = meta$type[match(colnames(ghm), meta$sample)],
+        subtype = meta$subtype[match(colnames(ghm), meta$sample)],
         Myc_expr = gex["Myc", match(colnames(ghm), colnames(gex))],
         Myc_copies = pmin(gcs["ENSMUSG00000022346", match(colnames(ghm), colnames(gcs))], 3),
-        Aneuploidy = pmin(meta$aneuploidy[match(colnames(ghm), meta$sample)], 0.2),
+        Aneuploidy = meta$aneuploidy[match(colnames(ghm), meta$sample)],
+        Aneuploidy0.2 = pmin(meta$aneuploidy[match(colnames(ghm), meta$sample)], 0.2),
         t(ghm[c("Myc Targets V1", "Myc Targets V2", "Interferon Gamma Response",
                 "Interferon Alpha Response", "Inflammatory Response", "DNA Repair",
                 "Oxidative Phosphorylation", "TNF-alpha Signaling via NF-kB",
                 "Mitotic Spindle", "TGF-beta Signaling"),]),
         t(gdo[c("STAT1 (a)", "TP53 (a)"),])
-    ) %>% as_tibble() %>% na.omit()
+    ) %>% as_tibble()
 
     #todo: move the subtype annotations to the actual metadata
-    gdf = sets %>%
-        mutate(subtype = case_when(
-            sample %in% c("157s", "404s", "411s", "412s", "416s", "424s", "425s", "428s",
-                          "432s", "437s", "461s", "476s", "482s", "627s", "632s") ~ "Ets1",
-            sample %in% c("402s", "405s", "409s", "413s", "417s", "422s", "429s", "431s",
-                          "434s", "435s", "442s") ~ "Erg",
-            sample %in% c("421s", "467s", "485s", "609s", "613t", "620s", "622s") ~ "Ebf1",
-            TRUE ~ NA_character_
-        )) %>%
-        mutate(subtype = factor(subtype, levels=c("Ebf1", "Ets1", "Erg"))) %>%
-        select(sample, subtype, everything())
-
     cis = readRDS(args$cis)$samples # todo: add stat1 ins to lm plot
 
     markers = readRDS("../expr_markers/markers.rds")
@@ -208,13 +214,13 @@ sys$run({
 
     umap = umap_types(markers)
     volc2 = aneup_volcano(diff_expr)
-    gsa = set_tissue(gdf) / gset_aneup(gdf) + plot_layout(heights=c(1,1,2))
+    gsa = set_tissue(sets) / gset_aneup(sets) + plot_layout(heights=c(1,1,2))
 
     asm = umap / (volc2 + gsa + plot_layout(widths=c(2,3))) +
         plot_layout(heights=c(1,2)) + plot_annotation(tag_levels='a') &
         theme(plot.tag = element_text(size=18, face="bold"))
 
-    pdf(args$plotfile, 16, 15)
+    pdf(args$plotfile, 16.5, 15)
     print(asm)
     dev.off()
 })
