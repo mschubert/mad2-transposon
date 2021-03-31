@@ -15,10 +15,13 @@ umap_types = function(em) {
     dset = meta %>%
         mutate(umap1 = umap2[,1],
                umap2 = umap2[,2])
+    dset$umap1[dset$umap1 > 0] = dset$umap1[dset$umap1 > 0] - 1.5 # empty space is meaningless, better vis
+    dset$umap2[dset$umap2 > 0] = dset$umap2[dset$umap2 > 0] - 1.5
 
     p1 = ggplot(dset, aes(x=umap1, y=umap2)) +
         geom_point(aes(color=type, size=aneuploidy), alpha=0.8) +
-        ggrepel::geom_text_repel(aes(label=sample), size=3, segment.alpha=0.3)
+        ggrepel::geom_text_repel(aes(label=sample), size=3, segment.alpha=0.3) +
+        labs(color="Type", size="Aneuploidy")
 
     markers = c("Cd3g", "Ly6g", "Lyz1", "Ebf1", "Kit", "Ets1", "Erg", "Stat1")
     reads = em$reads[markers,]
@@ -35,6 +38,7 @@ umap_types = function(em) {
         facet_wrap(~gene, nrow=2) +
         scale_fill_distiller(palette="Spectral", trans="log10") +
         coord_cartesian(clip="off") +
+        labs(fill="Read count", size="Read count\n(scaled)") +
         theme(strip.background = element_rect(fill="#efefef"))
     p1 + p2 + plot_layout(nrow=1, widths=c(1.1,2))
 }
@@ -72,37 +76,37 @@ gset_aneup = function(gdf) {
     cols = c("Myeloid"="#f8766d", "T-cell"="#619cff", "Other"="#00ba38",
              "Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3")
     gdf = gdf %>%
-        mutate(subtype = ifelse(is.na(subtype), as.character(type), as.character(subtype))) %>%
-        filter(subtype != "Other") # rare B-like
+        mutate(Subtype = ifelse(is.na(Subtype), as.character(Type), as.character(Subtype))) %>%
+        filter(Subtype != "B-like") # rare B-like
     p1 = ggplot(gdf, aes(x=`Interferon Gamma Response`, y=Aneuploidy0.2)) +
-        geom_point(aes(color=subtype, size=`STAT1 (a)`), alpha=0.5) +
-        geom_smooth(aes(color=subtype), method="lm", se=FALSE) +
+        geom_point(aes(color=Subtype, size=`STAT1 (a)`), alpha=0.5) +
+        geom_smooth(aes(color=Subtype), method="lm", se=FALSE) +
         geom_smooth(method="lm", se=FALSE, color="black") +
         scale_color_manual(values=cols) +
         ylab("Aneuploidy") +
         plot_layout(tag_level="new")
-    d1 = ggplot(gdf, aes(x=type, y=`Interferon Gamma Response`)) +
-        geom_boxplot(aes(fill=type)) +
+    d1 = ggplot(gdf, aes(x=Type, y=`Interferon Gamma Response`)) +
+        geom_boxplot(aes(fill=Type)) +
         coord_flip() +
         theme(axis.text = element_blank(),
               axis.title = element_blank(),
               legend.position = "none")
     p2 = ggplot(gdf, aes(x=`Myc Targets V1`, y=Aneuploidy0.2)) +
-        geom_point(aes(color=subtype, size=`STAT1 (a)`), alpha=0.5) +
-        geom_smooth(aes(color=subtype), method="lm", se=FALSE) +
+        geom_point(aes(color=Subtype, size=`STAT1 (a)`), alpha=0.5) +
+        geom_smooth(aes(color=Subtype), method="lm", se=FALSE) +
         geom_smooth(method="lm", se=FALSE, color="black") +
         theme(axis.title.y = element_blank()) +
         scale_color_manual(values=cols) +
         ylab("Aneuploidy") +
         plot_layout(tag_level="new")
-    d2 = ggplot(gdf, aes(x=type, y=`Myc Targets V1`)) +
-        geom_boxplot(aes(fill=type)) +
+    d2 = ggplot(gdf, aes(x=Type, y=`Myc Targets V1`)) +
+        geom_boxplot(aes(fill=Type)) +
         coord_flip() +
         theme(axis.text = element_blank(),
               axis.title = element_blank(),
               legend.position = "none")
-    d3 = ggplot(gdf, aes(x=type, y=Aneuploidy0.2)) +
-        geom_boxplot(aes(fill=type)) +
+    d3 = ggplot(gdf, aes(x=Type, y=Aneuploidy0.2)) +
+        geom_boxplot(aes(fill=Type)) +
         theme(axis.text = element_blank(),
               axis.title = element_blank(),
               legend.position = "none") +
@@ -128,22 +132,22 @@ set_tissue = function(sets) {
 
 #    sigs = data.frame(x1=)
 
-    p1 = ggplot(sets %>% filter(!is.na(type)), aes(x="Aneuploidy", y=Aneuploidy, fill=type)) +
+    p1 = ggplot(sets %>% filter(!is.na(Type)), aes(x="Aneuploidy", y=Aneuploidy, fill=Type)) +
         geom_boxplot(outlier.shape=NA) +
         ggbeeswarm::geom_quasirandom(color="black", alpha=0.3, shape=21, dodge.width=.75, size=2.5, width=0.05) +
         theme(axis.title.x = element_blank())
-    p2 = ggplot(gdf %>% filter(!is.na(type)), aes(x=`Gene set`, y=GSVA, fill=type)) +
+    p2 = ggplot(gdf %>% filter(!is.na(Type)), aes(x=`Gene set`, y=GSVA, fill=Type)) +
         geom_hline(yintercept=0, linetype="dashed", size=1, color="grey") +
         geom_boxplot(outlier.shape=NA) +
         ggbeeswarm::geom_quasirandom(color="black", alpha=0.3, shape=21, dodge.width=.75, size=2.5, width=0.05) +
         theme(axis.title.x = element_blank()) +
         plot_layout(tag_level="new")
-    p3 = ggplot(sets %>% filter(!is.na(subtype)), aes(x="Aneuploidy", y=Aneuploidy, fill=subtype)) +
+    p3 = ggplot(sets %>% filter(!is.na(Subtype)), aes(x="Aneuploidy", y=Aneuploidy, fill=Subtype)) +
         geom_boxplot(outlier.shape=NA) +
         ggbeeswarm::geom_quasirandom(color="black", alpha=0.3, shape=21, dodge.width=.75, size=2.5, width=0.05) +
         theme(axis.title.x = element_blank()) +
         scale_fill_manual(values=c("Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3"))
-    p4 = ggplot(gdf %>% filter(!is.na(subtype)), aes(x=`Gene set`, y=GSVA, fill=subtype)) +
+    p4 = ggplot(gdf %>% filter(!is.na(Subtype)), aes(x=`Gene set`, y=GSVA, fill=Subtype)) +
         geom_hline(yintercept=0, linetype="dashed", size=1, color="grey") +
         geom_boxplot(outlier.shape=NA) +
         ggbeeswarm::geom_quasirandom(color="black", alpha=0.3, shape=21, dodge.width=.75, size=2.5, width=0.05) +
@@ -185,8 +189,8 @@ sys$run({
     narray::intersect(ghm, gdo, along=2)
     sets = cbind.data.frame(
         sample = colnames(ghm),
-        type = meta$type[match(colnames(ghm), meta$sample)],
-        subtype = meta$subtype[match(colnames(ghm), meta$sample)],
+        Type = meta$type[match(colnames(ghm), meta$sample)],
+        Subtype = meta$subtype[match(colnames(ghm), meta$sample)],
         Myc_expr = gex["Myc", match(colnames(ghm), colnames(gex))],
         Myc_copies = pmin(gcs["ENSMUSG00000022346", match(colnames(ghm), colnames(gcs))], 3),
         Aneuploidy = meta$aneuploidy[match(colnames(ghm), meta$sample)],
