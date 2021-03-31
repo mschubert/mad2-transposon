@@ -132,7 +132,7 @@ set_tissue = function(sets) {
     levels(gdf$`Gene set`) = keepn
     sdf = gdf %>% filter(!is.na(Subtype))
 
-    stars = c("<0.15"="⋅", "<0.05"="▪", "<0.001"="٭", "n.s."="")
+    stars = c("<0.15"="⋅", "<0.05"="▪", "<0.001"="٭", "n.s."="×")
     a_v_b = function(x, y, a, b) {
         x1 = rep(NA, length(y))
         x1[x == a] = 0
@@ -153,34 +153,29 @@ set_tissue = function(sets) {
     sigs_sub = get_p(sdf, "Subtype", "Ebf1", "Ets1", "Erg")
     aneup_sub = get_p(subsets %>% mutate(x="1"), "Subtype", "Ebf1", "Ets1", "Erg", x="x", y="Aneuploidy")
 
-    p1 = ggplot(tsets, aes(x="Aneuploidy", y=Aneuploidy, fill=Type)) +
-        geom_boxplot(outlier.shape=NA) +
-        ggbeeswarm::geom_quasirandom(color="black", alpha=0.3, shape=21, dodge.width=.75, size=2.5, width=0.05) +
-        geom_text(data=aneup_type, aes(x=x, label=sig), y=0.57, hjust=0.5, vjust=0.5, inherit.aes=FALSE) +
-        scale_discrete_manual("label", values=stars, drop=FALSE, name="p-value") +
+    common = list(
+        geom_boxplot(outlier.shape=NA),
+        ggbeeswarm::geom_quasirandom(color="black", alpha=0.3, shape=21, dodge.width=.75, size=2.5, width=0.05),
+        scale_discrete_manual("label", values=stars, drop=FALSE, name="p-value"),
         theme(axis.title.x = element_blank())
+    )
+    p1 = ggplot(tsets, aes(x="Aneuploidy", y=Aneuploidy, fill=Type)) +
+        common +
+        geom_text(data=aneup_type, aes(x=x, label=sig), y=0.57, hjust=0.5, vjust=0.5, inherit.aes=FALSE)
     p2 = ggplot(gdf, aes(x=`Gene set`, y=GSVA, fill=Type)) +
         geom_hline(yintercept=0, linetype="dashed", size=1, color="grey") +
-        geom_boxplot(outlier.shape=NA) +
-        ggbeeswarm::geom_quasirandom(color="black", alpha=0.3, shape=21, dodge.width=.75, size=2.5, width=0.05) +
-        theme(axis.title.x = element_blank()) +
+        common +
         geom_text(data=sigs_type, aes(x=`Gene set`, label=sig), y=0.7, hjust=0.5, vjust=0.5, inherit.aes=FALSE) +
-        scale_discrete_manual("label", values=stars, drop=FALSE, name="p-value") +
         plot_layout(tag_level="new")
     p3 = ggplot(subsets, aes(x="Aneuploidy", y=Aneuploidy, fill=Subtype)) +
-        geom_boxplot(outlier.shape=NA) +
-        ggbeeswarm::geom_quasirandom(color="black", alpha=0.3, shape=21, dodge.width=.75, size=2.5, width=0.05) +
-        theme(axis.title.x = element_blank()) +
+        common +
         geom_text(data=aneup_sub, aes(x=x, label=sig), y=0.4, hjust=0.5, vjust=0.5, inherit.aes=FALSE) +
-        scale_discrete_manual("label", values=stars, drop=FALSE, name="p-value") +
         scale_fill_manual(values=c("Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3"))
     p4 = ggplot(sdf, aes(x=`Gene set`, y=GSVA, fill=Subtype)) +
         geom_hline(yintercept=0, linetype="dashed", size=1, color="grey") +
-        geom_boxplot(outlier.shape=NA) +
-        ggbeeswarm::geom_quasirandom(color="black", alpha=0.3, shape=21, dodge.width=.75, size=2.5, width=0.05) +
-        scale_fill_manual(values=c("Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3")) +
+        common +
         geom_text(data=sigs_sub, aes(x=`Gene set`, label=sig), y=0.7, hjust=0.5, vjust=0.5, inherit.aes=FALSE) +
-        scale_discrete_manual("label", values=stars, drop=FALSE, name="p-value") +
+        scale_fill_manual(values=c("Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3")) +
         plot_layout(tag_level="new")
     top = p1 + p2 + plot_layout(widths=c(1,6.5))
     btm = p3 + p4 + plot_layout(widths=c(1,6.5))
