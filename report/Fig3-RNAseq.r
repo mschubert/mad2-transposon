@@ -156,7 +156,8 @@ set_tissue = function(sets) {
     common = list(
         geom_boxplot(outlier.shape=NA),
         ggbeeswarm::geom_quasirandom(color="black", alpha=0.3, shape=21, dodge.width=.75, size=2.5, width=0.05),
-        scale_discrete_manual("label", values=stars, drop=FALSE, name="p-value"),
+        scale_fill_discrete(guide=guide_legend(order=1)),
+        scale_discrete_manual("label", values=stars, drop=FALSE, name="p-value", guide=guide_legend(order=2)),
         theme(axis.title.x = element_blank())
     )
     p1 = ggplot(tsets, aes(x="Aneuploidy", y=Aneuploidy, fill=Type)) +
@@ -170,16 +171,18 @@ set_tissue = function(sets) {
     p3 = ggplot(subsets, aes(x="Aneuploidy", y=Aneuploidy, fill=Subtype)) +
         common +
         geom_text(data=aneup_sub, aes(x=x, label=sig), y=0.4, hjust=0.5, vjust=0.5, inherit.aes=FALSE) +
-        scale_fill_manual(values=c("Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3"))
+        scale_fill_manual(values=c("Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3")) +
+        guides(label=FALSE)
     p4 = ggplot(sdf, aes(x=`Gene set`, y=GSVA, fill=Subtype)) +
         geom_hline(yintercept=0, linetype="dashed", size=1, color="grey") +
         common +
         geom_text(data=sigs_sub, aes(x=`Gene set`, label=sig), y=0.7, hjust=0.5, vjust=0.5, inherit.aes=FALSE) +
         scale_fill_manual(values=c("Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3")) +
+        guides(label=FALSE) +
         plot_layout(tag_level="new")
-    top = p1 + p2 + plot_layout(widths=c(1,6.5))
-    btm = p3 + p4 + plot_layout(widths=c(1,6.5))
-    (top / btm) + plot_layout(guides="collect")
+    top = p1 + p2 + plot_layout(widths=c(1,6.5), guides="collect")
+    btm = p3 + p4 + plot_layout(widths=c(1,6.5), guides="collect")
+    (top / btm)
 }
 
 ifn_myc_condition = function(sets, ghm, gdo) {
