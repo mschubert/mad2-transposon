@@ -72,46 +72,38 @@ aneup_volcano = function(diff_expr) {
               panel.grid.major = element_line(color="#efefef", size=0.5))
 }
 
-gset_aneup = function(gdf) {
-    cols = c("Myeloid"="#f8766d", "T-cell"="#619cff", "Other"="#00ba38",
+gset_aneup = function(dset) {
+    cols = c("Myeloid"="#f8766d", "T-cell"="#619cff", "B-like"="#00ba38",
              "Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3")
-    gdf = gdf %>%
+    gdf = dset %>%
         mutate(Subtype = ifelse(is.na(Subtype), as.character(Type), as.character(Subtype))) %>%
         filter(Subtype != "B-like") # rare B-like
-    p1 = ggplot(gdf, aes(x=`Interferon Gamma Response`, y=Aneuploidy0.2)) +
-        geom_point(aes(color=Subtype, size=`STAT1 (a)`), alpha=0.5) +
-        geom_smooth(aes(color=Subtype), method="lm", se=FALSE) +
-        geom_smooth(method="lm", se=FALSE, color="black") +
-        scale_color_manual(values=cols) +
-        ylab("Aneuploidy") +
+    common = list(
+        geom_point(aes(fill=Subtype, size=`STAT1 (a)`, shape=CIS), color="black", alpha=0.5),
+        geom_smooth(aes(color=Subtype), method="lm", se=FALSE),
+        geom_smooth(method="lm", se=FALSE, color="black"),
+        scale_fill_manual(values=cols),
+        scale_color_manual(values=cols),
+        scale_shape_manual(values=c("Stat1"=25, "Pias1"=24), na.translate=TRUE, na.value=21, guide=FALSE),
+        ylab("Aneuploidy"),
+        theme(plot.margin = margin(0,0,0,0,"mm")),
         plot_layout(tag_level="new")
-    d1 = ggplot(gdf, aes(x=Type, y=`Interferon Gamma Response`)) +
-        geom_boxplot(aes(fill=Type)) +
-        coord_flip() +
-        theme(axis.text = element_blank(),
-              axis.title = element_blank(),
-              legend.position = "none")
-    p2 = ggplot(gdf, aes(x=`Myc Targets V1`, y=Aneuploidy0.2)) +
-        geom_point(aes(color=Subtype, size=`STAT1 (a)`), alpha=0.5) +
-        geom_smooth(aes(color=Subtype), method="lm", se=FALSE) +
-        geom_smooth(method="lm", se=FALSE, color="black") +
-        theme(axis.title.y = element_blank()) +
-        scale_color_manual(values=cols) +
-        ylab("Aneuploidy") +
-        plot_layout(tag_level="new")
-    d2 = ggplot(gdf, aes(x=Type, y=`Myc Targets V1`)) +
-        geom_boxplot(aes(fill=Type)) +
-        coord_flip() +
-        theme(axis.text = element_blank(),
-              axis.title = element_blank(),
-              legend.position = "none")
-    d3 = ggplot(gdf, aes(x=Type, y=Aneuploidy0.2)) +
-        geom_boxplot(aes(fill=Type)) +
-        theme(axis.text = element_blank(),
-              axis.title = element_blank(),
-              legend.position = "none") +
-        ylab("Aneuploidy") +
-        plot_layout(tag_level="new")
+    )
+    dens_common = list(
+        geom_density(size=0.5, alpha=0.1, adjust=1.5),
+        scale_color_manual(values=cols, guide=FALSE),
+        scale_fill_manual(values=cols, guide=FALSE),
+        theme(plot.margin = margin(0,0,0,0,"mm")),
+        theme_void()
+    )
+    p1 = ggplot(gdf, aes(x=`Interferon Gamma Response`, y=Aneuploidy0.2)) + common
+    p2 = ggplot(gdf, aes(x=`Myc Targets V1`, y=Aneuploidy0.2)) + common +
+        theme(axis.title.y = element_blank(),
+              plot.margin = margin(0,0,0,0,"mm"))
+    d1 = ggplot(gdf, aes(x=`Interferon Gamma Response`, color=Subtype, fill=Subtype)) + dens_common
+    d2 = ggplot(gdf, aes(x=`Myc Targets V1`, color=Subtype, fill=Subtype)) + dens_common
+    d3 = ggplot(gdf, aes(x=Aneuploidy0.2, color=Subtype, fill=Subtype)) + dens_common +
+        coord_flip() + ylab("Aneuploidy") + plot_layout(tag_level="new")
 
     d1 + d2 + plot_spacer() + p1 + p2 + d3 +
         plot_layout(widths=c(5,5,1), heights=c(1,5), guides="collect")
@@ -148,41 +140,46 @@ set_tissue = function(dset) {
                !!rlang::sym(x) := as.integer(!!rlang::sym(x)) + sign(cmp)*0.15,
                sig = case_when(p<1e-3 ~ "<0.001", p<0.05 ~ "<0.05", p<0.15 ~ "<0.15", TRUE ~ "n.s."),
                sig = factor(sig, levels=names(stars)))
-    sigs_type = get_p(gdf, "Type", "Myeloid", "B-like", "T-cell")
+    sigs_type = get_p(gdf, "Type", "Myeloid", "B-like", "T-cell") %>% mutate(y = 0.7)
     aneup_type = get_p(tsets %>% mutate(x="1"), "Type", "Myeloid", "B-like", "T-cell", x="x", y="Aneuploidy")
     sigs_sub = get_p(sdf, "Subtype", "Ebf1", "Ets1", "Erg") %>%
         mutate(y = ifelse(`Gene set` > 6.5, -0.35, 0.7))
     aneup_sub = get_p(subsets %>% mutate(x="1"), "Subtype", "Ebf1", "Ets1", "Erg", x="x", y="Aneuploidy")
 
-    common = list(
+    common = function(map_bee) list(
         geom_boxplot(outlier.shape=NA),
-        ggbeeswarm::geom_quasirandom(color="black", alpha=0.3, shape=21, dodge.width=.75, size=2.5, width=0.05),
-        scale_fill_discrete(guide=guide_legend(order=1)),
+        ggbeeswarm::geom_quasirandom(map_bee, color="black", alpha=0.3, dodge.width=.75, size=2.5, width=0.05),
+        scale_shape_manual(values=c("Stat1"=25, "Pias1"=24), na.translate=TRUE, na.value=21, guide=guide_legend(order=2)),
         scale_discrete_manual("label", values=stars, drop=FALSE, name="p-value", guide=guide_legend(order=2)),
         theme(axis.title.x = element_blank())
     )
-    p1 = ggplot(tsets, aes(x="Aneuploidy", y=Aneuploidy, fill=Type)) +
-        common +
-        geom_text(data=aneup_type, aes(x=x, label=sig), y=0.57, size=5, hjust=0.5, vjust=0.5, inherit.aes=FALSE)
-    p2 = ggplot(gdf, aes(x=`Gene set`, y=GSVA, fill=Type)) +
-        geom_hline(yintercept=0, linetype="dashed", size=1, color="grey") +
-        common +
-        geom_text(data=sigs_type, aes(x=`Gene set`, label=sig), y=0.7, size=5, hjust=0.5, vjust=0.5, inherit.aes=FALSE) +
-        plot_layout(tag_level="new")
-    p3 = ggplot(subsets, aes(x="Aneuploidy", y=Aneuploidy, fill=Subtype)) +
-        common +
+    set_common = function(sig_df, map_bee) c(
+        list(geom_hline(yintercept=0, linetype="dashed", size=1, color="grey")),
+        common(map_bee),
+        list(guides(shape=FALSE),
+             geom_text(data=sig_df, aes(x=`Gene set`, label=sig, y=y), size=5, hjust=0.5, vjust=0.5, inherit.aes=FALSE),
+             plot_layout(tag_level="new"))
+    )
+    subvals = c("Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3")
+    p11 = ggplot(tsets, aes(x="Aneuploidy", y=Aneuploidy, fill=Type)) +
+        common(aes(group=Type, shape=CIS)) +
+        geom_text(data=aneup_type, aes(x=x, label=sig), y=0.57, size=5, hjust=0.5, vjust=0.5, inherit.aes=FALSE) +
+        scale_fill_discrete(guide=guide_legend(order=1)) +
+        guides(shape=FALSE)
+    p21 = ggplot(subsets, aes(x="Aneuploidy", y=Aneuploidy, fill=Subtype)) +
+        common(aes(shape=CIS, group=Subtype)) +
         geom_text(data=aneup_sub, aes(x=x, label=sig), y=0.4, size=5, hjust=0.5, vjust=0.5, inherit.aes=FALSE) +
-        scale_fill_manual(values=c("Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3")) +
+        scale_fill_manual(values=subvals, guide=guide_legend(order=1)) +
         guides(label=FALSE)
-    p4 = ggplot(sdf, aes(x=`Gene set`, y=GSVA, fill=Subtype)) +
-        geom_hline(yintercept=0, linetype="dashed", size=1, color="grey") +
-        common +
-        geom_text(data=sigs_sub, aes(x=`Gene set`, label=sig, y=y), size=5, hjust=0.5, vjust=0.5, inherit.aes=FALSE) +
-        scale_fill_manual(values=c("Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3")) +
-        guides(label=FALSE) +
-        plot_layout(tag_level="new")
-    top = p1 + p2 + plot_layout(widths=c(1,6.5), guides="collect")
-    btm = p3 + p4 + plot_layout(widths=c(1,6.5), guides="collect")
+    p12 = ggplot(gdf, aes(x=`Gene set`, y=GSVA, fill=Type)) +
+        set_common(sigs_type, aes(shape=CIS, group=Type)) +
+        scale_fill_discrete(guide=guide_legend(order=1))
+    p22 = ggplot(sdf, aes(x=`Gene set`, y=GSVA, fill=Subtype)) +
+        set_common(sigs_sub, aes(shape=CIS, group=Subtype)) +
+        scale_fill_manual(values=subvals, guide=guide_legend(order=1)) +
+        guides(label=FALSE)
+    top = p11 + p12 + plot_layout(widths=c(1,6.5), guides="collect")
+    btm = p21 + p22 + plot_layout(widths=c(1,6.5), guides="collect")
     (top / btm)
 }
 
