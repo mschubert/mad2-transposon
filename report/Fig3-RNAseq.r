@@ -117,9 +117,9 @@ gset_aneup = function(gdf) {
         plot_layout(widths=c(5,5,1), heights=c(1,5), guides="collect")
 }
 
-set_tissue = function(sets) {
-    tsets = sets %>% filter(!is.na(Type))
-    subsets = sets %>% filter(!is.na(Subtype))
+set_tissue = function(dset) {
+    tsets = dset %>% filter(!is.na(Type))
+    subsets = dset %>% filter(!is.na(Subtype))
     keep = c("Interferon Gamma Response", "TNF-alpha Signaling via NF-kB", "STAT1 (a)",
              "TP53 (a)", "Oxidative Phosphorylation", "DNA Repair", "Myc Targets V1")
     keepn = c("Ifn Gamma\nResponse", "TNFa\nvia NF-kB", "STAT1 (a)",
@@ -207,31 +207,33 @@ sys$run({
     )
 
     aset = readRDS(args$aset)
-    meta = aset$meta
+    cis = readRDS(args$cis)$samples %>%
+        filter(external_gene_name %in% c("Stat1", "Pias1")) %>%
+        select(sample, CIS=external_gene_name)
+    meta = aset$meta %>%
+        left_join(cis) %>%
+        transmute(sample=sample, Type=type, Subtype=subtype, CIS=CIS,
+                  Aneuploidy=aneuploidy, Aneuploidy0.2=pmin(aneuploidy, 0.2))
 
-    gcs = readRDS(args$gene_copies)
-    gex = readRDS("../expr_diff/eset_Mad2PB.rds")$vs
-
-    ghm = readRDS(args$gsva_hm)
-    gdo = readRDS(args$gsva_dorothea)
-    narray::intersect(ghm, gdo, along=2)
-    sets = cbind.data.frame(
-        sample = colnames(ghm),
-        Type = meta$type[match(colnames(ghm), meta$sample)],
-        Subtype = meta$subtype[match(colnames(ghm), meta$sample)],
-        Myc_expr = gex["Myc", match(colnames(ghm), colnames(gex))],
-        Myc_copies = pmin(gcs["ENSMUSG00000022346", match(colnames(ghm), colnames(gcs))], 3),
-        Aneuploidy = meta$aneuploidy[match(colnames(ghm), meta$sample)],
-        Aneuploidy0.2 = pmin(meta$aneuploidy[match(colnames(ghm), meta$sample)], 0.2),
-        t(ghm[c("Myc Targets V1", "Myc Targets V2", "Interferon Gamma Response",
+    set_keep = c("Myc Targets V1", "Myc Targets V2", "Interferon Gamma Response",
                 "Interferon Alpha Response", "Inflammatory Response", "DNA Repair",
                 "Oxidative Phosphorylation", "TNF-alpha Signaling via NF-kB",
-                "Mitotic Spindle", "TGF-beta Signaling"),]),
-        t(gdo[c("STAT1 (a)", "TP53 (a)"),])
-    ) %>% as_tibble()
+                "Mitotic Spindle", "TGF-beta Signaling", "STAT1 (a)", "TP53 (a)")
+    gsva = t(narray::stack(readRDS(args$gsva_hm), readRDS(args$gsva_dorothea), along=1)) %>%
+        as.data.frame() %>% tibble::rownames_to_column("sample") %>% as_tibble() %>%
+        `[`(, c("sample", set_keep))
 
-    #todo: move the subtype annotations to the actual metadata
-    cis = readRDS(args$cis)$samples # todo: add stat1 ins to lm plot
+    gcs = readRDS(args$gene_copies) %>% t() %>%
+        as.data.frame() %>% tibble::rownames_to_column("sample") %>% as_tibble() %>%
+        select(sample, Myc_copies=`ENSMUSG00000022346`)
+    gex = readRDS("../expr_diff/eset_Mad2PB.rds")$vs %>% t() %>%
+        as.data.frame() %>% tibble::rownames_to_column("sample") %>% as_tibble() %>%
+        select(sample, Myc_expr=Myc, Stat1_expr=Stat1, Pias1_expr=Pias1)
+
+    dset = meta %>%
+        left_join(gcs) %>%
+        left_join(gex) %>%
+        left_join(gsva)
 
     markers = readRDS("../expr_markers/markers.rds")
     diff_expr = readRDS(args$expr)
@@ -241,12 +243,11 @@ sys$run({
     # cor plot annotate insertions
     # volcano condition on STAT+Ifn (?)
     # volcano different colors for HMs, dorothea
-    # switch Ighm for monocyte marker?
     # myc copies -> myc targets? (maybe: does Myc targets assoc drop when conditioning on copies) [could do xy instead of @volc]
 
     umap = umap_types(markers)
     volc2 = aneup_volcano(diff_expr)
-    gsa = set_tissue(sets) / gset_aneup(sets) + plot_layout(heights=c(1,1,2))
+    gsa = set_tissue(dset) / gset_aneup(dset) + plot_layout(heights=c(1,1,2))
 
     asm = umap / (volc2 + gsa + plot_layout(widths=c(2,3))) +
         plot_layout(heights=c(1,2)) + plot_annotation(tag_levels='a') &
