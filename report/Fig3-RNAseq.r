@@ -82,11 +82,11 @@ gset_aneup = function(dset) {
 
     cor_p = . %>% lm(data=gdf) %>% broom::tidy() %>% filter(term == "Aneuploidy0.2")
     m1n = cor_p(`Interferon Gamma Response` ~ Aneuploidy0.2)
-    m1c = cor_p(`Interferon Gamma Response` ~ Subtype + Aneuploidy0.2)
+    m1c = cor_p(`Interferon Gamma Response` ~ Subtype + `STAT1 (a)` + Aneuploidy0.2)
     m2n = cor_p(`Myc Targets V1` ~ Aneuploidy0.2)
-    m2c = cor_p(`Myc Targets V1` ~ Subtype + Aneuploidy0.2)
-    m1 = sprintf("p=%.2g (naive)<br/>%.2g (corrected)", m1n$p.value, m1c$p.value)
-    m2 = sprintf("p=%.2g (naive)<br/>%.2g (corrected)", m2n$p.value, m2c$p.value)
+    m2c = cor_p(`Myc Targets V1` ~ Myc_copies + `STAT1 (a)` + Aneuploidy0.2)
+    m1 = sprintf("p=%.2g (naive)<br/>%.2g (Subtype + STAT1)", m1n$p.value, m1c$p.value)
+    m2 = sprintf("p=%.2g (naive)<br/>%.2g (Myc copies + STAT1)", m2n$p.value, m2c$p.value)
 
     common = list(
         geom_point(aes(fill=Subtype, size=`STAT1 (a)`, shape=CIS), color="black", alpha=0.5),
@@ -106,8 +106,8 @@ gset_aneup = function(dset) {
         theme_void()
     )
     p1 = ggplot(gdf, aes(x=`Interferon Gamma Response`, y=Aneuploidy0.2)) + common +
-        annotate("richtext", x=0, y=0.114, label=m1, hjust=0.7, vjust=0.5, angle=-34, size=4,
-                 label.size=NA, fill="#ffffffc0") +
+        annotate("richtext", x=0, y=0.112, label=m1, hjust=0.7, vjust=0.5, angle=-34, size=4,
+                 label.size=NA, fill="#ffffff90") +
         geom_smooth(method="lm", se=FALSE, color="black")
     p2 = ggplot(gdf, aes(x=`Myc Targets V1`, y=Aneuploidy0.2)) + common +
         annotate("richtext", x=-0.2, y=0.105, label=m2, hjust=0.4, vjust=0.58, angle=24, size=4,
