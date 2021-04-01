@@ -1,5 +1,8 @@
 configfile: "../config.yaml"
 
+subworkflow meta:
+    workdir: "../data/meta"
+
 subworkflow cis:
     workdir: "../data/cis"
 
@@ -94,6 +97,7 @@ rule ext_assocs:
 rule poisson_gene:
     input:
         rscript = "poisson.r",
+        meta = meta("meta.rds"),
         aset = "analysis_set.rds"
     output:
         result = "poisson.rds",
@@ -103,6 +107,7 @@ rule poisson_gene:
     shell:
         "Rscript {input.rscript}"
             " --infile {input.aset}"
+            " --meta {input.meta}"
             " --outfile {output.result}"
             " --plotfile {output.plot}"
 

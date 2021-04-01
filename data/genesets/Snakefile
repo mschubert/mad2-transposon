@@ -13,7 +13,7 @@ rule all:
     input:
         expand("{org}/{geneset}.rds", org=org, geneset=enrichr_sets),
         expand("{org}/MILE_regulons.rds", org=org),
-        expand("{org}/stat_ko.rds", org=org)
+        expand("{org}/stat1_ko.rds", org=org)
 
 rule enrichr:
     input:

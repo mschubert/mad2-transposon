@@ -7,14 +7,18 @@ plt = import('plot')
 
 args = sys$cmd$parse(
     opt('i', 'infile', 'transposon insert rds', 'analysis_set.rds'),
+    opt('m', 'meta', 'rds', '../data/meta/meta.rds'),
     opt('u', 'upstream', 'bp to include before gene', '10000'),
     opt('d', 'downstream', 'bp to include after gene', '0'),
     opt('o', 'outfile', 'insertion statistics rds', 'poisson.rds'),
     opt('p', 'plotfile', 'volcano pdf', 'poisson.pdf')
 )
 
+meta = readRDS(args$meta) %>% filter(analysis_set & !is.na(type))
 ins = readRDS(args$infile) %>%
-    filter(chr %in% c(1:19, 'X'), !is_local) %>%
+    filter(sample %in% meta$sample,
+           chr %in% c(1:19, 'X'),
+           !is_local) %>%
     GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns=TRUE,
         start.field="position", end.field="position")
 

@@ -84,11 +84,11 @@ sys$run({
         tidyr::complete(sample, external_gene_name, fill=list(reads=FALSE)) %>%
         inner_join(dset$sample_rates %>% select(sample, n_ins, n_reads, rate)) %>%
         inner_join(meta %>% select(sample, aneuploidy, type,
-                                   `T-cell`, Myeloid, Other))
+                                   `T-cell`, Myeloid, `B-like`))
 
-    fields = c("aneuploidy", "T-cell", "Myeloid", "Other")
+    fields = c("aneuploidy", "T-cell", "Myeloid", "B-like")
     result = expand.grid(external_gene_name=genes, ext=fields,
-            type=unique(aset$type), stringsAsFactors=FALSE) %>%
+            type=c(NA, levels(aset$type)), stringsAsFactors=FALSE) %>%
         filter(is.na(type) | ext == "aneuploidy") %>%
         mutate(res = clustermq::Q(test_gene, const=list(dset=aset),
             gene=external_gene_name, ext_var=ext, is_type=type,
