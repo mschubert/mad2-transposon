@@ -2,6 +2,7 @@ library(dplyr)
 library(tidygraph)
 library(ggplot2)
 library(patchwork)
+library(ggtext)
 theme_set(cowplot::theme_cowplot())
 sys = import('sys')
 gset = import('genesets')
@@ -78,10 +79,18 @@ gset_aneup = function(dset) {
     gdf = dset %>%
         mutate(Subtype = ifelse(is.na(Subtype), as.character(Type), as.character(Subtype))) %>%
         filter(Subtype != "B-like") # rare B-like
+
+    cor_p = . %>% lm(data=gdf) %>% broom::tidy() %>% filter(term == "Aneuploidy0.2")
+    m1n = cor_p(`Interferon Gamma Response` ~ Aneuploidy0.2)
+    m1c = cor_p(`Interferon Gamma Response` ~ Subtype + Aneuploidy0.2)
+    m2n = cor_p(`Myc Targets V1` ~ Aneuploidy0.2)
+    m2c = cor_p(`Myc Targets V1` ~ Subtype + Aneuploidy0.2)
+    m1 = sprintf("p=%.2g (naive)<br/>%.2g (corrected)", m1n$p.value, m1c$p.value)
+    m2 = sprintf("p=%.2g (naive)<br/>%.2g (corrected)", m2n$p.value, m2c$p.value)
+
     common = list(
         geom_point(aes(fill=Subtype, size=`STAT1 (a)`, shape=CIS), color="black", alpha=0.5),
         geom_smooth(aes(color=Subtype), method="lm", se=FALSE),
-        geom_smooth(method="lm", se=FALSE, color="black"),
         scale_fill_manual(values=cols),
         scale_color_manual(values=cols),
         scale_shape_manual(values=c("Stat1"=25, "Pias1"=24), na.translate=TRUE, na.value=21, guide=FALSE),
@@ -96,8 +105,14 @@ gset_aneup = function(dset) {
         theme(plot.margin = margin(0,0,0,0,"mm")),
         theme_void()
     )
-    p1 = ggplot(gdf, aes(x=`Interferon Gamma Response`, y=Aneuploidy0.2)) + common
+    p1 = ggplot(gdf, aes(x=`Interferon Gamma Response`, y=Aneuploidy0.2)) + common +
+        annotate("richtext", x=0, y=0.114, label=m1, hjust=0.7, vjust=0.5, angle=-34, size=4,
+                 label.size=NA, fill="#ffffffc0") +
+        geom_smooth(method="lm", se=FALSE, color="black")
     p2 = ggplot(gdf, aes(x=`Myc Targets V1`, y=Aneuploidy0.2)) + common +
+        annotate("richtext", x=-0.2, y=0.105, label=m2, hjust=0.4, vjust=0.58, angle=24, size=4,
+                 label.size=NA, fill="#ffffffc0") +
+        geom_smooth(method="lm", se=FALSE, color="black") +
         theme(axis.title.y = element_blank(),
               plot.margin = margin(0,0,0,0,"mm"))
     d1 = ggplot(gdf, aes(x=`Interferon Gamma Response`, color=Subtype, fill=Subtype)) + dens_common
