@@ -20,6 +20,8 @@ surv1 = function(meta_all) {
     levels(meta2$gtpc) = c("Mad2", "Mad2 PB UT", "Mad2 PB", "PB")
     fit = survfit(Surv(months_death, status) ~ gtpc, data=meta2)
     p1 = ggsurvplot(fit, data=meta2, palette=brewer.pal(4, "Set2"))$plot +
+        xlab("Months") +
+        ylab("OS") +
         theme(legend.position="none")
 
     tdf = meta2 %>%
@@ -39,7 +41,10 @@ surv1 = function(meta_all) {
 surv2 = function(meta) {
     meta = meta %>% mutate(status = 1)
     fit = survfit(Surv(months_death, status) ~ type, data=meta)
-    p1 = ggsurvplot(fit, data=meta)$plot + theme(legend.position="none") #, legend.labs=c("Myeloid", "B-like", "T-cell"))
+    p1 = ggsurvplot(fit, data=meta)$plot +
+        xlab("Months") +
+        ylab("LFS") +
+        theme(legend.position="none")
 
     tdf = meta %>%
         group_by(type) %>%
