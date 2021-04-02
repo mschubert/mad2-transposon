@@ -131,25 +131,29 @@ subtype_assocs = function(ext, net_genes) {
 }
 
 bionet_combine = function(bionet) {
-    aneup_centrality = bionet$ext_nets$aneuploidy %N>%
+    aneup_centrality = bionet$ext_nets$aneuploidy %E>%
+        mutate(`Edge type` = "Aneuploidy") %N>%
         select(external_gene_name) %>%
         mutate(aneup_hub = centrality_hub()) %>%
         arrange(-aneup_hub)
-    cnet = bionet$cis_net %N>%
+    cnet = bionet$cis_net %E>%
+        mutate(`Edge type` = "CIS") %N>%
         select(external_gene_name, n_smp) %>%
+        mutate(hub = centrality_hub()) %>%
+        graph_join(aneup_centrality, copy=TRUE) %>%
         mutate(deg = igraph::degree(.),
-               hub = centrality_hub()) %>%
-        filter(deg > 1) %>%
-        mutate(deg = igraph::degree(.)) %>%
-        filter(deg > 1) %>%
+               hub = ifelse(is.na(hub), 0, hub)) %>%
+        filter(deg > 2) %>%
         arrange(-hub) %>%
-        left_join(aneup_centrality, copy=TRUE) %>%
         mutate(aneup_hub = ifelse(is.na(aneup_hub), 0, aneup_hub))
     ggraph(cnet) +
-        geom_edge_link(alpha=0.05, width=3) +
+        geom_edge_link(aes(color=`Edge type`, alpha=`Edge type`, width=`Edge type`)) +
+        scale_edge_color_manual(values=c(CIS="black", Aneuploidy="pink")) +
+        scale_edge_width_manual(values=c(CIS=3, Aneuploidy=1)) +
+        scale_edge_alpha_manual(values=c(CIS=0.05, Aneuploidy=0.8)) +
         geom_node_point(aes(size=hub, fill=aneup_hub), color="black", shape=21) +
         scale_fill_distiller(palette="RdPu", direction=1) +
-        geom_node_label(aes(label=external_gene_name, size=hub), repel=TRUE,
+        geom_node_label(aes(label=external_gene_name, size=hub), repel=TRUE, min.segment.length=1,
                         label.size=NA, segment.alpha=0.3, fill="#ffffff00", box.padding=0.4) +
         scale_size(range = c(2.5,10)) +
         guides(fill = guide_legend(title="Aneuploidy\ncentrality", override.aes=list(size=5)),
