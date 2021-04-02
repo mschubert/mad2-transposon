@@ -51,7 +51,7 @@ chrom_genes = function() {
 chroms = function(segs, meta) {
     wgs30 = segs %>%
         mutate(seqnames = factor(seqnames, levels=c(1:19,'X')),
-               sample = factor(sample, levels=levels(meta$sample))) %>%
+               sample = factor(sample, levels=rev(levels(meta$sample)))) %>%
         inner_join(meta %>% select(sample, aneuploidy)) %>%
         mutate(copy.number = factor(round(ploidy)),
                cell = sample)
@@ -62,12 +62,13 @@ chroms = function(segs, meta) {
               panel.background = element_rect(fill="transparent", color=NA),
               strip.background = element_blank(),
               strip.text.x = element_blank(),
-              panel.spacing.x = unit(0.5, "mm"),
+              panel.spacing.x = unit(1, "mm"),
               panel.grid.major = element_blank(),
               panel.grid.minor = element_blank(),
               axis.text.x = element_text(angle=60, hjust=1),
               axis.text.y = element_text(size=5.5)) +
-        coord_cartesian(clip="off", expand=FALSE)
+        coord_cartesian(clip="off") +
+        plot_layout(tag_level="new")
 }
 
 genotype_weights = function(meta) {
@@ -117,16 +118,16 @@ sys$run({
     segs = aset$segs %>%
         filter(is_pref_src)
 
-    asm = ((cohort() | surv(meta) | types(meta)) + plot_layout(widths=c(1.8,1,1))) /
-#        plt$text("pathology imgs go here") +
-        (chrom_genes() + plot_layout(widths=c(5,1)) + plot_spacer() +
-         chroms(segs, meta) + genotype_weights(meta) +
-            plot_layout(widths=c(10,1), heights=c(1,50), guides="collect")) +
-        plot_annotation(tag_levels='a') + plot_layout(heights=c(1,2)) &
-        theme(plot.margin=margin(0.25, 0.25, 0.25, 0.25, "mm"),
-              plot.tag = element_text(size=18, face="bold"))
+    top = (cohort() | surv(meta) | types(meta)) + plot_layout(widths=c(3.5,1,1))
+    mid = plt$text("pathology imgs go here") + theme(panel.background = element_rect(fill=NA))
+    btm = chrom_genes() + plot_spacer() + chroms(segs, meta) + genotype_weights(meta) +
+        plot_layout(widths=c(10,1), heights=c(1,18), guides="collect")
 
-    pdf(args$plotfile, 15, 10)
+    asm = (top / mid / btm) +
+        plot_annotation(tag_levels='a') + plot_layout(heights=c(1.5,1,2)) &
+        theme(plot.tag = element_text(size=18, face="bold"))
+
+    pdf(args$plotfile, 15, 15)
     print(asm)
     dev.off()
 })
