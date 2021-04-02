@@ -69,7 +69,8 @@ aneup_volcano = function(diff_expr) {
                 pos_label_bias=1.5, x_label_bias=0.4, base.size=0.5, text.size=4) +
         xlab("Mean log2 fold change in set") +
         ylab("adjusted p-value (FDR) Wald change") +
-        theme(#axis.line.y = element_blank(),
+        theme(axis.title = element_text(size=14),
+              axis.text = element_text(size=12),
               panel.grid.major = element_line(color="#efefef", size=0.5))
 }
 
