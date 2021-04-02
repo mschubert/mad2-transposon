@@ -15,31 +15,31 @@ cohort = function() {
 
 surv1 = function(meta_all) {
     meta2 = meta_all %>%
-        mutate(gtpc = paste(genotype, pipc),
+        mutate(gtpc = factor(paste(genotype, pipc)),
                status = 1)
+    levels(meta2$gtpc) = c("Mad2", "Mad2 PB UT", "Mad2 PB", "PB")
     fit = survfit(Surv(months_death, status) ~ gtpc, data=meta2)
-    p1 = ggsurvplot(fit, data=meta2, legend.labs=c("Mad2", "Mad2 PB UT", "Mad2 PB", "PB"),
-               palette=brewer.pal(4, "Set1"))
+    p1 = ggsurvplot(fit, data=meta2, palette=brewer.pal(4, "Set2"))$plot +
+        theme(legend.position="none")
 
     tdf = meta2 %>%
-        group_by(tissue) %>%
-        summarize(frac = n() / nrow(.)) %>%
-        mutate(tissue = sub("no leukaemia/lymphoma", "no leukaemia/\nlymphoma", tissue))
-    p2 = ggplot(tdf, aes(x="", y=frac, fill=tissue)) +
+        group_by(gtpc) %>%
+        summarize(frac = n() / nrow(.))
+    p2 = ggplot(tdf, aes(x="", y=frac, fill=gtpc)) +
         geom_bar(stat="identity", width=1, color="white") +
         coord_polar("y", start=0) +
 #        geom_text(aes(y=ypos, label=frac), color = "white", size=6) +
-        scale_fill_brewer(palette="Accent") +
+        scale_fill_brewer(palette="Set2", name="Genotype") +
         theme_void() +
         plot_layout(tag_level="new")
 
-    p1$plot | p2
+    (p1 | p2) + plot_layout(widths=c(1.5,1))
 }
 
 surv2 = function(meta) {
     meta = meta %>% mutate(status = 1)
     fit = survfit(Surv(months_death, status) ~ type, data=meta)
-    p1 = ggsurvplot(fit, data=meta, legend.labs=c("Myeloid", "B-like", "T-cell"))
+    p1 = ggsurvplot(fit, data=meta)$plot + theme(legend.position="none") #, legend.labs=c("Myeloid", "B-like", "T-cell"))
 
     tdf = meta %>%
         group_by(type) %>%
@@ -47,11 +47,12 @@ surv2 = function(meta) {
     p2 = ggplot(tdf, aes(x="", y=frac, fill=type)) +
         geom_bar(stat="identity", width=1, color="white") +
         coord_polar("y", start=0) +
+        guides(fill = guide_legend(title="Cancer type")) +
 #        geom_text(aes(y=ypos, label=frac), color = "white", size=6) +
         theme_void() +
         plot_layout(tag_level="new")
 
-    p1$plot | p2
+    (p1 | p2) + plot_layout(widths=c(1.5,1))
 }
 
 chrom_genes = function() {
@@ -129,7 +130,7 @@ genotype_weights = function(meta) {
               axis.ticks.y = element_blank(),
               axis.title.y = element_blank(),
               axis.text.y = element_blank())
-    gtsw = (gt | sw) + plot_layout(widths=c(1,2.5))
+    gtsw = (gt | sw) + plot_layout(widths=c(1,2))
     tumors = ggplot(tw, aes(x=tissue, y=sample)) +
         geom_point(aes(size=weight), alpha=0.2) +
         coord_cartesian(clip="off") +
@@ -137,7 +138,7 @@ genotype_weights = function(meta) {
         scale_size_area(breaks=c(1,1.5)) &
         theme_minimal()
     #todo: mad2 switching in % as bar?
-    ct + sex + gtsw + tumors + plot_layout(widths=c(1,1,3.5,3), tag_level="new") &
+    ct + sex + gtsw + tumors + plot_layout(widths=c(1,1,3,3), tag_level="new") &
         theme(plot.margin = margin(0,0,0,0,"mm"),
               axis.ticks.y = element_blank(),
               axis.title.x = element_blank(),
