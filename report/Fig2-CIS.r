@@ -150,7 +150,7 @@ bionet_combine = function(bionet) {
         geom_node_point(aes(size=hub, fill=aneup_hub), color="black", shape=21) +
         scale_fill_distiller(palette="RdPu", direction=1) +
         geom_node_label(aes(label=external_gene_name, size=hub), repel=TRUE,
-                        label.size=NA, segment.alpha=0.3, fill="#ffffff00") +
+                        label.size=NA, segment.alpha=0.3, fill="#ffffff00", box.padding=0.4) +
         scale_size(range = c(2.5,10)) +
         guides(fill = guide_legend(title="Aneuploidy\ncentrality", override.aes=list(size=5)),
                size = guide_legend(title="CIS centrality"))
@@ -178,8 +178,9 @@ aneup_het = function(scs) {
     mlab = sprintf("p=%.2g<br/>R<sup>2</sup>=%.2f", mb$p.value, broom::glance(m)$r.squared)
     ggplot(measures, aes(x=Aneuploidy, y=Heterogeneity)) +
         geom_abline(slope=mb$estimate, color="purple", linetype="dashed", size=1) +
-        geom_point(size=5, alpha=0.7) +
-        ggrepel::geom_text_repel(aes(label=sample), box.padding=1, segment.color=NA) +
+        geom_point(size=5, alpha=0.6) +
+        ggrepel::geom_label_repel(aes(label=sample), box.padding=0.4, segment.color=NA,
+                                  label.size=NA, fill="#ffffffc0") +
         annotate("richtext", x=0.1, y=0.25, hjust=0.5, vjust=0.5, label=mlab, fill=NA, label.color=NA) +
         coord_cartesian(clip="off") +
         xlim(0, NA) +
