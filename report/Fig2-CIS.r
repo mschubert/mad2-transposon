@@ -3,6 +3,7 @@ library(tidygraph)
 library(ggplot2)
 library(patchwork)
 library(ggraph)
+library(ggtext)
 theme_set(cowplot::theme_cowplot())
 sys = import('sys')
 plt = import('plot')
@@ -172,12 +173,17 @@ aneup_het = function(scs) {
     measures = lapply(smp_chrs, . %>% AneuFinder::karyotypeMeasures() %>% `$`(genomewide)) %>%
         bind_rows(.id="sample")
 
-#    lm(Heterogeneity ~ Aneuploidy, data=measures) %>% broom::tidy() # not enough samples, p=0.09
+    m = lm(Heterogeneity ~ 0 + Aneuploidy, data=measures)
+    mb = broom::tidy(m)
+    mlab = sprintf("p=%.2g<br/>R<sup>2</sup>=%.2f", mb$p.value, broom::glance(m)$r.squared)
     ggplot(measures, aes(x=Aneuploidy, y=Heterogeneity)) +
+        geom_abline(slope=mb$estimate, color="purple", linetype="dashed", size=1) +
         geom_point(size=5, alpha=0.7) +
-        geom_smooth(method="lm", se=FALSE) +
         ggrepel::geom_text_repel(aes(label=sample), box.padding=1, segment.color=NA) +
-        coord_cartesian(clip="off")
+        annotate("richtext", x=0.1, y=0.25, hjust=0.5, vjust=0.5, label=mlab, fill=NA, label.color=NA) +
+        coord_cartesian(clip="off") +
+        xlim(0, NA) +
+        ylim(0, NA)
 }
 
 schema = function() {
