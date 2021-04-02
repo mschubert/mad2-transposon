@@ -100,7 +100,7 @@ insertion_matrix = function(cis, rna_ins, cis_aneup, aneup, net_genes) {
     p11 + plot_spacer() + (p12 + plot_layout(tag_level="new")) + plot_spacer() +
         p1 + (p13 + plot_layout(tag_level="new")) +
         plot_layout(widths=c(6,1), heights=c(1,0.12,5), guides="collect") &
-        theme(plot.margin=margin(0.25, -15, 0.25, 2, "mm"))
+        theme(plot.margin=margin(0.25, 0, 0.25, 2, "mm"))
 }
 
 subtype_assocs = function(ext, net_genes) {
@@ -124,8 +124,7 @@ subtype_assocs = function(ext, net_genes) {
         theme(axis.title.y = element_blank(),
               axis.text.y = element_blank(),
               axis.line = element_blank(),
-              axis.ticks.y = element_blank(),
-              plot.margin = margin(-5,3,-5,3,"mm")) +
+              axis.ticks.y = element_blank()) +
         guides(fill = FALSE) +
         labs(y = "Wald statistic")
 }
@@ -153,16 +152,39 @@ bionet_combine = function(bionet) {
                         label.size=NA, segment.alpha=0.3, fill="#ffffff00") +
         scale_size(range = c(2.5,10)) +
         guides(fill = guide_legend(title="Aneuploidy\ncentrality", override.aes=list(size=5)),
-               size = guide_legend(title="CIS centrality")) +
-        theme(plot.margin = margin(0,0,0,0,"mm"))
+               size = guide_legend(title="CIS centrality"))
 }
 
-sc_wgs = function() {
-    smps = c("401t", "419t", "413s")
-    scs = file.path("../data/wgs", paste0(smps, ".rds")) %>%
-        lapply(readRDS) %>%
-        setNames(smps)
-    plt$genome$heatmap_aneuHMM(scs) + guides(fill = guide_legend(title="Copy number"))
+sc_wgs = function(scs) {
+    plt$genome$heatmap_aneuHMM(scs) +
+        guides(fill = guide_legend(title="Copy number")) +
+        theme(panel.ontop = FALSE)
+}
+
+aneup_het = function(scs) {
+    smp_excl_chr = function(aneuHMM, chr=1:19) {
+        lapply(aneuHMM, function(a) {
+            a$bins = a$bins[seqnames(a$bins) %in% chr]
+            a
+        })
+    }
+    smp_chrs = lapply(scs, smp_excl_chr)
+    measures = lapply(smp_chrs, . %>% AneuFinder::karyotypeMeasures() %>% `$`(genomewide)) %>%
+        bind_rows(.id="sample")
+
+#    lm(Heterogeneity ~ Aneuploidy, data=measures) %>% broom::tidy() # not enough samples, p=0.09
+    ggplot(measures, aes(x=Aneuploidy, y=Heterogeneity)) +
+        geom_point(size=5, alpha=0.7) +
+        geom_smooth(method="lm", se=FALSE) +
+        ggrepel::geom_text_repel(aes(label=sample), box.padding=1, segment.color=NA) +
+        coord_cartesian(clip="off")
+}
+
+schema = function() {
+    schema = grid::rasterGrob(magick::image_read("external/CISschema.svg"))
+    splot = ggplot() +
+        annotation_custom(schema) +
+        theme(axis.line=element_blank())
 }
 
 sys$run({
@@ -184,17 +206,23 @@ sys$run({
     rna_ins = readr::read_tsv(args$rna_ins)
     cis = readRDS(args$poisson)
 
-    # create plot objects
-    schema = grid::rasterGrob(magick::image_read("external/CISschema.svg"))
-    splot = ggplot() + annotation_custom(schema) +
-        theme(axis.line=element_blank())
-    sc_wgs = sc_wgs() + theme(panel.ontop = FALSE)
-    ins_mat = wrap_plots(wrap_elements(insertion_matrix(cis, rna_ins, ext$aneuploidy, aneup, net_genes)))
-    stype = wrap_plots(wrap_elements(subtype_assocs(ext, net_genes)))
-    bnet = wrap_plots(wrap_elements(bionet_combine(bionet)))
+    # single-cell shallow WGS
+    smps = c("401t", "419t", "413s")
+    scs = file.path("../data/wgs", paste0(smps, ".rds")) %>%
+        lapply(readRDS) %>%
+        setNames(smps)
 
-    top = (splot | sc_wgs | plt$text("CIN<>aneup goes here") | stype) + plot_layout(widths=c(4,5.2,3,3))
-    bottom =  wrap_plots(ins_mat) + bnet + plot_layout(widths=c(1.8,1))
+    # create plot objects
+    splot = wrap_plots(wrap_elements(schema() + theme(plot.margin=margin(0.3,-2,0,-2,"cm"))))
+    ins_mat = wrap_plots(wrap_elements(insertion_matrix(cis, rna_ins, ext$aneuploidy, aneup, net_genes) +
+                                       theme(plot.margin = margin(0,0,0,0,"cm"))))
+    stype = wrap_plots(wrap_elements(subtype_assocs(ext, net_genes) + theme(plot.margin = margin(3,5,0,5,"mm"))))
+    sc_wgs = wrap_plots(wrap_elements(sc_wgs(scs) + theme(plot.margin = margin(3,0,0,0,"mm"))))
+    aneup_het = wrap_plots(wrap_elements(aneup_het(scs) + theme(plot.margin = margin(1,0.5,1,0,"cm"))))
+    bnet = wrap_plots(wrap_elements(bionet_combine(bionet) + theme(plot.margin = margin(15,0,15,-20,"mm"))))
+
+    top = (splot | sc_wgs | aneup_het | stype) + plot_layout(widths=c(4,5.2,2,3))
+    bottom =  wrap_plots(ins_mat) + bnet + plot_layout(widths=c(2,1))
 
     asm = (top / bottom) + plot_layout(heights=c(1,2.5)) +
         plot_annotation(tag_levels='a') & theme(plot.tag = element_text(size=18, face="bold"))
