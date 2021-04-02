@@ -21,23 +21,25 @@ surv1 = function(meta_all) {
     p1 = ggsurvplot(fit, data=meta2, legend.labs=c("Mad2", "Mad2 PB UT", "Mad2 PB", "PB"),
                palette=brewer.pal(4, "Set1"))
 
-    tdf = meta %>%
+    tdf = meta2 %>%
         group_by(tissue) %>%
-        summarize(frac = n() / nrow(.))
+        summarize(frac = n() / nrow(.)) %>%
+        mutate(tissue = sub("no leukaemia/lymphoma", "no leukaemia/\nlymphoma", tissue))
     p2 = ggplot(tdf, aes(x="", y=frac, fill=tissue)) +
         geom_bar(stat="identity", width=1, color="white") +
         coord_polar("y", start=0) +
 #        geom_text(aes(y=ypos, label=frac), color = "white", size=6) +
-        scale_fill_brewer(palette="Set1", guide=FALSE) +
+        scale_fill_brewer(palette="Accent") +
         theme_void() +
         plot_layout(tag_level="new")
 
-    p1$plot + p2 + plot_layout(widths=c(2.5,2))
+    p1$plot | p2
 }
 
 surv2 = function(meta) {
-    surv = grid::rasterGrob(magick::image_read("external/Overall survival in months - age.pdf"))
-    p1 = ggplot() + annotation_custom(surv) + theme_void()
+    meta = meta %>% mutate(status = 1)
+    fit = survfit(Surv(months_death, status) ~ type, data=meta)
+    p1 = ggsurvplot(fit, data=meta, legend.labs=c("Myeloid", "B-like", "T-cell"))
 
     tdf = meta %>%
         group_by(type) %>%
@@ -46,11 +48,10 @@ surv2 = function(meta) {
         geom_bar(stat="identity", width=1, color="white") +
         coord_polar("y", start=0) +
 #        geom_text(aes(y=ypos, label=frac), color = "white", size=6) +
-        scale_fill_brewer(palette="Set1", guide=FALSE) +
         theme_void() +
         plot_layout(tag_level="new")
 
-    p1 | p2
+    p1$plot | p2
 }
 
 chrom_genes = function() {
@@ -128,15 +129,15 @@ genotype_weights = function(meta) {
               axis.ticks.y = element_blank(),
               axis.title.y = element_blank(),
               axis.text.y = element_blank())
-    gtsw = (gt | sw) + plot_layout(widths=c(1,2))
+    gtsw = (gt | sw) + plot_layout(widths=c(1,2.5))
     tumors = ggplot(tw, aes(x=tissue, y=sample)) +
         geom_point(aes(size=weight), alpha=0.2) +
         coord_cartesian(clip="off") +
         guides(size=guide_legend(title="Weight (grams)")) +
-        scale_size_area(breaks=c(1,2)) &
+        scale_size_area(breaks=c(1,1.5)) &
         theme_minimal()
     #todo: mad2 switching in % as bar?
-    ct + sex + gtsw + tumors + plot_layout(widths=c(1,1,2,3), tag_level="new") &
+    ct + sex + gtsw + tumors + plot_layout(widths=c(1,1,3.5,3), tag_level="new") &
         theme(plot.margin = margin(0,0,0,0,"mm"),
               axis.ticks.y = element_blank(),
               axis.title.x = element_blank(),
@@ -149,7 +150,6 @@ sys$run({
     args = sys$cmd$parse(
         opt('m', 'meta', 'rds', '../data/meta/meta.rds'),
         opt('a', 'aset', 'rds', '../ploidy_compare/analysis_set.rds'),
-#        opt('', '', '', ''),
         opt('p', 'plotfile', 'pdf', 'Fig1-Schema.pdf')
     )
 
@@ -163,7 +163,7 @@ sys$run({
         filter(is_pref_src)
 
     topright = wrap_plots(wrap_elements(surv1(meta_all) / surv2(meta)))
-    top = (cohort() | topright) + plot_layout(widths=c(1.8,1))
+    top = (cohort() | topright) + plot_layout(widths=c(1.6,1))
     mid = plt$text("pathology imgs go here") + theme(panel.background = element_rect(color=NA, fill="#00000005"))
     btm = chrom_genes() + plot_spacer() + chroms(segs, meta) + genotype_weights(meta) +
         plot_layout(widths=unit(c(1,3), c("null","cm")), heights=c(1,18), guides="collect")
