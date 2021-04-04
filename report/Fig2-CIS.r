@@ -161,7 +161,7 @@ bionet_combine = function(bionet) {
 }
 
 sc_wgs = function(scs) {
-    plt$genome$heatmap_aneuHMM(scs) +
+    plt$genome$heatmap(scs) +
         guides(fill = guide_legend(title="Copy number")) +
         theme(panel.ontop = FALSE)
 }

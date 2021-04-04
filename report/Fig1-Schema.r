@@ -89,7 +89,7 @@ chroms = function(segs, meta) {
         mutate(copy.number = factor(round(ploidy)),
                cell = sample)
 
-    plt$genome$heatmap(wgs30) +
+    plt$genome$heatmap(wgs30, sample=".") +
         guides(fill=guide_legend(title="Copy number")) +
         theme(plot.background = element_rect(fill="transparent", color=NA),
               panel.background = element_rect(fill="transparent", color=NA),
