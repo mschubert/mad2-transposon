@@ -86,10 +86,9 @@ chroms = function(segs, meta) {
         mutate(seqnames = factor(seqnames, levels=c(1:19,'X')),
                sample = factor(sample, levels=rev(levels(meta$sample)))) %>%
         inner_join(meta %>% select(sample, aneuploidy)) %>%
-        mutate(copy.number = factor(round(ploidy)),
-               cell = sample)
+        mutate(copy.number = factor(round(ploidy)))
 
-    plt$genome$heatmap(wgs30, sample=".") +
+    plt$genome$heatmap(wgs30, cell="sample") +
         guides(fill=guide_legend(title="Copy number")) +
         theme(plot.background = element_rect(fill="transparent", color=NA),
               panel.background = element_rect(fill="transparent", color=NA),
