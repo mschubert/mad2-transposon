@@ -153,15 +153,15 @@ bionet_combine = function(bionet) {
         scale_edge_alpha_manual(values=c(CIS=0.05, Aneuploidy=0.8)) +
         geom_node_point(aes(size=hub, fill=aneup_hub), color="black", shape=21) +
         scale_fill_distiller(palette="RdPu", direction=1) +
-        geom_node_label(aes(label=external_gene_name, size=hub), repel=TRUE, min.segment.length=1,
-                        label.size=NA, segment.alpha=0.3, fill="#ffffff00", box.padding=0.4) +
+        geom_node_label(aes(label=external_gene_name, size=hub), repel=TRUE, min.segment.length=0.75,
+            label.size=NA, segment.alpha=0.3, fill="#ffffff00", label.padding=unit(0.31, "lines")) +
         scale_size(range = c(2.5,10)) +
         guides(fill = guide_legend(title="Aneuploidy\ncentrality", override.aes=list(size=5)),
                size = guide_legend(title="CIS centrality"))
 }
 
 sc_wgs = function(scs) {
-    plt$genome$heatmap_aneuHMM(scs) +
+    plt$genome$heatmap(scs) +
         guides(fill = guide_legend(title="Copy number")) +
         theme(panel.ontop = FALSE)
 }
@@ -224,18 +224,19 @@ sys$run({
         setNames(smps)
 
     # create plot objects
-    splot = wrap_plots(wrap_elements(schema() + theme(plot.margin=margin(0.3,-2,0,-2,"cm"))))
+    splot = wrap_plots(wrap_elements(schema() + theme(plot.margin=margin(5,-20,10,-20,"mm"))))
+    sc_wgs = wrap_plots(wrap_elements(sc_wgs(scs) + theme(plot.margin = margin(3,0,0,0,"mm"))))
+    aneup_het = wrap_plots(wrap_elements(aneup_het(scs) + theme(plot.margin = margin(15,5,15,0,"mm"))))
+    stype = wrap_plots(wrap_elements(subtype_assocs(ext, net_genes) + theme(plot.margin = margin(5,5,5,5,"mm"))))
+
     ins_mat = wrap_plots(wrap_elements(insertion_matrix(cis, rna_ins, ext$aneuploidy, aneup, net_genes) +
                                        theme(plot.margin = margin(0,0,0,0,"cm"))))
-    stype = wrap_plots(wrap_elements(subtype_assocs(ext, net_genes) + theme(plot.margin = margin(3,5,0,5,"mm"))))
-    sc_wgs = wrap_plots(wrap_elements(sc_wgs(scs) + theme(plot.margin = margin(3,0,0,0,"mm"))))
-    aneup_het = wrap_plots(wrap_elements(aneup_het(scs) + theme(plot.margin = margin(1,0.5,1,0,"cm"))))
-    bnet = wrap_plots(wrap_elements(bionet_combine(bionet) + theme(plot.margin = margin(15,0,15,-20,"mm"))))
+    bnet = wrap_plots(wrap_elements(bionet_combine(bionet) + theme(plot.margin = margin(10,0,10,-25,"mm"))))
 
     top = (splot | sc_wgs | aneup_het | stype) + plot_layout(widths=c(4,5.2,2,3))
-    bottom =  wrap_plots(ins_mat) + bnet + plot_layout(widths=c(2,1))
+    bottom =  wrap_plots(ins_mat) + bnet + plot_layout(widths=c(2.1,1))
 
-    asm = (top / bottom) + plot_layout(heights=c(1,2.5)) +
+    asm = (top / bottom) + plot_layout(heights=c(1,2)) +
         plot_annotation(tag_levels='a') & theme(plot.tag = element_text(size=18, face="bold"))
 
     pdf("Fig2-CIS.pdf", 20, 12)
