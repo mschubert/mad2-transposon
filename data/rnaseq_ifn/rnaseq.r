@@ -79,7 +79,7 @@ sys$run({
     )
     hms = readRDS("../genesets/mouse/MSigDB_Hallmark_2020.rds")
     gset = import('genesets')
-    lapply(ifn, gset$test, sets=hms, stat="log2FoldChange")
+    lapply(ifn, gset$test_lm, sets=hms, stat="log2FoldChange")
     # </todo>
 
     pdf(args$plotfile, 12, 7)

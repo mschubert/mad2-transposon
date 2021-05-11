@@ -55,12 +55,12 @@ aneup_volcano = function(diff_expr) {
                  use.names=FALSE)
     sets[[2]] = c(sets[[2]], "Stat1+IFN"=list(intersect(sets[[2]]$STAT1, ifn)))
 
-    hmFC = gset$test(diff_expr$aneuploidy, sets[[1]], stat="log2FoldChange")
-    goFC = gset$test(diff_expr$aneuploidy, sets[[2]], stat="log2FoldChange")
+    hmFC = gset$test_lm(diff_expr$aneuploidy, sets[[1]], stat="log2FoldChange")
+    goFC = gset$test_lm(diff_expr$aneuploidy, sets[[2]], stat="log2FoldChange")
     lfc = bind_rows(hmFC, goFC) %>% select(label, mean_lfc=estimate)
 
-    hm = gset$test(diff_expr$aneuploidy, sets[[1]])
-    go = gset$test(diff_expr$aneuploidy, sets[[2]])
+    hm = gset$test_lm(diff_expr$aneuploidy, sets[[1]])
+    go = gset$test_lm(diff_expr$aneuploidy, sets[[2]])
     both = bind_rows(hm, go) %>%
         arrange(adj.p, p.value) %>%
         inner_join(lfc) %>%
