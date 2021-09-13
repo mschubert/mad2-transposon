@@ -50,17 +50,20 @@ rownames(vs) = idmap$gene(rownames(eset), to="hgnc_symbol")
 
 sets = gset$get_mouse("MSigDB_Hallmark_2020")
 scores = GSVA::gsva(assay(vs), sets)
+scores = rbind(scores, assay(vs)[c("Myc", "Trp53"),])
 names(dimnames(scores)) = c("set", "Sample_ID")
 
 df = inner_join(meta, reshape2::melt(scores))
 
-pdf(args$plotfile, 12, 16)
+pdf(args$plotfile, 12, 18)
 
 plot_pca(vs[,eset$Sample_type == "Cell line"]) /
 plot_pca(vs[,eset$Sample_type == "Tumor"])
 
+plot_gsva(df, "Trp53") /
 plot_gsva(df, "Interferon Alpha Response") /
 plot_gsva(df, "Interferon Gamma Response") /
+plot_gsva(df, "Myc") /
 plot_gsva(df, "Myc Targets V1") /
 plot_gsva(df, "Myc Targets V2") + plot_layout(guides="collect")
 
