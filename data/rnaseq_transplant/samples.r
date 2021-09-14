@@ -5,6 +5,7 @@ library(patchwork)
 sys = import('sys')
 gset = import('genesets')
 idmap = import('process/idmap')
+plt = import('plot')
 
 plot_pca = function(vst) {
     pcadata = DESeq2::plotPCA(vst, intgroup=c("Sample_ID", "Sample_name",
@@ -14,7 +15,9 @@ plot_pca = function(vst) {
     ggplot(pcadata, aes(x=PC1, y=PC2)) +
         geom_point(aes(color=driver, shape=STAT1, size=KIF2C.dnMCAK), alpha=0.9) +
         ggrepel::geom_text_repel(aes(label=Sample_name)) +
-        scale_size_manual(values=c(KIF2C=5, dnMCAK=10))
+        scale_size_manual(values=c(KIF2C=5, dnMCAK=10)) +
+        xlab(paste0("PC1: ", pcavar[1], "% variance")) +
+        ylab(paste0("PC2: ", pcavar[2], "% variance"))
 }
 
 plot_gsva = function(df, set_name) {
@@ -26,6 +29,14 @@ plot_gsva = function(df, set_name) {
             ggtitle(set_name) +
             scale_size_manual(values=c(KIF2C=5, dnMCAK=10)) +
             scale_shape_manual(values=c(WT=16, KO=25))
+}
+
+plot_HMpca = function(scores) {
+    meta2 = meta[match(meta$Sample_ID, colnames(scores)),]
+    pc1 = prcomp(t(scores), scale.=TRUE)
+    plt$pca(pc1, aes(x=PC1, y=PC2), meta2, biplot=TRUE, bi_size=2.5, bi_arrow=0.05) +
+        geom_point(aes(color=driver, shape=STAT1, size=`KIF2C/dnMCAK`), alpha=0.9) +
+        ggrepel::geom_text_repel(aes(label=Sample_name), size=3.5)
 }
 
 args = sys$cmd$parse(
@@ -50,21 +61,31 @@ rownames(vs) = idmap$gene(rownames(eset), to="hgnc_symbol")
 
 sets = gset$get_mouse("MSigDB_Hallmark_2020")
 scores = GSVA::gsva(assay(vs), sets)
-scores = rbind(scores, assay(vs)[c("Myc", "Trp53"),])
+scores = rbind(scores, assay(vs)[c("Myc", "Trp53", "Stat1"),])
 names(dimnames(scores)) = c("set", "Sample_ID")
 
 df = inner_join(meta, reshape2::melt(scores))
 
-pdf(args$plotfile, 12, 18)
+pdf(args$plotfile, 12, 9)
 
-plot_pca(vs[,eset$Sample_type == "Cell line"]) /
-plot_pca(vs[,eset$Sample_type == "Tumor"])
+plot_pca(vs) + ggtitle("PCA all samples")
+plot_pca(vs[,eset$Sample_type == "Cell line"]) + ggtitle("PCA cell lines")
+plot_pca(vs[,eset$Sample_type == "Tumor"]) + ggtitle("PCA tumors")
 
 plot_gsva(df, "Trp53") /
+plot_gsva(df, "p53 Pathway") /
+plot_gsva(df, "IL-6/JAK/STAT3 Signaling") + plot_layout(guides="collect")
+
+plot_gsva(df, "Stat1") /
 plot_gsva(df, "Interferon Alpha Response") /
-plot_gsva(df, "Interferon Gamma Response") /
+plot_gsva(df, "Interferon Gamma Response") + plot_layout(guides="collect")
+
 plot_gsva(df, "Myc") /
 plot_gsva(df, "Myc Targets V1") /
 plot_gsva(df, "Myc Targets V2") + plot_layout(guides="collect")
+
+plot_HMpca(scores) + ggtitle("Hallmark PCA all samples")
+plot_HMpca(scores[,eset$Sample_type == "Cell line"]) + ggtitle("Hallmark PCA cell lines")
+plot_HMpca(scores[,eset$Sample_type == "Tumor"]) + ggtitle("Hallmark PCA tumors")
 
 dev.off()
