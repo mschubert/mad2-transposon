@@ -17,15 +17,15 @@ CH210506_17_S15	3T3 myc kif2c rep 1	OEX	WT	WT	KIF2C	Cell line
 CH210506_18_S16	3T3 myc dnmcak rep 1	OEX	WT	WT	dnMCAK	Cell line
 CH210506_19_S17	3t3 myc stat1 kif2c rep 1	OEX	WT	KO	KIF2C	Cell line
 CH210506_20_S18	3t3 myc stat1 dnmcak rep 1	OEX	WT	KO	dnMCAK	Cell line
-CH210506_21_S19	3t3 p53 kif2c rep1	WT	KO	WT	KIF2C	Cell line
+CH210506_21_S19	3t3 p53 kif2c rep 1	WT	KO	WT	KIF2C	Cell line
 CH210506_22_S20	3t3 p53 dnmcak rep 1	WT	KO	WT	dnMCAK	Cell line
 CH210506_23_S21	3t3 p53 stat1 kif2c rep 1	WT	KO	KO	KIF2C	Cell line
-CH210506_24_S22	3t3 p53 stat1 dnmcak rep1 	WT	KO	KO	dnMCAK	Cell line
+CH210506_24_S22	3t3 p53 stat1 dnmcak rep 1 	WT	KO	KO	dnMCAK	Cell line
 CH210506_25_S23	3T3 myc kif2c rep 2	OEX	WT	WT	KIF2C	Cell line
 CH210506_26_S24	3T3 myc dnmcak rep 2	OEX	WT	WT	dnMCAK	Cell line
 CH210506_27_S25	3t3 myc stat1 kif2c rep 2	OEX	WT	KO	KIF2C	Cell line
 CH210506_28_S26	3t3 myc stat1 dnmcak rep 2	OEX	WT	KO	dnMCAK	Cell line
-CH210506_29_S27	3t3 p53 kif2c rep2	WT	KO	WT	KIF2C	Cell line
+CH210506_29_S27	3t3 p53 kif2c rep 2	WT	KO	WT	KIF2C	Cell line
 CH210506_30_S28	3t3 p53 dnmcak rep 2	WT	KO	WT	dnMCAK	Cell line
 CH210506_31_S29	3t3 p53 stat1 kif2c rep 2	WT	KO	KO	KIF2C	Cell line
 CH210506_32_S30	3t3 p53 stat1 dnmcak rep 2	WT	KO	KO	dnMCAK	Cell line
