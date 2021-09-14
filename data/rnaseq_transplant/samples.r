@@ -16,6 +16,7 @@ plot_pca = function(vst) {
         geom_point(aes(color=driver, shape=STAT1, size=KIF2C.dnMCAK), alpha=0.9) +
         ggrepel::geom_text_repel(aes(label=Sample_name)) +
         scale_size_manual(values=c(KIF2C=5, dnMCAK=10)) +
+        scale_shape_manual(values=c(WT=16, KO=25)) +
         xlab(paste0("PC1: ", pcavar[1], "% variance")) +
         ylab(paste0("PC2: ", pcavar[2], "% variance"))
 }
@@ -31,11 +32,12 @@ plot_gsva = function(df, set_name) {
             scale_shape_manual(values=c(WT=16, KO=25))
 }
 
-plot_HMpca = function(scores) {
-    meta2 = meta[match(meta$Sample_ID, colnames(scores)),]
-    pc1 = prcomp(t(scores), scale.=TRUE)
+plot_HMpca = function(scores2) {
+    meta2 = meta[match(colnames(scores2), meta$Sample_ID),]
+    pc1 = prcomp(t(scores2), scale.=TRUE)
     plt$pca(pc1, aes(x=PC1, y=PC2), meta2, biplot=TRUE, bi_size=2.5, bi_arrow=0.05) +
         geom_point(aes(color=driver, shape=STAT1, size=`KIF2C/dnMCAK`), alpha=0.9) +
+        scale_shape_manual(values=c(WT=16, KO=25)) +
         ggrepel::geom_text_repel(aes(label=Sample_name), size=3.5)
 }
 
