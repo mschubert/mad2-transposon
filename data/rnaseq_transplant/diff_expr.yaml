@@ -1,0 +1,8 @@
+comparisons:
+    Myc_dnMCAK_vs_Kif2c:
+        samples:
+            Sample_type: Cell line
+            driver: Myc
+            STAT1: WT
+        design: ~ CIN
+        extract: CIN_dnMCAK_vs_KIF2C

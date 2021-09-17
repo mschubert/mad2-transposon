@@ -9,11 +9,11 @@ plt = import('plot')
 
 plot_pca = function(vst) {
     pcadata = DESeq2::plotPCA(vst, intgroup=c("Sample_ID", "Sample_name",
-        "driver", "STAT1", "KIF2C/dnMCAK", "Sample_type"), returnData=TRUE)
+        "driver", "STAT1", "CIN", "Sample_type"), returnData=TRUE)
     pcavar = round(100 * attr(pcadata, "percentVar"))
 
     ggplot(pcadata, aes(x=PC1, y=PC2)) +
-        geom_point(aes(color=driver, shape=STAT1, size=KIF2C.dnMCAK), alpha=0.9) +
+        geom_point(aes(color=driver, shape=STAT1, size=CIN), alpha=0.9) +
         ggrepel::geom_text_repel(aes(label=Sample_name)) +
         scale_size_manual(values=c(KIF2C=5, dnMCAK=10)) +
         scale_shape_manual(values=c(WT=16, KO=25)) +
@@ -24,7 +24,7 @@ plot_pca = function(vst) {
 plot_gsva = function(df, set_name) {
     df %>% filter(set == set_name) %>%
         ggplot(aes(x=Sample_name, y=value)) +
-            geom_point(aes(color=driver, shape=STAT1, size=`KIF2C/dnMCAK`), alpha=0.9) +
+            geom_point(aes(color=driver, shape=STAT1, size=CIN), alpha=0.9) +
             theme(axis.text.x = element_text(angle=30, hjust=1)) +
             facet_wrap(~ Sample_type, scales="free_x") +
             ggtitle(set_name) +
@@ -36,7 +36,7 @@ plot_HMpca = function(scores2) {
     meta2 = meta[match(colnames(scores2), meta$Sample_ID),]
     pc1 = prcomp(t(scores2), scale.=TRUE)
     plt$pca(pc1, aes(x=PC1, y=PC2), meta2, biplot=TRUE, bi_size=2.5, bi_arrow=0.05) +
-        geom_point(aes(color=driver, shape=STAT1, size=`KIF2C/dnMCAK`), alpha=0.9) +
+        geom_point(aes(color=driver, shape=STAT1, size=CIN), alpha=0.9) +
         scale_shape_manual(values=c(WT=16, KO=25)) +
         ggrepel::geom_text_repel(aes(label=Sample_name), size=3.5)
 }
@@ -49,9 +49,15 @@ args = sys$cmd$parse(
 )
 
 meta = readr::read_tsv(args$samples) %>%
+    dplyr::rename(CIN = `KIF2C/dnMCAK`) %>%
     mutate(driver = paste0(Myc, p53),
            driver = sub("OEXWT", "Myc", driver, fixed=TRUE),
-           driver = sub("WTKO", "p53", driver, fixed=TRUE))
+           driver = sub("WTKO", "p53", driver, fixed=TRUE)) %>%
+    mutate(Myc = relevel(factor(Myc), "WT"),
+           p53 = relevel(factor(p53), "WT"),
+           STAT1 = relevel(factor(STAT1), "WT"),
+           CIN = relevel(factor(CIN), "KIF2C"),
+           driver = relevel(factor(driver), "p53"))
 meta$Sample_ID = paste0("SU_", meta$Sample_ID)
 reads = readr::read_tsv(args$infile)
 stopifnot(meta$Sample_ID == colnames(reads)[-1])

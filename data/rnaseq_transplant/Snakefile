@@ -9,13 +9,11 @@ rule diff_expr:
         eset = "samples.rds"
     output:
         outfile = "diff_expr.rds",
-        plotfile = "diff_expr.pdf"
     shell:
         "Rscript {input.rscript}"
             " --eset {input.eset}"
             " --comps {input.comps}"
             " --outfile {output.outfile}"
-            " --plotfile {output.plotfile}"
 
 rule eset:
     input:
