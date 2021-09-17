@@ -2,6 +2,17 @@ rule all:
     input:
         "diff_expr.pdf"
 
+rule plot:
+    input:
+        rscript = "plot.r",
+        diff_expr = "diff_expr.rds"
+    output:
+        plotfile = "diff_expr.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --diff_expr {input.diff_expr}"
+            " --plotfile {output.plotfile}"
+
 rule diff_expr:
     input:
         rscript = "diff_expr.r",
