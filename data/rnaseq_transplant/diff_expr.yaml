@@ -6,3 +6,43 @@ comparisons:
             STAT1: WT
         design: ~ CIN
         extract: CIN_dnMCAK_vs_KIF2C
+
+    p53_dnMCAK_vs_Kif2c:
+        samples:
+            Sample_type: Cell line
+            driver: p53
+            STAT1: WT
+        design: ~ CIN
+        extract: CIN_dnMCAK_vs_KIF2C
+
+    Kif2c_Myc_vs_p53:
+        samples:
+            Sample_type: Cell line
+            CIN: KIF2C
+            STAT1: WT
+        design: ~ driver
+        extract: driver_Myc_vs_p53
+
+    dnMCAK_Myc_vs_p53:
+        samples:
+            Sample_type: Cell line
+            CIN: dnMCAK
+            STAT1: WT
+        design: ~ driver
+        extract: driver_Myc_vs_p53
+
+    STAT1_Kif2c_Myc_vs_p53:
+        samples:
+            Sample_type: Cell line
+            CIN: KIF2C
+            STAT1: KO
+        design: ~ driver
+        extract: driver_Myc_vs_p53
+
+    STAT1_dnMCAK_Myc_vs_p53:
+        samples:
+            Sample_type: Cell line
+            CIN: dnMCAK
+            STAT1: KO
+        design: ~ driver
+        extract: driver_Myc_vs_p53
