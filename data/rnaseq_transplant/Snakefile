@@ -1,13 +1,13 @@
 rule all:
     input:
-        "diff_expr.pdf"
+        expand("{yaml}.pdf", yaml=["cell_lines", "tumors"])
 
 rule plot:
     input:
         rscript = "plot.r",
-        diff_expr = "diff_expr.rds"
+        diff_expr = "{yaml}.rds"
     output:
-        plotfile = "diff_expr.pdf"
+        plotfile = "{yaml}.pdf"
     shell:
         "Rscript {input.rscript}"
             " --diff_expr {input.diff_expr}"
@@ -16,10 +16,10 @@ rule plot:
 rule diff_expr:
     input:
         rscript = "diff_expr.r",
-        comps = "diff_expr.yaml",
+        comps = "{yaml}.yaml",
         eset = "samples.rds"
     output:
-        outfile = "diff_expr.rds",
+        outfile = "{yaml}.rds"
     shell:
         "Rscript {input.rscript}"
             " --eset {input.eset}"
