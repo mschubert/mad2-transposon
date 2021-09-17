@@ -1,0 +1,33 @@
+rule all:
+    input:
+        "diff_expr.pdf"
+
+rule diff_expr:
+    input:
+        rscript = "diff_expr.r",
+        comps = "diff_expr.yaml",
+        eset = "samples.rds"
+    output:
+        outfile = "diff_expr.rds",
+        plotfile = "diff_expr.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --eset {input.eset}"
+            " --comps {input.comps}"
+            " --outfile {output.outfile}"
+            " --plotfile {output.plotfile}"
+
+rule eset:
+    input:
+        rscript = "samples.r",
+        samples = "samples.tsv",
+        infile = "count_matrix_known_barcodes_STL_and_USS_genes.txt.gz"
+    output:
+        outfile = "samples.rds",
+        plotfile = "samples.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --infile {input.infile}"
+            " --samples {input.samples}"
+            " --outfile {output.outfile}"
+            " --plotfile {output.plotfile}"

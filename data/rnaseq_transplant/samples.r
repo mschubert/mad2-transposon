@@ -91,3 +91,5 @@ plot_HMpca(scores[,eset$Sample_type == "Cell line"]) + ggtitle("Hallmark PCA cel
 plot_HMpca(scores[,eset$Sample_type == "Tumor"]) + ggtitle("Hallmark PCA tumors")
 
 dev.off()
+
+saveRDS(eset, file=args$outfile)
