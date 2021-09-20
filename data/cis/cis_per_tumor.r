@@ -40,9 +40,23 @@ read_one = function(fname) {
         filter(sample != "tumourid")
 }
 
+read_new = function(fname) {
+    message("readxl :: ", fname)
+    cis = readxl::read_excel(fname)
+    cis %>%
+        transmute(sample = sub("cis_2021/([0-9]+)_spleen_IS_annotated.xlsx", "\\1s", fname),
+                  chr = sub("^chr", "", seqnames),
+                  position = start,
+                  strand = strand,
+                  ensembl_gene_id = ENSEMBL,
+                  assembly = "GRCm38",
+                  reads = depth)
+}
+
 files0 = list.files("pilot", "\\.xlsx?$", full.names=TRUE)
 files1 = list.files("cis_per_tumor", "\\.xlsx?$", full.names=TRUE)
 files2 = list.files("TraDIS_IS_180622/COMBI_CHROMOSOME_mincov20_xls", "\\.xlsx?$", full.names=TRUE)
+files3 = list.files("cis_2021", "\\.xlsx$", full.names=TRUE)
 files = c(files0, files1, files2)
 lookup = c( # pilot had different tumor IDs in the xls, standardize them
     "1jspbpb" = "145s",
@@ -52,8 +66,8 @@ lookup = c( # pilot had different tumor IDs in the xls, standardize them
     "8jspbpb" = "184s",
     "23jspbpb" = "212s"
 )
-nested = lapply(files, read_one) %>%
-    dplyr::bind_rows() %>%
+nested = dplyr::bind_rows(lapply(files, read_one)) %>%
+    dplyr::bind_rows(lapply(files3, read_new)) %>%
     group_by(sample) %>%
     mutate(sample = ifelse(sample %in% names(lookup), lookup[sample], sample),
            n_ins_smp = n()) %>%
