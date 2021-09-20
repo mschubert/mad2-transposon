@@ -21,9 +21,10 @@ test_gene = function(dset, gene, ext_var, is_type=NA) {
     tset = dset %>%
         dplyr::filter(type %in% is_type, external_gene_name == gene) %>%
         dplyr::mutate(ext = !! rlang::sym(ext_var))
-    broom::tidy(glm(reads ~ ext, family=poisson(), data=tset)) %>%
+
+    broom::tidy(lm(ext ~ reads, data=tset)) %>%
         dplyr::mutate(size = sum(tset$reads, na.rm=TRUE)) %>%
-        dplyr::filter(term == "ext") %>%
+        dplyr::filter(term == "readsTRUE") %>%
         dplyr::select(-term)
 }
 
@@ -35,7 +36,6 @@ plot_volcano = function(res) {
     res %>%
         filter(size >= 2) %>%
         mutate(label = external_gene_name) %>%
-        plt$p_effect("p.value", thresh=0.1) %>%
         plt$volcano(p=0.1, label_top=30, repel=TRUE) +
             ylab("non-adj. p-value")
 }
