@@ -5,7 +5,7 @@ fstem = [os.path.splitext(p)[0] for p in files]
 
 rule all:
     input:
-        "30cellseq.rds",
+        "30cellseq.pdf",
         "sc_merge.rds",
         expand("{sample}.rds", sample=fstem),
         expand("{sample}.pdf", sample=fstem)

@@ -1,0 +1,22 @@
+sample: 30cellseq
+assembly: GRCm38
+directory: seqdata/210628_NB501840_0393_AHGTTLBGXJ/FF210622_1
+bin_width_ref: GRCm38_diploid_ref.bam
+blacklist: GRCm38_diploid_ref.bam
+
+files:
+    564s: FF210622_1_001.bam
+    622s: FF210622_1_002.bam
+    627s: FF210622_1_003.bam
+    628s: FF210622_1_004.bam
+    633s: FF210622_1_005.bam
+    637s: FF210622_1_006.bam
+    638s: FF210622_1_007.bam
+    639s: FF210622_1_008.bam
+    640s: FF210622_1_009.bam
+    652s: FF210622_1_010.bam
+    656s: FF210622_1_011.bam
+    638s-extra: FF210622_1_012.bam
+
+exclude:
+    638s-extra: sample as 638s
