@@ -18,6 +18,8 @@ tab = readxl::read_excel(args$infile, na="n.a.") %>%
               hist_nr = `Hist nr.`,
               sample = `Sample ID`,
 #              wbc_per_nl = as.numeric(ifelse(`WBC (1e9/L)` == ">100", 100, `WBC (1e9/L)`)),
+              pipc = !is.na(`Date of Poly I:C`),
+              switching = as.numeric(sub("([0-9]+).*", "\\1", `Mad2 switching %`)),
               spleen_g = `Spleen (mg)` / 1000,
               thymus_g = `Thymus (mg)` / 1000,
               type = factor(`Consensus type`, levels=c("Myeloid", "B-like", "T-cell")),
