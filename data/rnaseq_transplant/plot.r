@@ -17,7 +17,7 @@ args = sys$cmd$parse(
 
 res = readRDS(args$diff_expr)
 
-pdf(18, 8, file=args$plotfile)
+pdf(24, 8, file=args$plotfile)
 for (i in seq_along(res))
     print(plot_one(names(res)[i], res[[i]]))
 dev.off()

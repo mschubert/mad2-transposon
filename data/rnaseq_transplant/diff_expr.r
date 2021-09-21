@@ -35,7 +35,7 @@ eset = readRDS(args$eset)
 
 sets = gset$get_mouse(c(
     "MSigDB_Hallmark_2020",
-#    "GO_Biological_Process_2021",
+    "GO_Biological_Process_2021",
     "DoRothEA",
     "CIN"
 ), conf="A")
