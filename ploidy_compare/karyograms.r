@@ -91,11 +91,12 @@ if (is.null(module_name())) {
         opt('e', 'expr', 'gene expression rds', '../data/rnaseq/assemble.rds'),
         opt('r', 'rna', 'RNA expr reference rds', '../ploidy_from_rnaseq/eT_ploidy.rds'),
         opt('d', 'dna', '30-cell DNA WGS', '../data/wgs/30cellseq.rds'),
-        opt('m', 'meta', 'sample .RData', 'analysis_set.RData'),
+        opt('m', 'meta', 'sample .rds', 'analysis_set.rds'),
         opt('c', 'mixcr', 'mixcr tsv', '../data/rnaseq/mixcr_Mad2+PB.tsv'),
-        opt('p', 'plotfile', 'pdf to save plot to', '/dev/null'))
+        opt('p', 'plotfile', 'pdf to save plot to', '/dev/null')
+    )
 
-    meta = readRDS(args$meta)
+    meta = readRDS(args$meta)$meta
     mixcr = io$read_table(args$mixcr, header=TRUE)
     dna = readRDS(args$dna)
     rna = readRDS(args$rna)
