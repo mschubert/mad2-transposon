@@ -69,7 +69,6 @@ result = as.data.frame(GenomicRanges::mcols(genes)) %>%
 p = result %>%
     mutate(size = n_smp,
            label = external_gene_name) %>%
-    plt$p_effect() %>%
     plt$volcano(label_top=30, repel=TRUE, ceil=1e-30) +
         xlab("log2 fold change poisson rate")
 
