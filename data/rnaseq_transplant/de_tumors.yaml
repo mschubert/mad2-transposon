@@ -1,5 +1,5 @@
 comparisons:
-    Myc_dnMCAK_vs_Kif2c:
+    Myc-dnMCAK_vs_Kif2c:
         samples:
             Sample_type: Tumor
             driver: Myc
@@ -7,7 +7,7 @@ comparisons:
         design: ~ CIN
         extract: CIN_dnMCAK_vs_KIF2C
 
-    p53_dnMCAK_vs_Kif2c:
+    p53-dnMCAK_vs_Kif2c:
         samples:
             Sample_type: Tumor
             driver: p53
@@ -15,7 +15,7 @@ comparisons:
         design: ~ CIN
         extract: CIN_dnMCAK_vs_KIF2C
 
-    Kif2c_Myc_vs_p53:
+    Kif2c-Myc_vs_p53:
         samples:
             Sample_type: Tumor
             CIN: KIF2C
@@ -23,7 +23,7 @@ comparisons:
         design: ~ driver
         extract: driver_Myc_vs_p53
 
-    dnMCAK_Myc_vs_p53:
+    dnMCAK-Myc_vs_p53:
         samples:
             Sample_type: Tumor
             CIN: dnMCAK
@@ -31,7 +31,7 @@ comparisons:
         design: ~ driver
         extract: driver_Myc_vs_p53
 
-    STAT1_Kif2c_Myc_vs_p53:
+    STAT1_Kif2c-Myc_vs_p53:
         samples:
             Sample_type: Tumor
             CIN: KIF2C
@@ -39,7 +39,7 @@ comparisons:
         design: ~ driver
         extract: driver_Myc_vs_p53
 
-    STAT1_dnMCAK_Myc_vs_p53:
+    STAT1_dnMCAK-Myc_vs_p53:
         samples:
             Sample_type: Tumor
             CIN: dnMCAK
@@ -47,7 +47,7 @@ comparisons:
         design: ~ driver
         extract: driver_Myc_vs_p53
 
-    Myc+dnMCAK_Stat1_vs_wt:
+    Myc+dnMCAK-Stat1_vs_wt:
         samples:
             Sample_type: Tumor
             CIN: dnMCAK
@@ -55,7 +55,7 @@ comparisons:
         design: ~ STAT1
         extract: STAT1_KO_vs_WT
 
-    p53+dnMCAK_Stat1_vs_wt:
+    p53+dnMCAK-Stat1_vs_wt:
         samples:
             Sample_type: Tumor
             CIN: dnMCAK
