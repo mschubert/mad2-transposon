@@ -46,3 +46,19 @@ comparisons:
             STAT1: KO
         design: ~ driver
         extract: driver_Myc_vs_p53
+
+    Myc+dnMCAK_Stat1_vs_wt:
+        samples:
+            Sample_type: Tumor
+            CIN: dnMCAK
+            driver: Myc
+        design: ~ STAT1
+        extract: STAT1_KO_vs_WT
+
+    p53+dnMCAK_Stat1_vs_wt:
+        samples:
+            Sample_type: Tumor
+            CIN: dnMCAK
+            driver: p53
+        design: ~ STAT1
+        extract: STAT1_KO_vs_WT

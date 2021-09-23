@@ -26,8 +26,8 @@ de_comparison = function(rec, sets) {
 
 args = sys$cmd$parse(
     opt('e', 'eset', 'rds', 'samples.rds'),
-    opt('c', 'comps', 'yaml', 'diff_expr.yaml'),
-    opt('o', 'outfile', 'rds', 'diff_expr.rds')
+    opt('c', 'comps', 'yaml', 'de_clines.yaml'),
+    opt('o', 'outfile', 'rds', 'de_clines.rds')
 )
 
 comps = yaml::read_yaml(args$comps)$comparisons
