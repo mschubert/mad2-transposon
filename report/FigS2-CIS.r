@@ -25,7 +25,7 @@ cis_row = function(bn, assocs) {
         geom_col() +
         coord_flip() +
         labs(x="CIS gene", y="Hub centrality")
-    p1 + p2 + p3 + plot_layout(widths=c(1,2,0.5))
+    p1 + p2 + p3 + plot_layout(widths=c(1.2,2,0.5))
 }
 
 aneup_row = function(bn, ext) {
@@ -52,7 +52,7 @@ aneup_row = function(bn, ext) {
         geom_col() +
         coord_flip() +
         labs(x="CIS gene", y="Hub centrality")
-    p1 + p2 + p3 + plot_layout(widths=c(1,2,0.5))
+    p1 + p2 + p3 + plot_layout(widths=c(1.2,2,0.5))
 }
 
 sys$run({
