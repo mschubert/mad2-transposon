@@ -1,5 +1,6 @@
 library(dplyr)
 library(ggplot2)
+library(tidygraph)
 library(ggraph)
 library(patchwork)
 theme_set(cowplot::theme_cowplot())
@@ -14,7 +15,16 @@ cis_row = function(bn, assocs) {
         geom_node_text(aes(label=name), repel=TRUE) +
         geom_edge_link(alpha=0.2) +
         theme_void()
-    p1 + p2 + plot_layout(widths=c(1,2))
+    hubdf = bn$cis_net %>%
+        mutate(hub = centrality_hub()) %N>%
+        as_tibble() %>%
+        arrange(-hub) %>% head(20) %>%
+        mutate(name = forcats::fct_reorder(name, hub))
+    p3 = ggplot(hubdf, aes(x=name, y=hub)) +
+        geom_col() +
+        coord_flip() +
+        labs(x="CIS gene", y="Hub centrality")
+    p1 + p2 + p3 + plot_layout(widths=c(1,2,0.5))
 }
 
 aneup_row = function(bn, ext) {
@@ -30,7 +40,16 @@ aneup_row = function(bn, ext) {
         scale_fill_gradient2(low="red", mid="white", high="blue", midpoint=0) +
         scale_color_manual(name="signif", labels=c("n.s.", "p<0.05"),
                            values=c("white", "black"))
-    p1 + p2 + plot_layout(widths=c(1,2))
+    hubdf = bn$ext_nets$aneuploidy %>%
+        mutate(hub = centrality_hub()) %N>%
+        as_tibble() %>%
+        arrange(-hub) %>% head(20) %>%
+        mutate(name = forcats::fct_reorder(name, hub))
+    p3 = ggplot(hubdf, aes(x=name, y=hub)) +
+        geom_col() +
+        coord_flip() +
+        labs(x="CIS gene", y="Hub centrality")
+    p1 + p2 + p3 + plot_layout(widths=c(1,2,0.5))
 }
 
 sys$run({
