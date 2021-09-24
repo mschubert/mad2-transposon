@@ -12,13 +12,12 @@ cis_row = function(bn, assocs) {
     p1 = plt$volcano(assocs, size="n_smp", label_top=30, max.overlaps=50, x_label_bias=0.5) +
         labs(x="CIS enrichment", y="Adjusted p-value (FDR)")
     p2 = ggraph(bn$cis_net) +
-        geom_node_point(aes(size=n_smp)) +
+        geom_node_point(aes(size=n_smp, alpha=hub)) +
         geom_node_text(aes(label=name), repel=TRUE) +
         geom_edge_link(alpha=0.2) +
         theme_void() +
-        labs(size = "Samples\nwith\ninsertions")
-    hubdf = bn$cis_net %>%
-        mutate(hub = centrality_hub()) %N>%
+        labs(size = "Samples\nwith\ninsertions", alpha="Hub\ncentrality")
+    hubdf = bn$cis_net %N>%
         as_tibble() %>%
         arrange(-hub) %>% head(25) %>%
         mutate(name = forcats::fct_reorder(name, hub))
@@ -67,6 +66,7 @@ sys$run({
     )
 
     bn = readRDS(args$bionet)
+    bn$cis_net = bn$cis_net %>% mutate(hub = centrality_hub())
     cis_nodes = igraph::V(bn$cis_net)$name
     an_nodes = igraph::V(bn$ext_nets$aneuploidy)$name
 
