@@ -1,4 +1,5 @@
 import_package("dplyr", attach=TRUE)
+import_package("ggplot2", attach=TRUE)
 import_package("BioNet", attach=TRUE)
 import_package("ggraph", attach=TRUE)
 import_package("tidygraph", attach=TRUE)
@@ -13,14 +14,12 @@ idmap = import('process/idmap')
 #' @param thresh  p-value/fdr cutoff
 #' @return  tidygraph object
 bionet = function(g, assocs, thresh=0.05, var="adj.p") {
-    assocs = assocs %>% filter(!duplicated(name))
-    g = g %>% activate(nodes) %>% left_join(assocs)
+    assocs2 = assocs %>% filter(!duplicated(name))
+    g = g %N>% left_join(assocs)
     scores = setNames(pull(g, !! rlang::sym(var)), pull(g, name))
     scores[is.na(scores)] = 1
     scores = pmax(-log10(scores) + log10(thresh), 0)
-    as_tbl_graph(runFastHeinz(g, scores)) %>%
-        activate(edges) %>%
-        filter(from != to)
+    as_tbl_graph(runFastHeinz(g, scores))
 }
 
 #' Plot a network
@@ -48,26 +47,17 @@ plot_net = function(net, node_aes, ...) {
 plot_net_overlay = function(net, ov) {
     if (igraph::vcount(net) == 0)
         return(patchwork::plot_spacer())
-    get_node_stats(net, ov) %>%
-        plot_net(aes(size=n_smp, fill=statistic, stroke=p.value<0.05,
-                     color=p.value<0.05), shape=21) +
-            scale_fill_gradient2(low="red", mid="white", high="blue", midpoint=0) +
-            scale_color_manual(name="signif", labels=c("n.s.", "p<0.05"),
-                               values=c("white", "black"))
-}
 
-#' Return the node statistics as data.frame
-#'
-#' @param net  ggraph-compatible network object
-#' @param ov  data.frame with fields: external_gene_name, statistic
-#' @return  data.frame with association statistics
-get_node_stats = function(net, ov) {
-    net %>%
-        as_tbl_graph() %>%
-        activate(nodes) %>%
-        mutate(p.value = ov$p.value[match(name, toupper(ov$external_gene_name))],
-               statistic = ov$statistic[match(name, toupper(ov$external_gene_name))],
-               adj.p = p.adjust(p.value, method="fdr"))
+    ov2 = ov %>% select(name, p.value, statistic) %>% filter(!duplicated(name))
+    net_with_stats = as_tbl_graph(net) %N>%
+        left_join(ov2) %>%
+        mutate(adj.p = p.adjust(p.value, method="fdr"))
+
+    plot_net(net_with_stats, aes(size=n_smp, fill=statistic, stroke=p.value<0.05,
+                 color=p.value<0.05), shape=21) +
+        scale_fill_gradient2(low="red", mid="white", high="blue", midpoint=0) +
+        scale_color_manual(name="signif", labels=c("n.s.", "p<0.05"),
+                           values=c("white", "black"))
 }
 
 sys$run({
@@ -80,12 +70,11 @@ sys$run({
     )
 
     aneup = readRDS(args$aneup) %>%
-        lapply(function(df) {
-            df %>% mutate(name = idmap$orthologue(external_gene_name, to="hgnc_symbol"),
-                          adj.p = NA, n_smp = size)
-        })
-    cis = readRDS(args$cis)$result %>%
-        mutate(name = idmap$orthologue(external_gene_name, to="hgnc_symbol"))
+        lapply(. %>% mutate(name=external_gene_name, n_smp=size, adj.p=NA))
+    # Error in get.all.shortest.paths(mst, from = mst.cluster.id[j], to = mst.cluster.id[(j +  :
+    #   At structural_properties.c:4863 : Weight vector must be non-negative, Invalid value
+    aneup = aneup[1] # wtf...
+    cis = readRDS(args$cis)$result %>% mutate(name = external_gene_name)
 
     if (args$interactome == "DLBCL") {
         library(DLBCL)
@@ -96,14 +85,17 @@ sys$run({
             select(name = geneSymbol)
         fdr = 0.01
     } else if (args$interactome == "omnipath") {
-        net = OmnipathR::import_all_interactions() %>%
+        op = OmnipathR::import_all_interactions()
+        net = op %>%
             OmnipathR::interaction_graph() %>%
             as_tbl_graph() %>%
-            activate(edges) %>%
-#            select(-dip_url, -sources, -references) %>% # ggraph issue #214
-#            to_simple()
-            select(from, to) %>%
-            distinct()
+                convert(to_undirected, .clean=TRUE) %>%
+                convert(to_simple, .clean=TRUE) %>%
+            mutate(name = idmap$orthologue(name, from="external_gene_name", to="mgi_symbol")) %>%
+            filter(!is.na(name)) %E>%
+            select(-.orig_data)
+        conn = igraph::components(net)$membership == 1 # doesn't work in filter above
+        net = net %N>% filter(conn) %>% activate(edges)
         fdr = 0.05
     } else
         stop("invalid interactome")
