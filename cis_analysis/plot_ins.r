@@ -60,7 +60,7 @@ names(bams) = b$grep("/([0-9]{3}[st])/", bams)
 txdb = GenomicFeatures::makeTxDbFromGFF(args$gtf, format="gtf")
 grtrack = GeneRegionTrack(txdb, name=args$gene)
 gtrack = GenomeAxisTrack(name="GRCm38.92")
-genes = seq$coords$gene(dset="mmusculus_gene_ensembl", granges=TRUE) # get this out of txdb obj?
+genes = seq$coords$gene(dset="mmusculus_gene_ensembl", assembly="GRCm38", granges=TRUE) # get this from txdb?
 region = genes[genes$external_gene_name %in% all_genes] %>%
     anchor_5p() %>% stretch(as.integer(args$flank)) %>%
     anchor_3p() %>% stretch(as.integer(args$flank))
