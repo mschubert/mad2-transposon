@@ -1,6 +1,7 @@
-library(BioNet)
-library(ggraph)
-library(tidygraph)
+import_package("dplyr", attach=TRUE)
+import_package("BioNet", attach=TRUE)
+import_package("ggraph", attach=TRUE)
+import_package("tidygraph", attach=TRUE)
 io = import('io')
 sys = import('sys')
 idmap = import('process/idmap')
@@ -108,8 +109,8 @@ sys$run({
         stop("invalid interactome")
 
     cis_net = bionet(net, cis, fdr, "adj.p")
-    ext_nets = lapply(aneup, bionet, g=net, thresh=0.2, var="p.value")
-    saveRDS(list(cis_net=cis_net, ext_nets=ext_nets), file=args$outfile)
+    ext_nets = lapply(aneup, bionet, g=net, thresh=0.1, var="p.value")
+    saveRDS(list(cis_net=cis_net, ext_nets=ext_nets, aneup=aneup), file=args$outfile)
 
     pdf(args$plotfile)
     print(plot_net(cis_net, aes(size=n_smp)))
