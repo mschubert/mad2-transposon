@@ -11,7 +11,7 @@ gnet = import('tools/genenet')
 marker_pca = function(markers) {
     one_pca = function(mm, smps) {
         plt$pca(prcomp(mm[smps,]), aes(x=PC1, y=PC2), annot=meta[smps,],
-                biplot=TRUE, bi_size=3.5, bi_color="black") +
+                biplot=TRUE, bi_size=2.5, bi_color="darkviolet", bi_arrow=0.2) +
             geom_point(aes(color=type, size=aneuploidy), alpha=0.8) +
             ggrepel::geom_text_repel(aes(label=sample), size=2, segment.alpha=0.3) +
             scale_color_discrete(drop=FALSE) +
