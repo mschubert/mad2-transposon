@@ -29,7 +29,7 @@ sheet = io$read_yaml(args$sheet)
 
 # s&t different tumors: 184, 443 (RNA also both)
 ins = readRDS(args$infile) %>%
-    dplyr::select(sample, chr, position, reads) %>% # ignore strand
+    dplyr::select(sample, chr, position, strand, reads) %>% # ignore strand
     distinct() %>%
     filter(!sample %in% names(sheet$exclude)) %>%
     mutate(sample = ifelse(sample %in% names(sheet$replace),
