@@ -3,7 +3,8 @@ io = import('io')
 sys = import('sys')
 
 args = sys$cmd$parse(
-    opt('o', 'outfile', 'rds', 'sets.rds'))
+    opt('o', 'outfile', 'rds', 'sets.rds')
+)
 
 genes = c("STAT1", "PIAS1", "IFNG", "IL1B", "IFITM1",
           "CGAS", "TBK1", "IRF2", "IRF3", "TP53")
@@ -16,27 +17,27 @@ hm = readRDS("../data/genesets/human/MSigDB_Hallmark_2020.rds")
 msdb = readRDS("../data/genesets/human/MSigDB_Oncogenic_Signatures.rds")
 reac = readRDS("../data/genesets/human/Reactome_2016.rds")
 sets = c(go["regulation of complement activation (GO:0030449)"],
-         chea["STAT1_20625510_ChIP-Seq_HELA_Human"],
-         chea["STAT1_17558387_ChIP-Seq_HELA_Human"],
-         encc["STAT3_CHEA"],
-         encc["STAT3_ENCODE"],
-         hm["HALLMARK_INTERFERON_GAMMA_RESPONSE"],
-         hm["HALLMARK_MYC_TARGETS_V2"],
-         hm["HALLMARK_OXIDATIVE_PHOSPHORYLATION"],
-         msdb["TBK1.DF_DN"],
-         reac["Mitochondrial translation_Homo sapiens_R-HSA-5368287"],
-         reac["Interferon alpha/beta signaling_Homo sapiens_R−HSA−909733"],
+         chea["STAT1 20625510 ChIP-Seq HELA Human"],
+         chea["STAT1 17558387 ChIP-Seq HELA Human"],
+         encc["STAT3 CHEA"],
+         encc["STAT3 ENCODE"],
+         hm["Interferon Gamma Response"],
+         hm["Myc Targets V2"],
+         hm["Oxidative Phosphorylation"],
+         msdb["TBK1.DF DN"],
+         reac["Mitochondrial translation Homo sapiens R-HSA-5368287"],
+         reac["Interferon Signaling Homo sapiens R-HSA-913531"],
          go["mitochondrial respiratory chain complex assembly (GO:0033108)"],
 #         go["type I interferon signaling pathway (GO:0060337)"], # kills IFNg>stat1>IFNg response
          STAT1_complement = list(intersect(
             go[["regulation of complement activation (GO:0030449)"]],
-            chea[["STAT1_17558387_ChIP-Seq_HELA_Human"]])),
+            chea[["STAT1 17558387 ChIP-Seq HELA Human"]])),
          STAT1_mhc = list(intersect(
             go[["antigen receptor-mediated signaling pathway (GO:0050851)"]],
-            chea[["STAT1_17558387_ChIP-Seq_HELA_Human"]])),
+            chea[["STAT1 17558387 ChIP-Seq HELA Human"]])),
          STAT1_apop = list(intersect(
             go[["apoptotic process (GO:0006915)"]],
-            chea[["STAT1_17558387_ChIP-Seq_HELA_Human"]])),
+            chea[["STAT1 17558387 ChIP-Seq HELA Human"]])),
          go["regulation of complement activation (GO:0030449)"],
          go["antigen receptor-mediated signaling pathway (GO:0050851)"],
          go["apoptotic process (GO:0006915)"]
