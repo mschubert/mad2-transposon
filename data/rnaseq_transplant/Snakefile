@@ -19,12 +19,14 @@ rule diff_expr:
         comps = "de_{yaml}.yaml",
         eset = "samples.rds"
     output:
-        outfile = "de_{yaml}.rds"
+        outfile = "de_{yaml}.rds",
+        xlsfile = "de_{yaml}.xlsx"
     shell:
         "Rscript {input.rscript}"
             " --eset {input.eset}"
             " --comps {input.comps}"
             " --outfile {output.outfile}"
+            " --xlsfile {output.xlsfile}"
 
 rule eset:
     input:

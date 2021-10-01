@@ -27,7 +27,8 @@ de_comparison = function(rec, sets) {
 args = sys$cmd$parse(
     opt('e', 'eset', 'rds', 'samples.rds'),
     opt('c', 'comps', 'yaml', 'de_clines.yaml'),
-    opt('o', 'outfile', 'rds', 'de_clines.rds')
+    opt('o', 'outfile', 'rds', 'de_clines.rds'),
+    opt('x', 'xlsfile', 'xlsx', 'de_clines.xlsx')
 )
 
 comps = yaml::read_yaml(args$comps)$comparisons
@@ -42,3 +43,6 @@ sets = gset$get_mouse(c(
 
 res = lapply(comps, de_comparison, sets=sets)
 saveRDS(res, file=args$outfile)
+
+genes = lapply(res, function(x) x$genes)
+writexl::write_xlsx(genes, args$xlsfile)
