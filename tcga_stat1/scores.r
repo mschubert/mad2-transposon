@@ -15,7 +15,7 @@ gsva_tcga = function(cohort, genes, sets) {
     expr = tcga$rna_seq(cohort, trans="vst")
     rownames(expr) = idmap$gene(rownames(expr), to="external_gene_name")
     expr = expr[keep | rownames(expr) %in% genes,]
-    expr = expr[!is.na(rownames(expr)) & rownames(expr) != "", !duplicated(colnames(expr))]
+    expr = expr[!is.na(rownames(expr)) & rownames(expr) != "",]
 
     genes = expr[intersect(rownames(expr), genes),,drop=FALSE]
     if (length(sets) == 0)
@@ -58,5 +58,6 @@ immune = readxl::read_xlsx("1-s2.0-S1074761318301213-mmc2.xlsx") %>%
               NK_total = NK_activated + as.numeric(`NK Cells Resting`)) %>%
     inner_join(aneup)
 
-data = inner_join(scores, immune, by="sample") %>% na.omit()
+data = inner_join(scores, immune, by="sample") %>% na.omit() %>%
+    filter(!duplicated(sample))
 saveRDS(data, file=args$outfile)

@@ -4,7 +4,8 @@ import('./genenet_util', attach=TRUE)
 
 args = sys$cmd$parse(
     opt('i', 'infile', 'rds', 'scores/inflammation.rds'),
-    opt('p', 'plotfile', 'pdf', 'genenet_inflammation.pdf'))
+    opt('p', 'plotfile', 'pdf', 'genenet_inflammation.pdf')
+)
 
 data = readRDS(args$infile)
 
