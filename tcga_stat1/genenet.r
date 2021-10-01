@@ -1,6 +1,6 @@
 library(dplyr)
 sys = import('sys')
-import('../../cgas/cor_structure/genenet', attach=TRUE)
+import('./genenet_util', attach=TRUE)
 
 args = sys$cmd$parse(
     opt('i', 'infile', 'rds', 'scores.rds'),
