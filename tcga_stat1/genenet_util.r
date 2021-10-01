@@ -1,6 +1,6 @@
 import_package("dplyr", attach=TRUE)
 import_package("corrplot", attach=TRUE)
-import_package("cowplot", attach=TRUE)
+import_package("ggplot2", attach=TRUE)
 import_package("ggraph", attach=TRUE)
 io = import('io')
 sys = import('sys')

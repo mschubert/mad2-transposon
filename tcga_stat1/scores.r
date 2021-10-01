@@ -5,7 +5,8 @@ sys = import('sys')
 
 args = sys$cmd$parse(
     opt('i', 'infile', 'rds', 'sets/stat1TGs.rds'),
-    opt('o', 'outfile', 'rds', 'scores/stat1TGs.rds'))
+    opt('o', 'outfile', 'rds', 'scores/stat1TGs.rds')
+)
 
 gsva_tcga = function(cohort, genes, sets) {
     message(cohort)
@@ -14,7 +15,7 @@ gsva_tcga = function(cohort, genes, sets) {
     expr = tcga$rna_seq(cohort, trans="vst")
     rownames(expr) = idmap$gene(rownames(expr), to="external_gene_name")
     expr = expr[keep | rownames(expr) %in% genes,]
-    expr = expr[!is.na(rownames(expr)) & rownames(expr) != "",]
+    expr = expr[!is.na(rownames(expr)) & rownames(expr) != "", !duplicated(colnames(expr))]
 
     genes = expr[intersect(rownames(expr), genes),,drop=FALSE]
     if (length(sets) == 0)
@@ -44,7 +45,7 @@ scores = gsva %>%
 aneup = lapply(cohorts, tcga$aneuploidy) %>%
     bind_rows() %>%
     inner_join(tcga$purity() %>% select(Sample, purity=estimate)) %>%
-    transmute(sample=substr(Sample,1,12), aneup=aneuploidy / purity)
+    transmute(sample=substr(Sample,1,12), aneup=aneup_log2seg / purity)
 
 immune = readxl::read_xlsx("1-s2.0-S1074761318301213-mmc2.xlsx") %>%
     transmute(sample = `TCGA Participant Barcode`,

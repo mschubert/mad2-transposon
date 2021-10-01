@@ -9,12 +9,12 @@ genes = c("STAT1", "PIAS1", "IFNG", "IL1B", "IFITM1",
           "CGAS", "TBK1", "IRF2", "IRF3", "TP53")
 # don't have: "IFNA", "IFNB", "OAS1", "ISG54"
 
-encc = io$load("../data/genesets/human/ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X.RData")
-chea = io$load("../data/genesets/human/ChEA_2016.RData")
-go = io$load("../data/genesets/human/GO_Biological_Process_2018.RData")
-hm = io$load("../data/genesets/human/CH.HALLMARK.RData")
-msdb = io$load("../data/genesets/human/MSigDB_Oncogenic_Signatures.RData")
-reac = io$load("../data/genesets/human/Reactome_2016.RData")
+encc = readRDS("../data/genesets/human/ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X.rds")
+chea = readRDS("../data/genesets/human/ChEA_2016.rds")
+go = readRDS("../data/genesets/human/GO_Biological_Process_2021.rds")
+hm = readRDS("../data/genesets/human/MSigDB_Hallmark_2020.rds")
+msdb = readRDS("../data/genesets/human/MSigDB_Oncogenic_Signatures.rds")
+reac = readRDS("../data/genesets/human/Reactome_2016.rds")
 sets = c(go["regulation of complement activation (GO:0030449)"],
          chea["STAT1_20625510_ChIP-Seq_HELA_Human"],
          chea["STAT1_17558387_ChIP-Seq_HELA_Human"],
@@ -36,7 +36,10 @@ sets = c(go["regulation of complement activation (GO:0030449)"],
             chea[["STAT1_17558387_ChIP-Seq_HELA_Human"]])),
          STAT1_apop = list(intersect(
             go[["apoptotic process (GO:0006915)"]],
-            chea[["STAT1_17558387_ChIP-Seq_HELA_Human"]]))
+            chea[["STAT1_17558387_ChIP-Seq_HELA_Human"]])),
+         go["regulation of complement activation (GO:0030449)"],
+         go["antigen receptor-mediated signaling pathway (GO:0050851)"],
+         go["apoptotic process (GO:0006915)"]
 )
 
 genes = c(genes, sets$STAT1_mhc)
