@@ -18,10 +18,11 @@ lm_plot = function(dset, aes, covar) {
     ggplot(dset, aes) +
         geom_point() +
         geom_smooth(method="lm") +
-        labs(subtitle = sprintf("p=%.2g (%.2g with %s)", m1$p.value, m2$p.value, covar))
+        labs(subtitle = sprintf("%.2f p=%.2g (%.2f p=%.2g with %s)",
+                                m1$estimate, m1$p.value, m2$estimate, m2$p.value, covar))
 }
 
-check_surv(var) {
+check_surv = function(var) {
     var = dset[["Myc Targets V2"]]
     survival::coxph(survival::Surv(OS_time, as.integer(vital_status)-1) ~
                     year_of_birth + sex + purity + var, data=dset) %>%
@@ -40,8 +41,8 @@ sys$run({
     dset = cbind(ds$meta, as.data.frame(ds$dmat))
 
     dens = dset %>%
-        select(Sample, purity, `Aneuploidy Score`, `Interferon Gamma Response`,
-               `Myc Targets V2`, `Leukocyte Fraction`, `Stromal Fraction`, `Lymphocytes`,
+        select(Sample, purity, aneuploidy, `Aneuploidy Score`, `Interferon Gamma Response`,
+               `Myc Targets V1`, `Leukocyte Fraction`, `Stromal Fraction`, `Lymphocytes`,
                wt_rev24_over_dmso, wt_rev48_over_dmso, rev24_stat1_over_wt, rev48_stat1_over_wt) %>%
         tidyr::gather("field", "value", -Sample)
 
@@ -53,24 +54,27 @@ sys$run({
     pdf(args$plotfile, 8, 6)
     corrplot::corrplot(cor(x))
     print(p1)
-    print(lm_plot(dset, aes(x=myc_copy, y=`Myc Targets V2`), covar="purity"))
-    print(lm_plot(dset, aes(x=`Myc Targets V2`, y=`Interferon Gamma Response`), covar="purity"))
-    print(lm_plot(dset, aes(x=`Myc Targets V2`, y=`Aneuploidy Score`), covar="purity"))
-    print(lm_plot(dset, aes(x=`Myc Targets V2`, y=wt_ifn2_over_dmso), covar="purity"))
-    print(lm_plot(dset, aes(x=`Myc Targets V2`, y=wt_rev24_over_dmso), covar="purity"))
-    print(lm_plot(dset, aes(x=`Myc Targets V2`, y=wt_rev48_over_dmso), covar="purity"))
-    print(lm_plot(dset, aes(x=`Myc Targets V2`, y=rev24_stat1_over_wt), covar="purity"))
-    print(lm_plot(dset, aes(x=`Myc Targets V2`, y=rev48_stat1_over_wt), covar="purity"))
-#    print(lm_plot(dset, aes(x=`Aneuploidy Score`, y=rev24_stat1_over_wt), covar="purity")) # no cor
+    print(lm_plot(dset, aes(x=myc_copy, y=`Myc Targets V1`), covar="purity"))
+    print(lm_plot(dset, aes(x=`Myc Targets V1`, y=`Interferon Gamma Response`), covar="purity"))
+    print(lm_plot(dset, aes(x=`Myc Targets V1`, y=`Aneuploidy Score`), covar="purity"))
+    print(lm_plot(dset, aes(y=`Myc Targets V1`, x=aneuploidy), covar="purity"))
+    print(lm_plot(dset, aes(x=`Myc Targets V1`, y=wt_ifn2_over_dmso), covar="purity"))
+    print(lm_plot(dset, aes(x=`Myc Targets V1`, y=wt_rev24_over_dmso), covar="purity"))
+    print(lm_plot(dset, aes(x=`Myc Targets V1`, y=wt_rev48_over_dmso), covar="purity"))
+    print(lm_plot(dset, aes(x=`Myc Targets V1`, y=rev24_stat1_over_wt), covar="purity"))
+    print(lm_plot(dset, aes(x=`Myc Targets V1`, y=rev48_stat1_over_wt), covar="purity"))
+    print(lm_plot(dset, aes(x=`Myc Targets V1`, y=wt_ifn2_over_dmso), covar="rev24_stat1_over_wt"))
+    print(lm_plot(dset, aes(x=aneuploidy, y=rev24_stat1_over_wt), covar="wt_ifn2_over_dmso")) # no cor
     print(lm_plot(dset, aes(x=wt_rev24_over_dmso, y=rev24_stat1_over_wt), covar="purity"))
-    print(lm_plot(dset, aes(x=wt_rev48_over_dmso, y=rev24_stat1_over_wt), covar="Myc Targets V2"))
+    print(lm_plot(dset, aes(x=wt_rev48_over_dmso, y=rev24_stat1_over_wt), covar="Myc Targets V1"))
     print(lm_plot(dset, aes(x=wt_rev48_over_dmso, y=rev48_stat1_over_wt), covar="purity"))
-#    print(lm_plot(dset, aes(x=`Aneuploidy Score`, y=wt_rev48_over_dmso), covar="purity")) # no cor
-    print(lm_plot(dset, aes(x=`Aneuploidy Score`, y=`Interferon Gamma Response`), covar="Myc Targets V2"))
+    print(lm_plot(dset, aes(x=aneuploidy, y=wt_rev24_over_dmso), covar="purity")) # no cor
+    print(lm_plot(dset, aes(x=`Aneuploidy Score`, y=`Interferon Gamma Response`), covar="Myc Targets V1"))
+    print(lm_plot(dset, aes(x=aneuploidy, y=`Interferon Gamma Response`), covar="Myc Targets V1"))
     print(lm_plot(dset, aes(x=rev24_stat1_over_wt, y=`purity`), covar="Interferon Gamma Response"))
-    print(lm_plot(dset, aes(x=`Myc Targets V2`, y=purity), covar="Interferon Gamma Response"))
-    print(lm_plot(dset, aes(x=purity, y=`Myc Targets V2`), covar="Interferon Gamma Response"))
-    print(lm_plot(dset, aes(x=purity, y=`Myc Targets V2`), covar="rev24_stat1_over_wt"))
+    print(lm_plot(dset, aes(x=`Myc Targets V1`, y=purity), covar="Interferon Gamma Response"))
+    print(lm_plot(dset, aes(x=purity, y=`Myc Targets V1`), covar="Interferon Gamma Response"))
+    print(lm_plot(dset, aes(x=purity, y=`Myc Targets V1`), covar="rev24_stat1_over_wt"))
     dev.off()
 
     # split Myc targets low vs high (bimodal)
