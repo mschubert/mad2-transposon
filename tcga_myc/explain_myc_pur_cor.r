@@ -1,6 +1,7 @@
 library(dplyr)
 library(ggplot2)
 sys = import('sys')
+plt = import('plot')
 
 args = sys$cmd$parse(
     opt('d', 'dset', 'rds', 'dset.rds'),
@@ -21,18 +22,20 @@ test_one = function(covar) {
         filter(term != "(Intercept)") %>%
         mutate(term = sub("`Myc Targets V2`", "Myc", term)) %>%
         select(term, est=estimate, stat=statistic, p.value) %>%
-        tidyr::pivot_wider(names_from=c(term), values_from=c(estimate:p.value)) %>%
+        tidyr::pivot_wider(names_from=c(term), values_from=c(est:p.value)) %>%
         mutate(delta_stat = red_stat - stat_Myc)
 }
 naive = broom::tidy(lm(purity ~ `Myc Targets V2`, data=both))
 red_stat = naive %>% filter(term == "`Myc Targets V2`") %>% pull(statistic)
 
-res = clustermq::Q(test_one, covar=narray::split(both[,-1], along=2), n_jobs=0,
+res = clustermq::Q(test_one, covar=narray::split(both[,-1], along=2), n_jobs=10,
                    export = list(naive=naive, both=both, red_stat=red_stat),
                    pkgs = c("dplyr")) %>%
     setNames(colnames(both)[-1]) %>%
     bind_rows(.id="covar") %>%
     arrange(delta_stat)
 
-res %>% filter(estimate_covar > 0) %>% select(covar, delta_stat)
-res %>% filter(estimate_covar > 0, !grepl("^GO:", covar))
+res2 = res %>% filter(est_covar > 0, !grepl("^GO:", covar))
+
+plt$volcano(res, x="delta_stat", y="p.value_covar", label="covar", label_top=40, pos_label_bias=1.5)
+plt$volcano(res2, x="delta_stat", y="p.value_covar", label="covar")
