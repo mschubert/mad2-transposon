@@ -1,6 +1,6 @@
 rule all:
     input:
-        expand("genenet_{sets}.pdf", sets=['inflammation', 'stat1TGs'])
+        expand("genenet_{sets}.pdf", sets=['inflammation', 'stat1TGs', 'focus'])
 
 rule genenet:
     input:
