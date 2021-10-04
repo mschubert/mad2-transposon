@@ -23,12 +23,7 @@ cfg = yaml::read_yaml(args$config)
 sets = setdiff(names(cfg$dset), c("genes", "Thorsson")) %>%
     sapply(read_sets, simplify=FALSE)
 
-immdf = readxl::read_xlsx("1-s2.0-S1074761318301213-mmc2.xlsx", 1) %>%
-    dplyr::rename(Sample = `TCGA Participant Barcode`,
-                  Study = `TCGA Study`) %>%
-    filter(Study == "BRCA")
-immune = data.matrix(immdf[cfg$dset$Thorsson])
-rownames(immune) = paste0(immdf$Sample, "-01A")
+immune = tcga$cell_frac("BRCA", "epic")
 
 smat = narray::stack(c(sets, list(immune)), along=2)
 

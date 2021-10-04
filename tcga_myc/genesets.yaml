@@ -26,12 +26,3 @@ dset:
     DoRothEA:
         - STAT1 (a)
         - TP53 (a)
-    Thorsson:
-        - Leukocyte Fraction
-        - Stromal Fraction
-        - Lymphocytes
-        - Macrophages
-        - Aneuploidy Score
-#        - Macrophages M0
-#        - Macrophages M1
-#        - Macrophages M2
