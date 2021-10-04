@@ -3,6 +3,7 @@ library(ggplot2)
 library(patchwork)
 io = import('io')
 sys = import('sys')
+seq = import('seq')
 tcga = import('data/tcga') # todo: include this in dset
 
 read_sets = function(setname) {
@@ -33,7 +34,8 @@ smat = narray::stack(c(sets, list(immune)), along=2)
 
 # process TCGA data
 dset = readRDS(args$tcga)
-meta = dset$meta
+meta = dset$meta %>%
+    inner_join(tcga$aneuploidy("BRCA"))
 expr = t(dset$expr)
 cna = ((t(dset$cna) - 2) / meta$purity) + 2
 

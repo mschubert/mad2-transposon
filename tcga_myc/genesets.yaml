@@ -23,6 +23,9 @@ dset:
 #        - prog.MAPK
 #        - prog.PI3K
 #        - prog.p53
+    DoRothEA:
+        - STAT1 (a)
+        - TP53 (a)
     Thorsson:
         - Leukocyte Fraction
         - Stromal Fraction

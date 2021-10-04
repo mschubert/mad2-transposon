@@ -1,7 +1,7 @@
 configfile: "genesets.yaml"
 
-subworkflow genesets:
-    workdir: "../data/genesets"
+subworkflow gsva:
+    workdir: "../data/gsva"
 
 gsets = set(config['dset'].keys()) - set(['genes', 'Thorsson'])
 
@@ -27,7 +27,7 @@ rule dset:
         rscript = "dset.r",
         config = "genesets.yaml",
         tcga = "tcga.rds",
-        setfiles = genesets(expand("human/{gset}.rds", gset=gsets))
+        setfiles = gsva(expand("tcga-brca/{gset}.rds", gset=gsets))
     output:
         outfile = "dset.rds"
     shell:
