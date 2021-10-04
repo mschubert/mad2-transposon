@@ -7,6 +7,7 @@ library(dplyr)
 library(ggplot2)
 library(patchwork)
 sys = import('sys')
+gu = import('../tcga_stat1/genenet_util')
 
 lm_plot = function(dset, aes, covar) {
     v = sapply(aes, all.vars) %>%
@@ -41,8 +42,8 @@ sys$run({
     dset = cbind(ds$meta, as.data.frame(ds$dmat))
 
     dens = dset %>%
-        select(Sample, purity, aneuploidy, `Aneuploidy Score`, `Interferon Gamma Response`,
-               `Myc Targets V1`, `Leukocyte Fraction`, `Stromal Fraction`, `Lymphocytes`,
+        select(Sample, purity, aneup_abs, aneup_log2seg, `Interferon Gamma Response`,
+               `Myc Targets V1`,
                wt_rev24_over_dmso, wt_rev48_over_dmso, rev24_stat1_over_wt, rev48_stat1_over_wt) %>%
         tidyr::gather("field", "value", -Sample)
 
@@ -51,26 +52,33 @@ sys$run({
         facet_wrap(~ field, scales="free")
 
     x = na.omit(data.matrix(dset[-1]))
+    x2 = x[,c("purity", "aneup_log2seg", "Myc Targets V1", "Interferon Gamma Response",
+              "wt_rev24_over_dmso", "wt_rev48_over_dmso", "rev24_stat1_over_wt", "rev48_stat1_over_wt",
+              "myc_copy", "STAT1 (a)", "TP53 (a)", "B cell", "T cell CD4+", "T cell CD8+",
+              "Macrophage", "NK cell", "Cancer associated fibroblast", "Endothelial cell",
+              "uncharacterized cell")]
     pdf(args$plotfile, 8, 6)
-    corrplot::corrplot(cor(x))
+    corrplot::corrplot(cor(x), tl.cex=0.5)
+    gu$pcor(x) %>% gu$plot_pcor_net(node_size=4, edge_size=2.5)
+    gu$plot_bootstrapped_pcor(x2, node_size=4)
     print(p1)
     print(lm_plot(dset, aes(x=myc_copy, y=`Myc Targets V1`), covar="purity"))
     print(lm_plot(dset, aes(x=`Myc Targets V1`, y=`Interferon Gamma Response`), covar="purity"))
-    print(lm_plot(dset, aes(x=`Myc Targets V1`, y=`Aneuploidy Score`), covar="purity"))
-    print(lm_plot(dset, aes(y=`Myc Targets V1`, x=aneuploidy), covar="purity"))
+    print(lm_plot(dset, aes(x=`Myc Targets V1`, y=aneup_log2seg), covar="purity"))
+    print(lm_plot(dset, aes(y=`Myc Targets V1`, x=aneup_abs), covar="purity"))
     print(lm_plot(dset, aes(x=`Myc Targets V1`, y=wt_ifn2_over_dmso), covar="purity"))
     print(lm_plot(dset, aes(x=`Myc Targets V1`, y=wt_rev24_over_dmso), covar="purity"))
     print(lm_plot(dset, aes(x=`Myc Targets V1`, y=wt_rev48_over_dmso), covar="purity"))
     print(lm_plot(dset, aes(x=`Myc Targets V1`, y=rev24_stat1_over_wt), covar="purity"))
     print(lm_plot(dset, aes(x=`Myc Targets V1`, y=rev48_stat1_over_wt), covar="purity"))
     print(lm_plot(dset, aes(x=`Myc Targets V1`, y=wt_ifn2_over_dmso), covar="rev24_stat1_over_wt"))
-    print(lm_plot(dset, aes(x=aneuploidy, y=rev24_stat1_over_wt), covar="wt_ifn2_over_dmso")) # no cor
+    print(lm_plot(dset, aes(x=aneup_abs, y=rev24_stat1_over_wt), covar="wt_ifn2_over_dmso")) # no cor
     print(lm_plot(dset, aes(x=wt_rev24_over_dmso, y=rev24_stat1_over_wt), covar="purity"))
     print(lm_plot(dset, aes(x=wt_rev48_over_dmso, y=rev24_stat1_over_wt), covar="Myc Targets V1"))
     print(lm_plot(dset, aes(x=wt_rev48_over_dmso, y=rev48_stat1_over_wt), covar="purity"))
-    print(lm_plot(dset, aes(x=aneuploidy, y=wt_rev24_over_dmso), covar="purity")) # no cor
-    print(lm_plot(dset, aes(x=`Aneuploidy Score`, y=`Interferon Gamma Response`), covar="Myc Targets V1"))
-    print(lm_plot(dset, aes(x=aneuploidy, y=`Interferon Gamma Response`), covar="Myc Targets V1"))
+    print(lm_plot(dset, aes(x=aneup_abs, y=wt_rev24_over_dmso), covar="purity")) # no cor
+    print(lm_plot(dset, aes(x=aneup_log2seg, y=`Interferon Gamma Response`), covar="Myc Targets V1"))
+    print(lm_plot(dset, aes(x=aneup_abs, y=`Interferon Gamma Response`), covar="Myc Targets V1"))
     print(lm_plot(dset, aes(x=rev24_stat1_over_wt, y=`purity`), covar="Interferon Gamma Response"))
     print(lm_plot(dset, aes(x=`Myc Targets V1`, y=purity), covar="Interferon Gamma Response"))
     print(lm_plot(dset, aes(x=purity, y=`Myc Targets V1`), covar="Interferon Gamma Response"))
