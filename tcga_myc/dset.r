@@ -8,7 +8,7 @@ tcga = import('data/tcga') # todo: include this in dset
 
 read_sets = function(setname) {
     sets = readRDS(grep(setname, args$setfiles, value=TRUE))
-    t(sets[cfg$dset[[setname]],])
+    t(sets[cfg$dset[[setname]],,drop=FALSE])
 }
 
 args = sys$cmd$parse(
@@ -20,7 +20,7 @@ args = sys$cmd$parse(
 )
 
 cfg = yaml::read_yaml(args$config)
-sets = setdiff(names(cfg$dset), c("genes", "Thorsson")) %>%
+sets = setdiff(names(cfg$dset), "genes") %>%
     sapply(read_sets, simplify=FALSE)
 
 immune = tcga$cell_frac("BRCA", "epic")

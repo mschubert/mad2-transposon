@@ -1,6 +1,6 @@
 dset:
     genes:
-        expr: [ STAT1, MYC, IL1RN ]
+        expr: [ IFNG, STAT1, MYC, IL1RN ]
         mut: [ TP53, PIK3CA, PTEN ]
         cna: [ MYC, TP53, PTEN ]
     MSigDB_Hallmark_2020:
@@ -26,3 +26,5 @@ dset:
     DoRothEA:
         - STAT1 (a)
         - TP53 (a)
+    CIN:
+        - CIN70_Carter2006

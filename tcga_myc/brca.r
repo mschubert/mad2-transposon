@@ -43,7 +43,7 @@ sys$run({
 
     dens = dset %>%
         select(Sample, purity, aneup_abs, aneup_log2seg, `Interferon Gamma Response`,
-               `Myc Targets V1`,
+               `Myc Targets V1`, CIN70_Carter2006,
                wt_rev24_over_dmso, wt_rev48_over_dmso, rev24_stat1_over_wt, rev48_stat1_over_wt) %>%
         tidyr::gather("field", "value", -Sample)
 
@@ -56,7 +56,7 @@ sys$run({
              "wt_rev24_over_dmso", "rev24_stat1_over_wt",
              "myc_copy", "STAT1 (a)", "TP53 (a)", "B cell", "T cell CD4+", "T cell CD8+",
              "Macrophage", "NK cell", "Cancer associated fibroblast", "Endothelial cell",
-             "uncharacterized cell", "STAT1", "MYC")
+             "uncharacterized cell", "STAT1", "MYC", "IFNG", "CIN70_Carter2006")
     pdf(args$plotfile, 8, 6)
     corrplot::corrplot(cor(x), tl.cex=0.5)
     gu$pcor(x) %>% gu$plot_pcor_net(node_size=4, edge_size=2.5)
