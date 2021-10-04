@@ -45,7 +45,7 @@ dmat = cbind(p53_mut = mut("TP53"), # | del("TP53"),
              pten_copy = cna[,"PTEN"],
              mapk_mut = mut(c("KRAS", "HRAS", "NRAS")),
              myc_amp = amp("MYC"),
-             myc_copy = cna[,"MYC"], smat)
-#             expr[,c("IL1RN","MYC")], smat)
+             myc_copy = cna[,"MYC"],
+             expr[,cfg$dset$genes$expr], smat)
 
 saveRDS(list(dmat=dmat, smat=smat, meta=meta), file=args$outfile)

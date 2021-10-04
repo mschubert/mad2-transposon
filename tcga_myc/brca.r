@@ -52,15 +52,18 @@ sys$run({
         facet_wrap(~ field, scales="free")
 
     x = na.omit(data.matrix(dset[-1]))
-    x2 = x[,c("purity", "aneup_log2seg", "Myc Targets V1", "Interferon Gamma Response",
-              "wt_rev24_over_dmso", "wt_rev48_over_dmso", "rev24_stat1_over_wt", "rev48_stat1_over_wt",
-              "myc_copy", "STAT1 (a)", "TP53 (a)", "B cell", "T cell CD4+", "T cell CD8+",
-              "Macrophage", "NK cell", "Cancer associated fibroblast", "Endothelial cell",
-              "uncharacterized cell")]
+    xsub = c("purity", "aneup_log2seg", "Myc Targets V1", "Interferon Gamma Response",
+             "wt_rev24_over_dmso", "rev24_stat1_over_wt",
+             "myc_copy", "STAT1 (a)", "TP53 (a)", "B cell", "T cell CD4+", "T cell CD8+",
+             "Macrophage", "NK cell", "Cancer associated fibroblast", "Endothelial cell",
+             "uncharacterized cell", "STAT1", "MYC")
     pdf(args$plotfile, 8, 6)
     corrplot::corrplot(cor(x), tl.cex=0.5)
     gu$pcor(x) %>% gu$plot_pcor_net(node_size=4, edge_size=2.5)
-    gu$plot_bootstrapped_pcor(x2, node_size=4)
+    gu$plot_bootstrapped_pcor(x[,xsub], node_size=4)
+    gu$plot_bootstrapped_pcor(x[,setdiff(xsub, "TP53 (a)")], node_size=4)
+    gu$plot_bootstrapped_pcor(x[,sub("rev24", "rev48", xsub)], node_size=4)
+    gu$plot_bootstrapped_pcor(x[,sub("rev24", "rev48", xsub) %>% setdiff("TP53 (a)")], node_size=4)
     print(p1)
     print(lm_plot(dset, aes(x=myc_copy, y=`Myc Targets V1`), covar="purity"))
     print(lm_plot(dset, aes(x=`Myc Targets V1`, y=`Interferon Gamma Response`), covar="purity"))

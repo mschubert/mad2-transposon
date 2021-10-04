@@ -1,8 +1,8 @@
 dset:
     genes:
-        - expr: IL1RN
-        - mut: [ TP53, PIK3CA, PTEN ]
-        - cna: [ MYC, TP53, PTEN ]
+        expr: [ STAT1, MYC, IL1RN ]
+        mut: [ TP53, PIK3CA, PTEN ]
+        cna: [ MYC, TP53, PTEN ]
     MSigDB_Hallmark_2020:
         - TNF-alpha Signaling via NF-kB
         - Interferon Gamma Response
