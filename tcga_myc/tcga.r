@@ -29,7 +29,7 @@ meta = colData(eset) %>%
               vital_status = factor(vital_status, levels=c("alive", "dead")),
 #              site_orig = tissue_or_organ_of_origin, # c22.0
               sex = gender,
-              year_of_birth = year_of_birth) %>%
+              age_at_diagnosis = age_at_diagnosis) %>%
     left_join(purity) %>%
     tcga$filter(along="Sample", cancer=TRUE, primary=TRUE, vial="A")
 cna = tcga$cna_genes("BRCA", gene="hgnc_symbol")

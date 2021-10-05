@@ -102,28 +102,30 @@ sys$run({
           data=dset %>% filter(rev24_stat1_over_wt>0, p53_mut==0))
 
 
-    # aneup generally predictive of survival
-    coxph(Surv(OS_time, as.integer(vital_status)) ~ aneup_log2seg, data=dset)
+    # aneup generally predictive of survival, MycV1 is not
+    coxph(Surv(OS_time, as.integer(vital_status)) ~ age_at_diagnosis + aneup_log2seg, data=dset)
+    coxph(Surv(OS_time, as.integer(vital_status)) ~ age_at_diagnosis + `Myc Targets V1`, data=dset)
 
     # can stratify with myc+stat1 act if p53 wt
     dset2 = dset %>%
         filter(p53_mut == 0) %>%
         mutate(class = case_when(
-            `Myc Targets V1`<0 ~ "nomyc",
-            rev24_stat1_over_wt>0 ~ "stat1ko_myc",
-            rev24_stat1_over_wt<0 ~ "stat1wt_myc"
+            `Myc Targets V1`< 0 ~ "nomyc", # <0.5 (high-myc) even has est<0 for stat1wt
+            rev48_stat1_over_wt>0 ~ "stat1ko_myc",
+            rev48_stat1_over_wt<0 ~ "stat1wt_myc"
         ))
-    coxph(Surv(OS_time, as.integer(vital_status)) ~ class:aneup_log2seg, data=dset2) # sign w/ purity+
+#    ggplot(dset2, aes(x=aneup_log2seg, y=purity)) + geom_point() + facet_wrap(~class) + geom_smooth(method="lm")
+    coxph(Surv(OS_time, as.integer(vital_status)) ~ age_at_diagnosis + class:aneup_log2seg, data=dset2) # sign w/ purity+, IFNg+, MycV1+; or all 3
 
     # no diff in p53 mut
     dset3 = dset %>%
         filter(p53_mut == 1) %>%
         mutate(class = case_when(
-            `Myc Targets V1`<0 ~ "nomyc",
-            rev24_stat1_over_wt>0 ~ "stat1ko_myc",
-            rev24_stat1_over_wt<0 ~ "stat1wt_myc"
+            `Myc Targets V1`<0 ~ "nomyc", # <0.5 (high-myc) has stat1wt least surv by far
+            rev48_stat1_over_wt>0 ~ "stat1ko_myc",
+            rev48_stat1_over_wt<0 ~ "stat1wt_myc"
         ))
-    coxph(Surv(OS_time, as.integer(vital_status)) ~ class:aneup_log2seg, data=dset3)
+    coxph(Surv(OS_time, as.integer(vital_status)) ~ age_at_diagnosis + class:aneup_log2seg, data=dset3)
 
 
     #todo: non-purity STAT1 act? +"separate from Myc act"?
