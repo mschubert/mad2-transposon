@@ -38,7 +38,8 @@ sys$run({
     )
 
     ds = readRDS(args$infile)
-    ds$meta$OS_time = ifelse(ds$meta$OS_time > 365*5, NA, ds$meta$OS_time)
+#    ds$meta$OS_time = ifelse(ds$meta$OS_time > 365*5, NA, ds$meta$OS_time)
+    ds$meta$vital_status = factor(ds$meta$vital_status, levels=c("alive", "dead"))
     dset = cbind(ds$meta, as.data.frame(ds$dmat))
 
     dens = dset %>%
@@ -53,7 +54,7 @@ sys$run({
 
     x = na.omit(data.matrix(dset[-1]))
     xsub = c("purity", "aneup_log2seg", "Myc Targets V1", "Interferon Gamma Response",
-             "wt_rev24_over_dmso", "rev24_stat1_over_wt",
+             "wt_rev24_over_dmso", "rev24_stat1_over_wt", #"ifn_loss",
              "myc_copy", "STAT1 (a)", "TP53 (a)", "B cell", "T cell CD4+", "T cell CD8+",
              "Macrophage", "NK cell", "Cancer associated fibroblast", "Endothelial cell",
              "uncharacterized cell", "STAT1", "MYC", "IFNG", "CIN70_Carter2006")
@@ -79,6 +80,8 @@ sys$run({
     print(lm_plot(dset, aes(x=wt_rev24_over_dmso, y=rev24_stat1_over_wt), covar="purity"))
     print(lm_plot(dset, aes(x=wt_rev48_over_dmso, y=rev24_stat1_over_wt), covar="Myc Targets V1"))
     print(lm_plot(dset, aes(x=wt_rev48_over_dmso, y=rev48_stat1_over_wt), covar="purity"))
+    print(lm_plot(dset, aes(x=`Myc Targets V1`, y=rev48_stat1_over_wt), covar="CIN70_Carter2006"))
+    print(lm_plot(dset, aes(x=CIN70_Carter2006, y=rev48_stat1_over_wt), covar="Myc Targets V1"))
     print(lm_plot(dset, aes(x=aneup_abs, y=wt_rev24_over_dmso), covar="purity")) # no cor
     print(lm_plot(dset, aes(x=aneup_log2seg, y=`Interferon Gamma Response`), covar="Myc Targets V1"))
     print(lm_plot(dset, aes(x=aneup_abs, y=`Interferon Gamma Response`), covar="Myc Targets V1"))
@@ -90,4 +93,38 @@ sys$run({
 
     # split Myc targets low vs high (bimodal)
     # split IFN response low vs high (bimodal)
+
+    library(survival)
+    coxph(Surv(OS_time, as.integer(vital_status)) ~ purity+ aneup_log2seg,
+          data=dset %>% filter(rev24_stat1_over_wt>0))# still sign after +IFNg resp/2h; <0 n.s. (and more surv)
+    # still sign for p53_mut==0, not for !=0; both ns <0 (-> pt. that )
+    coxph(Surv(OS_time, as.integer(vital_status)) ~ purity+ aneup_log2seg,
+          data=dset %>% filter(rev24_stat1_over_wt>0, p53_mut==0))
+
+
+    # aneup generally predictive of survival
+    coxph(Surv(OS_time, as.integer(vital_status)) ~ aneup_log2seg, data=dset)
+
+    # can stratify with myc+stat1 act if p53 wt
+    dset2 = dset %>%
+        filter(p53_mut == 0) %>%
+        mutate(class = case_when(
+            `Myc Targets V1`<0 ~ "nomyc",
+            rev24_stat1_over_wt>0 ~ "stat1ko_myc",
+            rev24_stat1_over_wt<0 ~ "stat1wt_myc"
+        ))
+    coxph(Surv(OS_time, as.integer(vital_status)) ~ class:aneup_log2seg, data=dset2) # sign w/ purity+
+
+    # no diff in p53 mut
+    dset3 = dset %>%
+        filter(p53_mut == 1) %>%
+        mutate(class = case_when(
+            `Myc Targets V1`<0 ~ "nomyc",
+            rev24_stat1_over_wt>0 ~ "stat1ko_myc",
+            rev24_stat1_over_wt<0 ~ "stat1wt_myc"
+        ))
+    coxph(Surv(OS_time, as.integer(vital_status)) ~ class:aneup_log2seg, data=dset3)
+
+
+    #todo: non-purity STAT1 act? +"separate from Myc act"?
 })
