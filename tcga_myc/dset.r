@@ -30,7 +30,8 @@ smat = narray::stack(c(sets, list(immune)), along=2)
 # process TCGA data
 dset = readRDS(args$tcga)
 meta = dset$meta %>%
-    inner_join(tcga$aneuploidy("BRCA"))
+    inner_join(tcga$aneuploidy("BRCA")) %>%
+    mutate(aneup_log2seg = aneup_log2seg / purity)
 expr = t(dset$expr)
 cna = ((t(dset$cna) - 2) / meta$purity) + 2
 
@@ -39,7 +40,8 @@ amp = function(g) cna[,g] > 2.5
 del = function(g) cna[,g] < 1.5
 
 narray::intersect(meta$Sample, expr, cna, smat, along=1)
-dmat = cbind(p53_mut = mut("TP53"), # | del("TP53"),
+dmat = cbind(#ifn_loss = del("IFNA1"),
+             p53_mut = mut("TP53"), # | del("TP53"),
              p53_copy = cna[,"TP53"],
              pi3k_mut = mut(c("PIK3CA", "PTEN")) | del("PTEN"),
              pten_copy = cna[,"PTEN"],
