@@ -39,7 +39,7 @@ sys$run({
 
     ds = readRDS(args$infile)
 #    ds$meta$OS_time = ifelse(ds$meta$OS_time > 365*5, NA, ds$meta$OS_time)
-    ds$meta$vital_status = factor(ds$meta$vital_status, levels=c("alive", "dead"))
+    ds$meta$vital_status = as.integer(ds$meta$vital_status) - 1
     dset = cbind(ds$meta, as.data.frame(ds$dmat))
 
     dens = dset %>%
@@ -95,16 +95,16 @@ sys$run({
     # split IFN response low vs high (bimodal)
 
     library(survival)
-    coxph(Surv(OS_time, as.integer(vital_status)) ~ purity+ aneup_log2seg,
+    coxph(Surv(OS_time, vital_status) ~ purity+ aneup_log2seg,
           data=dset %>% filter(rev24_stat1_over_wt>0))# still sign after +IFNg resp/2h; <0 n.s. (and more surv)
     # still sign for p53_mut==0, not for !=0; both ns <0 (-> pt. that )
-    coxph(Surv(OS_time, as.integer(vital_status)) ~ purity+ aneup_log2seg,
+    coxph(Surv(OS_time, vital_status) ~ purity+ aneup_log2seg,
           data=dset %>% filter(rev24_stat1_over_wt>0, p53_mut==0))
 
 
     # aneup generally predictive of survival, MycV1 is not
-    coxph(Surv(OS_time, as.integer(vital_status)) ~ age_at_diagnosis + aneup_log2seg, data=dset)
-    coxph(Surv(OS_time, as.integer(vital_status)) ~ age_at_diagnosis + `Myc Targets V1`, data=dset)
+    coxph(Surv(OS_time, vital_status) ~ age_at_diagnosis + aneup_log2seg, data=dset)
+    coxph(Surv(OS_time, vital_status) ~ age_at_diagnosis + `Myc Targets V1`, data=dset)
 
     # can stratify with myc+stat1 act if p53 wt
     dset2 = dset %>%
@@ -115,7 +115,7 @@ sys$run({
             rev48_stat1_over_wt<0 ~ "stat1wt_myc"
         ))
 #    ggplot(dset2, aes(x=aneup_log2seg, y=purity)) + geom_point() + facet_wrap(~class) + geom_smooth(method="lm")
-    coxph(Surv(OS_time, as.integer(vital_status)) ~ age_at_diagnosis + class:aneup_log2seg, data=dset2) # sign w/ purity+, IFNg+, MycV1+; or all 3
+    coxph(Surv(OS_time, vital_status) ~ age_at_diagnosis + class:aneup_log2seg, data=dset2) # sign w/ purity+, IFNg+, MycV1+; or all 3
 
     # no diff in p53 mut
     dset3 = dset %>%
@@ -125,7 +125,7 @@ sys$run({
             rev48_stat1_over_wt>0 ~ "stat1ko_myc",
             rev48_stat1_over_wt<0 ~ "stat1wt_myc"
         ))
-    coxph(Surv(OS_time, as.integer(vital_status)) ~ age_at_diagnosis + class:aneup_log2seg, data=dset3)
+    coxph(Surv(OS_time, vital_status) ~ age_at_diagnosis + class:aneup_log2seg, data=dset3)
 
 
     #todo: non-purity STAT1 act? +"separate from Myc act"?
