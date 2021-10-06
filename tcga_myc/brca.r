@@ -114,8 +114,15 @@ sys$run({
             rev48_stat1_over_wt>0 ~ "stat1ko_myc",
             rev48_stat1_over_wt<0 ~ "stat1wt_myc"
         ))
-#    ggplot(dset2, aes(x=aneup_log2seg, y=purity)) + geom_point() + facet_wrap(~class) + geom_smooth(method="lm")
     coxph(Surv(OS_time, vital_status) ~ age_at_diagnosis + class:aneup_log2seg, data=dset2) # sign w/ purity+, IFNg+, MycV1+; or all 3
+
+    ggplot(dset2, aes(x=aneup_log2seg, y=purity)) + geom_point() + facet_wrap(~class) + geom_smooth(method="lm")
+    ggplot(dset2, aes(x=class, y=purity, fill=cut(aneup_log2seg, c(-Inf,0.1,0.5,Inf)))) + geom_boxplot() #rm green
+    ggplot(dset2, aes(x=class, y=purity, fill=cut(`Myc Targets V1`, c(-Inf,0,0.5,Inf)))) + geom_boxplot()
+    ggplot(dset2 %>% filter(aneup_log2seg > 0.5), aes(x=class, y=purity)) + geom_boxplot()
+    ggplot(dset2 %>% filter(CIN70_Carter2006 > 0.5), aes(x=class, y=purity)) + geom_boxplot()
+    ggplot(dset2 %>% filter(`Myc Targets V1` > 0.5), aes(x=class, y=purity)) + geom_boxplot()
+    dset2 %>% filter(`Myc Targets V1` > quantile(`Myc Targets V1`, 0.75)) %>% lm(purity ~ type+ class, data=.) %>% broom::tidy()
 
     # no diff in p53 mut
     dset3 = dset %>%
@@ -127,6 +134,32 @@ sys$run({
         ))
     coxph(Surv(OS_time, vital_status) ~ age_at_diagnosis + class:aneup_log2seg, data=dset3)
 
+
+
+    dset4 = dset %>%
+        filter(p53_mut == 0) %>%
+        mutate(class = case_when(
+            wt_rev48_over_dmso<0 & rev48_stat1_over_wt>0 ~ "CIN_stat1ko",
+            wt_rev48_over_dmso>0 ~ "CIN",
+            wt_rev48_over_dmso<0 & rev48_stat1_over_wt<0 ~ "noCIN"
+        ), class=relevel(factor(class), "noCIN"))
+    coxph(Surv(OS_time, vital_status) ~ age_at_diagnosis + class, data=dset4) # + :aneup_log2seg
+
+    dset5 = dset %>%
+        filter(p53_mut == 1) %>%
+        mutate(class = case_when(
+            wt_rev48_over_dmso<0 & rev48_stat1_over_wt>0 ~ "CIN_stat1ko",
+            wt_rev48_over_dmso>0 ~ "CIN",
+            wt_rev48_over_dmso<0 & rev48_stat1_over_wt<0 ~ "noCIN"
+        ), class=relevel(factor(class), "noCIN"))
+    coxph(Surv(OS_time, vital_status) ~ age_at_diagnosis + class, data=dset5) # + :aneup_log2seg
+
+    bind_rows(list(p53wt=dset4, p53mut=dset5), .id="type") %>%
+    mutate(MycV1 = cut(`Myc Targets V1`, c(-Inf,0,Inf))) %>%
+    ggplot(aes(x=class, fill=class, y=1-purity)) +
+        geom_boxplot(outlier.shape=NA) + facet_grid(MycV1 ~ type)
+
+    ggplot(dset, aes(x=CIN70_Carter2006, y=wt_rev48_over_dmso)) + geom_point()
 
     #todo: non-purity STAT1 act? +"separate from Myc act"?
 })
