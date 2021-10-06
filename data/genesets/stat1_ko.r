@@ -10,7 +10,7 @@ args = sys$cmd$parse(
 
 # BT549 STAT1 KO differential expression
 sets = readRDS(args$diff_expr) %>%
-    lapply(. %>% filter(log2FoldChange > 0) %>% head(100) %>% pull(gene_name))
+    lapply(. %>% filter(log2FoldChange > 0) %>% head(70) %>% pull(gene_name))
 
 # DoRothEA STAT1 binding + inflammatory MSigDB Hallmarks
 gets = gset$get_human(c("MSigDB_Hallmark_2020", "DoRothEA"), conf="a")
