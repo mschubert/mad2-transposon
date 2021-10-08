@@ -114,11 +114,18 @@ aov_plot = function(dset) {
 }
 
 purplot = function(dset) {
-    dset %>%
-        mutate(p53_mut = as.character(p53_mut), #todo: add myc expr
-               MycV1 = cut(`Myc Targets V1`, c(-Inf,0,Inf))) %>%
-        ggplot(aes(x=iclass, fill=iclass, y=1-purity)) +
-            geom_boxplot(outlier.shape=NA) + facet_grid(MycV1 ~ p53_mut)
+    ds = dset %>%
+        mutate(p53_mut = as.character(p53_mut),
+               MYCg = cut(MYC, c(-Inf,median(MYC),Inf)),
+               MycV1 = cut(`Myc Targets V1`, c(-Inf,0,Inf)))
+
+    p1 = ggplot(ds, aes(x=iclass, fill=iclass, y=1-purity)) +
+        geom_boxplot(outlier.shape=NA) + facet_grid(MYCg ~ p53_mut) +
+        ggtitle("MYC")
+    p2 = ggplot(ds, aes(x=iclass, fill=iclass, y=1-purity)) +
+        geom_boxplot(outlier.shape=NA) + facet_grid(MycV1 ~ p53_mut) +
+        ggtitle("Myc Targets V1")
+    p1 + p2 + plot_layout(guides="collect")
 }
 
 sys$run({
@@ -139,5 +146,9 @@ sys$run({
             wt_rev48_over_dmso<0 & rev48_stat1_over_wt<0 ~ "noCIN"
         ), iclass=relevel(factor(iclass), "noCIN"))
 
-    sgl_plot(dset) + aov_plot(dset) + plot_layout(nrow=2, heights=c(2,3))
-})
+    p1 = isCINsig_plot(dset)
+    p2 = purplot(dset)
+    right = sgl_plot(dset) + aov_plot(dset) + plot_layout(nrow=2, heights=c(2,3))
+    left = p1 + p2 + plot_layout(heights=c(1,2), ncol=1)
+    wrap_plots(left) + wrap_plots(right) + plot_layout(widths=c(3,2)) + plot_annotation(tag_levels='a')
+}
