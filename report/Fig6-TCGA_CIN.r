@@ -37,10 +37,17 @@ survplot = function(dset) {
 
 isCINsig_plot = function(dset) {
     cins = tidyr::gather(dset, "measure", "value", aneup_log2seg, CIN70_Carter2006, HET70)
+    stats = cins %>% group_by(measure) %>%
+        summarize(res = list(lm(value ~ rev48_stat1_over_wt) %>% broom::tidy() %>%
+                             filter(term == "rev48_stat1_over_wt"))) %>%
+        tidyr::unnest_wider(res)
+
     ggplot(cins, aes(x=rev48_stat1_over_wt, y=value)) +
         geom_point(aes(fill=type, shape=factor(p53_mut)), size=2, alpha=0.6) +
         geom_smooth(method="lm", se=FALSE) +
         facet_wrap(~measure, scales="free") +
+        geom_text_npc(data=stats, aes(label=sprintf("p=%.2g", p.value)),
+                      npcx=0.08, npcy=0.95, size=4) +
         scale_shape_manual(values=c("0"=21, "1"=23), name="TP53 mutation")
 }
 
