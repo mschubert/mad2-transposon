@@ -35,6 +35,15 @@ survplot = function(dset) {
     ps1 + ps2 + plot_layout(guides="collect") & theme(legend.direction = "vertical")
 }
 
+isCINsig_plot = function(dset) {
+    cins = tidyr::gather(dset, "measure", "value", aneup_log2seg, CIN70_Carter2006, HET70)
+    ggplot(cins, aes(x=rev48_stat1_over_wt, y=value)) +
+        geom_point(aes(fill=type, shape=factor(p53_mut)), size=2, alpha=0.6) +
+        geom_smooth(method="lm", se=FALSE) +
+        facet_wrap(~measure, scales="free") +
+        scale_shape_manual(values=c("0"=21, "1"=23), name="TP53 mutation")
+}
+
 aov_plot = function(dset) {
 
 
@@ -49,13 +58,13 @@ aov_plot = function(dset) {
         bind_rows(.id = "p53_status") %>%
             mutate(rel_sq = total_sq / max(total_sq, na.rm=TRUE))
     }
-    anov = list(MYC = aov_one(MYC ~ aneup_log2seg +type+p53_mut + myc_copy + rev48_stat1_over_wt),
-                MycV1 = aov_one(`Myc Targets V1` ~ aneup_log2seg +type+p53_mut + MYC + myc_copy + rev48_stat1_over_wt),
-                aneup_log2seg = aov_one(aneup_log2seg ~ `Myc Targets V1`+type + p53_mut + MYC + rev48_stat1_over_wt)) %>%
+    anov = list(MYC = aov_one(MYC ~ type + p53_mut + myc_copy + rev48_stat1_over_wt),
+                MycV1 = aov_one(`Myc Targets V1` ~ type + p53_mut + MYC + myc_copy + rev48_stat1_over_wt)) %>%
         bind_rows(.id="y") %>%
         mutate(p53_status = factor(p53_status, levels=c("all", "wt", "mut")),
                y = factor(y, levels=c("MYC", "MycV1", "aneup_log2seg")))
 
+    # todo: ideally, add survival
     ggplot(anov, aes(x=rel_sq/2, fill=term, y=frac_sq_total, width=rel_sq)) +
         geom_col() +
         coord_polar("y", start=0) +
