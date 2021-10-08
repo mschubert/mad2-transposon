@@ -41,23 +41,28 @@ aov_plot = function(dset) {
     aov_one = function(fml) {
         do_aov = function(mod) car::Anova(mod) %>% broom::tidy() %>%
             mutate(frac_sq = sumsq / sum(rev(sumsq)[-1], na.rm=TRUE),
-                   frac_sq_total = sumsq / sum(sumsq, na.rm=TRUE))
+                   frac_sq_total = sumsq / sum(sumsq, na.rm=TRUE),
+                   total_sq = sum(sumsq, na.rm=TRUE) / nobs(mod))
         list(all = lm(fml, dset) %>% do_aov(),
              wt = lm(fml, dset %>% filter(p53_mut == 0)) %>% do_aov(),
              mut = lm(fml, dset %>% filter(p53_mut == 1)) %>% do_aov()) %>%
-        bind_rows(.id = "p53_status")
+        bind_rows(.id = "p53_status") %>%
+            mutate(rel_sq = total_sq / max(total_sq, na.rm=TRUE))
     }
-    anov = list(MycV1 = aov_one(`Myc Targets V1` ~ p53_mut + MYC + myc_copy + rev48_stat1_over_wt),
-                aneup_log2seg = aov_one(aneup_log2seg ~ `Myc Targets V1` + p53_mut + MYC + rev48_stat1_over_wt)) %>%
+    anov = list(MYC = aov_one(MYC ~ aneup_log2seg +type+p53_mut + myc_copy + rev48_stat1_over_wt),
+                MycV1 = aov_one(`Myc Targets V1` ~ aneup_log2seg +type+p53_mut + MYC + myc_copy + rev48_stat1_over_wt),
+                aneup_log2seg = aov_one(aneup_log2seg ~ `Myc Targets V1`+type + p53_mut + MYC + rev48_stat1_over_wt)) %>%
         bind_rows(.id="y") %>%
         mutate(p53_status = factor(p53_status, levels=c("all", "wt", "mut")),
-               y = factor(y, levels=c("MycV1", "aneup_log2seg")))
+               y = factor(y, levels=c("MYC", "MycV1", "aneup_log2seg")))
 
-    ggplot(anov, aes(x="", fill=term, y=frac_sq_total)) +
+    ggplot(anov, aes(x=rel_sq/2, fill=term, y=frac_sq_total, width=rel_sq)) +
         geom_col() +
         coord_polar("y", start=0) +
         facet_grid(y ~ p53_status) +
-        theme(axis.text.x = element_blank(),
+        theme(axis.title = element_blank(),
+              axis.text = element_blank(),
+              axis.ticks = element_blank(),
               panel.grid = element_blank(),
               panel.background = element_blank())
 }
