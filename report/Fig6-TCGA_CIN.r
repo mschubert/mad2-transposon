@@ -35,6 +35,33 @@ survplot = function(dset) {
     ps1 + ps2 + plot_layout(guides="collect") & theme(legend.direction = "vertical")
 }
 
+aov_plot = function(dset) {
+
+
+    aov_one = function(fml) {
+        do_aov = function(mod) car::Anova(mod) %>% broom::tidy() %>%
+            mutate(frac_sq = sumsq / sum(rev(sumsq)[-1], na.rm=TRUE),
+                   frac_sq_total = sumsq / sum(sumsq, na.rm=TRUE))
+        list(all = lm(fml, dset) %>% do_aov(),
+             wt = lm(fml, dset %>% filter(p53_mut == 0)) %>% do_aov(),
+             mut = lm(fml, dset %>% filter(p53_mut == 1)) %>% do_aov()) %>%
+        bind_rows(.id = "p53_status")
+    }
+    anov = list(MycV1 = aov_one(`Myc Targets V1` ~ p53_mut + MYC + myc_copy + rev48_stat1_over_wt),
+                aneup_log2seg = aov_one(aneup_log2seg ~ `Myc Targets V1` + p53_mut + MYC + rev48_stat1_over_wt)) %>%
+        bind_rows(.id="y") %>%
+        mutate(p53_status = factor(p53_status, levels=c("all", "wt", "mut")),
+               y = factor(y, levels=c("MycV1", "aneup_log2seg")))
+
+    ggplot(anov, aes(x="", fill=term, y=frac_sq_total)) +
+        geom_col() +
+        coord_polar("y", start=0) +
+        facet_grid(y ~ p53_status) +
+        theme(axis.text.x = element_blank(),
+              panel.grid = element_blank(),
+              panel.background = element_blank())
+}
+
 purplot = function(dset) {
     dset %>%
         mutate(p53_mut = as.character(p53_mut), #TODO: check if wt/mut ordered right
