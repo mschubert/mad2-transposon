@@ -6,6 +6,8 @@ library(patchwork)
 library(ggpmisc)
 sys = import('sys')
 
+#todo: if instead of stat1ko, put in aneup/CIN70/E2F? @supp
+# + naive assocs with those @supp
 survplot = function(dset, iclass_cmp="iclassCIN_stat1ko") {
     p53wt = dset %>% filter(p53_mut == 0)
     p53mut = dset %>% filter(p53_mut != 0)
@@ -25,7 +27,7 @@ survplot = function(dset, iclass_cmp="iclassCIN_stat1ko") {
              title = "Acute CIN response vs. STAT1 ko",
              subtitle = sprintf("p53 wt (n=%i)", sum(fit1$n))) +
         annotate("text_npc", npcx=0.1, npcy=0.1,
-                 label=sprintf("CIN STAT1ko vs. no CIN p=%.2g", m1p))
+                 label=sprintf("CIN STAT1ko vs. no CIN p=%.2g\nCIN70 n.s.\nMyc Targets V1 n.s.\nE2F Targets n.s.", m1p))
 
     fit2 = survfit(Surv(OS_years, vital_status) ~ iclass, data=p53mut)
     ps2 = ggsurvplot(fit2, data=p53mut, xlim=c(0,10), break.time.by=2.5, palette=pal, legend.labs=lab)$plot +
@@ -33,7 +35,7 @@ survplot = function(dset, iclass_cmp="iclassCIN_stat1ko") {
         labs(x = "Overall survival (years)",
              subtitle = sprintf("p53 mut (n=%i)", sum(fit2$n))) +
         annotate("text_npc", npcx=0.1, npcy=0.1,
-                 label=sprintf("CIN STAT1ko vs. no CIN p=%.2g", m2p))
+                 label=sprintf("CIN STAT1ko vs. no CIN p=%.2g\nCIN70 n.s.\nMyc Targets V1 n.s.\nE2F Targets n.s.", m2p))
 
     ps1 + ps2 + plot_layout(guides="collect") & theme(legend.direction = "vertical")
 }
@@ -52,6 +54,32 @@ isCINsig_plot = function(dset) {
         geom_text_npc(data=stats, aes(label=sprintf("p=%.2g", p.value)),
                       npcx=0.08, npcy=0.95, size=4) +
         scale_shape_manual(values=c("0"=21, "1"=23), name="TP53 mutation")
+}
+
+sgl_plot = function(dset) {
+    sgl_one = function(x, y) {
+        fml = as.formula(sprintf("`%s` ~ `%s`", y, x))
+        list(all = lm(fml, data=dset) %>% broom::tidy(),
+             wt = lm(fml, data=dset %>% filter(p53_mut == 0)) %>% broom::tidy(),
+             mut = lm(fml, data=dset %>% filter(p53_mut == 1)) %>% broom::tidy()) %>%
+        bind_rows(.id="p53_status") %>%
+        filter(grepl(x, term, fixed=TRUE))
+    }
+    sgl = expand.grid(x = c("type", "p53_mut", "myc_copy", "MYC", "rev48_stat1_over_wt"),
+                      y = c("MYC", "Myc Targets V1"), stringsAsFactors=FALSE) %>%
+        filter(x != y) %>%
+        rowwise() %>%
+            mutate(res = list(sgl_one(x, y))) %>%
+        ungroup() %>%
+        tidyr::unnest(res) %>%
+        filter(!is.na(estimate)) %>%
+        mutate(p53_status = factor(p53_status, levels=c("all", "wt", "mut")))
+
+    ggplot(sgl, aes(x=term, y=-log10(p.value))) +
+        geom_col(aes(fill=factor(sign(estimate)))) +
+        facet_grid(y ~ p53_status, scales="free_x", space="free_x") +
+        theme(axis.text.x = element_text(hjust=1, angle=30)) +
+        labs(title="Single associations", x="Predictor", fill="Regression slope")
 }
 
 aov_plot = function(dset) {
@@ -81,7 +109,8 @@ aov_plot = function(dset) {
               axis.text = element_blank(),
               axis.ticks = element_blank(),
               panel.grid = element_blank(),
-              panel.background = element_blank())
+              panel.background = element_blank()) +
+        labs(title="Variance explained (Type II ANOVA)", fill="Predictor")
 }
 
 purplot = function(dset) {
@@ -109,4 +138,6 @@ sys$run({
             wt_rev48_over_dmso>0 ~ "CIN",
             wt_rev48_over_dmso<0 & rev48_stat1_over_wt<0 ~ "noCIN"
         ), iclass=relevel(factor(iclass), "noCIN"))
+
+    sgl_plot(dset) + aov_plot(dset) + plot_layout(nrow=2, heights=c(2,3))
 })
