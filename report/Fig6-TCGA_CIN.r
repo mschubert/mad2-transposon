@@ -64,11 +64,12 @@ survplot = function(dset) {
                  label=sprintf("CIN STAT1ko vs. no CIN p=%.2g\nCIN70 n.s.\nMyc Targets V1 n.s.\nE2F Targets n.s.", m2p))
 
     other = calc_surv(dset)
-    ggplot(other, aes(x=assoc, fill=p53_status, y=-log10(p.value))) +
+    ggplot(other, aes(x=assoc, fill=p53_status, y=-log10(p.value), alpha=p.value<0.05)) +
         geom_col(position="dodge") +
         geom_hline(yintercept=-log10(0.05), linetype="dashed") +
         geom_text(aes(label=sprintf("  %.2g  ", p.value)), position=position_dodge(width=1),
                   hjust=ifelse(other$p.value<0.3, 1, 0)) +
+        scale_alpha_manual(values=c("TRUE"=0.9, "FALSE"=0.4)) +
         coord_flip()
 
     ps1 + ps2 + plot_layout(guides="collect") & theme(legend.direction = "vertical")
@@ -79,6 +80,8 @@ sys$run({
         opt('b', 'brca', 'rds', '../tcga_myc/dset.rds'),
         opt('p', 'plotfile', 'pdf', 'Fig6-TCGA_CIN.pdf')
     )
+
+    scde = readRDS("../data/scRNA_cancer/dset.rds")
 
     brca = readRDS(args$brca)
     brca$meta$vital_status = as.integer(brca$meta$vital_status) - 1
