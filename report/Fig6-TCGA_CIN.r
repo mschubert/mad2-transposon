@@ -6,12 +6,38 @@ library(patchwork)
 library(ggpmisc)
 sys = import('sys')
 
+#todo: add what is now Fig4 BRCA sig compare
+
 #todo: if instead of stat1ko, put in aneup/CIN70/E2F? @supp
 # + naive assocs with those @supp
-survplot = function(dset, iclass_cmp="iclassCIN_stat1ko") {
+
+calc_surv = function(dset) {
+    calc_one = function(field) {
+        fs = rlang::sym(field)
+        dset2 = dset %>%
+            mutate(field = case_when(
+            wt_rev48_over_dmso<0 & !! fs>0 ~ "CIN_field",
+            wt_rev48_over_dmso>0 ~ "CIN",
+            wt_rev48_over_dmso<0 & !! fs<0 ~ "noCIN"
+        ), field=relevel(factor(field), "noCIN"))
+        fml = Surv(OS_years, vital_status) ~ age_at_diagnosis + purity + field
+        list(#all = coxph(fml, data=dset2),
+             wt = coxph(fml, data=dset2 %>% filter(p53_mut == 0)),
+             mut = coxph(fml, data=dset2 %>% filter(p53_mut == 1))) %>%
+            lapply(broom::tidy) %>% bind_rows(.id="p53_status")
+    }
+
+    fields = c("rev48_stat1_over_wt", "CIN70_Carter2006", "HET70",
+               "Myc Targets V1", "E2F Targets")
+    sapply(fields, calc_one, simplify=FALSE) %>% bind_rows(.id="assoc") %>%
+        filter(term == "fieldCIN_field") %>% select(-term)
+}
+
+survplot = function(dset) {
     p53wt = dset %>% filter(p53_mut == 0)
     p53mut = dset %>% filter(p53_mut != 0)
 
+    iclass_cmp = paste0("iclass", rev(levels(dset$iclass))[1])
     m1 = coxph(Surv(OS_years, vital_status) ~ age_at_diagnosis + purity + iclass, data=p53wt)
     m1p = broom::tidy(m1) %>% filter(term == iclass_cmp) %>% pull(p.value)
     m2 = coxph(Surv(OS_years, vital_status) ~ age_at_diagnosis + purity + iclass, data=p53mut)
@@ -37,11 +63,15 @@ survplot = function(dset, iclass_cmp="iclassCIN_stat1ko") {
         annotate("text_npc", npcx=0.1, npcy=0.1,
                  label=sprintf("CIN STAT1ko vs. no CIN p=%.2g\nCIN70 n.s.\nMyc Targets V1 n.s.\nE2F Targets n.s.", m2p))
 
-    ps1 + ps2 + plot_layout(guides="collect") & theme(legend.direction = "vertical")
-}
+    other = calc_surv(dset)
+    ggplot(other, aes(x=assoc, fill=p53_status, y=-log10(p.value))) +
+        geom_col(position="dodge") +
+        geom_hline(yintercept=-log10(0.05), linetype="dashed") +
+        geom_text(aes(label=sprintf("  %.2g  ", p.value)), position=position_dodge(width=1),
+                  hjust=ifelse(other$p.value<0.3, 1, 0)) +
+        coord_flip()
 
-surv_atn = function(dset) {
-    # atn explanation for BRCA surv assocs (E2F, MycV1, CIN70, aneup, [etc.])
+    ps1 + ps2 + plot_layout(guides="collect") & theme(legend.direction = "vertical")
 }
 
 sys$run({
