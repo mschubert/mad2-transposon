@@ -159,7 +159,8 @@ sys$run({
     ggplot(aes(x=class, fill=class, y=1-purity)) +
         geom_boxplot(outlier.shape=NA) + facet_grid(MycV1 ~ type)
 
-    ggplot(dset, aes(x=CIN70_Carter2006, y=wt_rev48_over_dmso)) + geom_point()
+    ggplot(dset, aes(x=`Buccitelli_up`, y=rev48_stat1_over_wt)) + geom_point()
+    lm_plot(dset, aes(x=aneup_log2seg, y=rev48_stat1_over_wt), covar="CIN70_Carter2006")
 
     #todo: non-purity STAT1 act? +"separate from Myc act"?
 })
