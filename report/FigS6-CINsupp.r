@@ -42,7 +42,7 @@ sgl_plot = function(dset) {
     ggplot(sgl, aes(x=term, y=-log10(p.value))) +
         geom_col(aes(fill=factor(sign(estimate)))) +
         facet_grid(y ~ p53_status, scales="free_x", space="free_x") +
-        theme(axis.text.x = element_text(hjust=1, angle=30)) +
+        theme(axis.text.x = element_text(hjust=1, angle=45)) +
         labs(title="Single associations", x="Predictor", fill="Regression slope")
 }
 
@@ -113,5 +113,11 @@ sys$run({
     p2 = purplot(dset)
     right = sgl_plot(dset) + aov_plot(dset) + plot_layout(nrow=2, heights=c(2,3))
     left = p1 + p2 + plot_layout(heights=c(1,2), ncol=1)
-    wrap_plots(left) + wrap_plots(right) + plot_layout(widths=c(3,2)) + plot_annotation(tag_levels='a')
+    p = wrap_plots(left) + wrap_plots(right) + plot_layout(widths=c(1.6,1)) +
+        plot_annotation(tag_levels='a') &
+        theme(plot.tag = element_text(size=18, face="bold"))
+
+    pdf(args$plotfile, 16, 9)
+    print(p)
+    dev.off()
 })
