@@ -15,6 +15,8 @@ tcga = import('data/tcga')
 pancan_myc_stat = function() {
     pur = tcga$purity() %>% select(Sample, cohort, purity=estimate)
     cohorts = unique(pur$cohort)
+    cin70 = lapply(cohorts, function(c) tcga$gsva(c, "CIN")["CIN70_Carter2006",]) %>%
+        do.call(c, .) %>% stack() %>% as_tibble() %>% select(Sample=ind, CIN70=values)
     myc = lapply(cohorts, function(c) tcga$gsva(c, "MSigDB_Hallmark_2020")["Myc Targets V1",]) %>%
         do.call(c, .) %>% stack() %>% as_tibble() %>% select(Sample=ind, MycV1=values)
     stat = lapply(cohorts, function(c) tcga$gsva(c, "DoRothEA")["STAT1 (a)",]) %>%
@@ -23,23 +25,45 @@ pancan_myc_stat = function() {
     ds = tcga$aneuploidy() %>% select(Sample, aneup=aneup_log2seg) %>%
         filter(substr(Sample, 14, 16) == "01A") %>%
         inner_join(pur) %>%
+        inner_join(cin70) %>%
         inner_join(myc) %>%
         inner_join(stat) %>%
         mutate(aneup = aneup / purity)
 
     x= ds %>% group_by(cohort) %>%
-        summarize(res = list(broom::tidy(lm(STAT1 ~ purity + aneup)))) %>%
+        summarize(res = list(broom::tidy(lm(STAT1 ~ purity + CIN70)))) %>%
         tidyr::unnest(res)
     y= ds %>% group_by(cohort) %>%
-        summarize(res = list(broom::tidy(lm(MycV1 ~ purity + aneup)))) %>%
+        summarize(res = list(broom::tidy(lm(MycV1 ~ purity + CIN70)))) %>%
         tidyr::unnest(res)
 
     ds2 = inner_join(
-        x %>% filter(term == "aneup") %>% select(cohort, STAT1=statistic),
-        y %>% filter(term == "aneup") %>% select(cohort, MycV1=statistic)
+        x %>% filter(term == "CIN70") %>% select(cohort, STAT1=estimate),
+        y %>% filter(term == "CIN70") %>% select(cohort, MycV1=estimate)
     )
     ggplot(ds2, aes(x=STAT1, y=MycV1, color=cohort)) + geom_point() +
         geom_text(aes(label=cohort))
+}
+
+stat1int_mut = function() {
+    library(tidygraph)
+    op = OmnipathR::import_all_interactions()
+    net = OmnipathR::interaction_graph(op) %>%
+        as_tbl_graph() %>%
+            convert(to_undirected, .clean=TRUE) %>%
+            convert(to_simple, .clean=TRUE) %E>%
+        select(-.orig_data)
+    ints = igraph::neighbors(net, "STAT1")$name
+
+    m = tcga$mutations() %>% filter(Study == "BRCA") %>%
+        select(Sample=Tumor_Sample_Barcode, gene=Hugo_Symbol) %>%
+        group_by(Sample) %>%
+        summarize(ints = sum(gene %in% ints), non=sum(! gene %in% ints)) %>%
+        mutate(frac = ints/non) %>%
+        arrange(-frac)
+
+    xx= inner_join(m ,ds)
+    ggplot(xx, aes(x=aneup, y=frac)) + geom_point() + geom_smooth(method="lm")
 }
 
 calc_surv = function(dset) {
