@@ -5,11 +5,42 @@ library(survminer)
 library(patchwork)
 library(ggpmisc)
 sys = import('sys')
+tcga = import('data/tcga')
 
 #todo: add what is now Fig4 BRCA sig compare
 
 #todo: if instead of stat1ko, put in aneup/CIN70/E2F? @supp
 # + naive assocs with those @supp
+
+pancan_myc_stat = function() {
+    pur = tcga$purity() %>% select(Sample, cohort, purity=estimate)
+    cohorts = unique(pur$cohort)
+    myc = lapply(cohorts, function(c) tcga$gsva(c, "MSigDB_Hallmark_2020")["Myc Targets V1",]) %>%
+        do.call(c, .) %>% stack() %>% as_tibble() %>% select(Sample=ind, MycV1=values)
+    stat = lapply(cohorts, function(c) tcga$gsva(c, "DoRothEA")["STAT1 (a)",]) %>%
+        do.call(c, .) %>% stack() %>% as_tibble() %>% select(Sample=ind, STAT1=values)
+
+    ds = tcga$aneuploidy() %>% select(Sample, aneup=aneup_log2seg) %>%
+        filter(substr(Sample, 14, 16) == "01A") %>%
+        inner_join(pur) %>%
+        inner_join(myc) %>%
+        inner_join(stat) %>%
+        mutate(aneup = aneup / purity)
+
+    x= ds %>% group_by(cohort) %>%
+        summarize(res = list(broom::tidy(lm(STAT1 ~ purity + aneup)))) %>%
+        tidyr::unnest(res)
+    y= ds %>% group_by(cohort) %>%
+        summarize(res = list(broom::tidy(lm(MycV1 ~ purity + aneup)))) %>%
+        tidyr::unnest(res)
+
+    ds2 = inner_join(
+        x %>% filter(term == "aneup") %>% select(cohort, STAT1=statistic),
+        y %>% filter(term == "aneup") %>% select(cohort, MycV1=statistic)
+    )
+    ggplot(ds2, aes(x=STAT1, y=MycV1, color=cohort)) + geom_point() +
+        geom_text(aes(label=cohort))
+}
 
 calc_surv = function(dset) {
     calc_one = function(field) {
