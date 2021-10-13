@@ -54,16 +54,69 @@ stat1int_mut = function() {
             convert(to_simple, .clean=TRUE) %E>%
         select(-.orig_data)
     ints = igraph::neighbors(net, "STAT1")$name
+    tot = igraph::V(net)$name
 
-    m = tcga$mutations() %>% filter(Study == "BRCA") %>%
+    m = tcga$mutations() %>% #filter(Study == "BRCA") %>%
+        filter(Variant_Classification != "Silent") %>%
         select(Sample=Tumor_Sample_Barcode, gene=Hugo_Symbol) %>%
         group_by(Sample) %>%
-        summarize(ints = sum(gene %in% ints), non=sum(! gene %in% ints)) %>%
-        mutate(frac = ints/non) %>%
+        summarize(ints = sum(gene %in% ints), tot=length(gene)) %>%
+        mutate(frac = ints/tot) %>%
         arrange(-frac)
 
-    xx= inner_join(m ,ds)
-    ggplot(xx, aes(x=aneup, y=frac)) + geom_point() + geom_smooth(method="lm")
+    xx= inner_join(m ,ds) %>% filter(tot < 200, !is.na(aneup))
+    ggplot(xx, aes(x=tot, y=ints)) + geom_point(alpha=0.5, aes(color=aneup>0.2, size=aneup)) + geom_smooth() + facet_wrap(~STAT1>0)+
+        geom_abline(slope=length(ints)/length(tot)) +
+        scale_size_continuous(range=c(0.1,3))
+    ggplot(xx %>% filter(ints %in% c(9:12)),aes(x=STAT1>0, y=tot)) + ggbeeswarm::geom_quasirandom()
+    #todo: find IFNA loss assocs first & link them to aneup/STAT1ko sig
+}
+
+mut_stat1ko = function() {
+    # which mutations are associated with stat1ko signature score? [bem?]
+
+    bem = tcga$bem()
+    yy = ds %>% mutate(Sample = substr(Sample, 1, 12)) %>% filter(cohort == "BRCA")
+    narray::intersect(bem, yy$Sample, along=1)
+    bem = bem[,colSums(bem) >= 4]
+
+    s1 = yy$STAT1 #todo: actual stat1 ko sig
+    purity = yy$purity
+    res = st$lm(s1 ~ purity + bem) %>% as_tibble() %>%
+        filter(term == "bem") %>%
+        mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
+        arrange(adj.p, p.value) %>% filter(adj.p < 0.2)
+
+
+    bem = tcga$bem()
+    bem = bem[,colSums(bem) >= 4]
+    rownames(bem) = paste0(rownames(bem), "-01A")
+    narray::intersect(dset$Sample, bem, along=1)
+    purity = dset$purity
+    s1 = dset$rev48_stat1_over_wt
+    aneup = dset$aneup_log2seg
+    type = dset$type
+    res = st$lm(s1 ~ purity + type + aneup + bem) %>%
+        as_tibble() %>%
+        filter(term == "bem") %>%
+        mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
+        arrange(adj.p, p.value) #%>% filter(adj.p < 0.2)
+
+    s2 = dset$wt_rev48_over_dmso
+    res2 = st$lm(s2 ~ purity + type + aneup + bem) %>%
+        as_tibble() %>%
+        filter(term == "bem") %>%
+        mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
+        arrange(adj.p, p.value) #%>% filter(adj.p < 0.2)
+
+    inner_join(res %>% select(bem, e1=estimate, p1=p.value, s1=statistic),
+               res2 %>% select(bem, e2=estimate, p2=p.value, s2=statistic)) %>%
+        ggplot(aes(x=s1, y=s2)) +
+            geom_point() +
+            ggrepel::geom_text_repel(aes(label=ifelse(s1>2.5, bem, NA))) +
+            geom_smooth(method="lm") +
+            geom_hline(yintercept=0) + geom_vline(xintercept=0) +
+            labs(x="stat1ko", y="acute cin")
 }
 
 calc_surv = function(dset) {
