@@ -73,14 +73,13 @@ stat1int_mut = function() {
         mutate(frac = ints/tot) %>%
         arrange(-frac)
 
-    xx= inner_join(m ,ds) %>% filter(tot < 500, !is.na(aneup)) # %>% inner_join(dset %>% select(Sample, rev48_stat1_over_wt))
+    xx= inner_join(m ,ds) %>% filter(tot < 500, !is.na(aneup))  %>% left_join(dset %>% select(Sample, rev48_stat1_over_wt))
     ggplot(xx, aes(x=tot, y=ints, color=aneup>0.15, fill=aneup>0.15)) +
         geom_point(alpha=0.5, aes(size=aneup)) +
         geom_smooth() +
-#        geom_abline(slope=length(ints)/length(tot)) +
+#        facet_wrap(~STAT1>0) +
         scale_size_continuous(range=c(0.1,3)) +
         scale_x_continuous(trans="log1p") + scale_y_continuous(trans="log1p") + coord_cartesian(xlim=c(5,NA))
-    ggplot(xx %>% filter(tot>=50, tot<=150),aes(x=rev48_stat1_over_wt>0, y=tot)) + ggbeeswarm::geom_quasirandom()
     #todo: find IFNA loss assocs first & link them to aneup/STAT1ko sig
 
     #todo: add RUBIC BEM incl IFNA loss, then split out IFNa loss + new marker(s)?
