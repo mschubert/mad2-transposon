@@ -29,6 +29,7 @@ pancan_myc_stat = function() {
         inner_join(cin70) %>%
         inner_join(myc) %>%
         inner_join(stat) %>%
+#        left_join(dset %>% select(Sample, rev48_stat1_over_wt)) %>% filter(cohort == "BRCA") %>% mutate(cohort=paste0(cohort,rev48_stat1_over_wt>0)) %>%
         mutate(aneup = aneup / purity)
 
     x= ds %>% group_by(cohort) %>%
@@ -44,9 +45,13 @@ pancan_myc_stat = function() {
     ) %>% inner_join(ds %>% group_by(cohort) %>% summarize(n=n()))
     ggplot(ds2, aes(x=STAT1, y=MycV1, color=cohort)) +
         geom_point(aes(size=n)) +
+        scale_size_area() +
         ggrepel::geom_text_repel(aes(label=cohort)) +
         geom_vline(xintercept=0, linetype="dashed") +
         geom_hline(yintercept=0, linetype="dashed")
+
+    #todo: could show that Myc on avg increases, stat1 unchanged -> separate BRCA in STAT1+/- via KO sig
+    # -> show that acuteCIN-high and KO-high are more aneup then no-CIN + effect in surv
 }
 
 stat1int_mut = function() {
@@ -60,7 +65,7 @@ stat1int_mut = function() {
     ints = igraph::neighbors(net, "STAT1")$name
     tot = igraph::V(net)$name
 
-    m = tcga$mutations() %>% #filter(Study == "BRCA") %>%
+    m = tcga$mutations() %>% filter(Study == "BRCA") %>%
         filter(Variant_Classification != "Silent") %>%
         select(Sample=Tumor_Sample_Barcode, gene=Hugo_Symbol) %>%
         group_by(Sample) %>%
@@ -68,12 +73,17 @@ stat1int_mut = function() {
         mutate(frac = ints/tot) %>%
         arrange(-frac)
 
-    xx= inner_join(m ,ds) %>% filter(tot < 200, !is.na(aneup))
-    ggplot(xx, aes(x=tot, y=ints)) + geom_point(alpha=0.5, aes(color=aneup>0.2, size=aneup)) + geom_smooth() + facet_wrap(~STAT1>0)+
-        geom_abline(slope=length(ints)/length(tot)) +
-        scale_size_continuous(range=c(0.1,3))
-    ggplot(xx %>% filter(ints %in% c(9:12)),aes(x=STAT1>0, y=tot)) + ggbeeswarm::geom_quasirandom()
+    xx= inner_join(m ,ds) %>% filter(tot < 500, !is.na(aneup)) # %>% inner_join(dset %>% select(Sample, rev48_stat1_over_wt))
+    ggplot(xx, aes(x=tot, y=ints, color=aneup>0.15, fill=aneup>0.15)) +
+        geom_point(alpha=0.5, aes(size=aneup)) +
+        geom_smooth() +
+#        geom_abline(slope=length(ints)/length(tot)) +
+        scale_size_continuous(range=c(0.1,3)) +
+        scale_x_continuous(trans="log1p") + scale_y_continuous(trans="log1p") + coord_cartesian(xlim=c(5,NA))
+    ggplot(xx %>% filter(tot>=50, tot<=150),aes(x=rev48_stat1_over_wt>0, y=tot)) + ggbeeswarm::geom_quasirandom()
     #todo: find IFNA loss assocs first & link them to aneup/STAT1ko sig
+
+    #todo: add RUBIC BEM incl IFNA loss, then split out IFNa loss + new marker(s)?
 }
 
 mut_stat1ko = function() {
