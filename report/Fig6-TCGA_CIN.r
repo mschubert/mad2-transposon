@@ -14,6 +14,7 @@ tcga = import('data/tcga')
 
 pancan_myc_stat = function() {
     pur = tcga$purity() %>% select(Sample, cohort, purity=estimate)
+#    pur = tcga$purity_estimate() separate immune/stroma puts BRCA, LUSC, KIRC, GCM in upper left
     cohorts = unique(pur$cohort)
     cin70 = lapply(cohorts, function(c) tcga$gsva(c, "CIN")["CIN70_Carter2006",]) %>%
         do.call(c, .) %>% stack() %>% as_tibble() %>% select(Sample=ind, CIN70=values)
@@ -31,18 +32,21 @@ pancan_myc_stat = function() {
         mutate(aneup = aneup / purity)
 
     x= ds %>% group_by(cohort) %>%
-        summarize(res = list(broom::tidy(lm(STAT1 ~ purity + CIN70)))) %>%
+        summarize(res = list(broom::tidy(lm(STAT1 ~ purity + aneup)))) %>%
         tidyr::unnest(res)
     y= ds %>% group_by(cohort) %>%
-        summarize(res = list(broom::tidy(lm(MycV1 ~ purity + CIN70)))) %>%
+        summarize(res = list(broom::tidy(lm(MycV1 ~ purity + aneup)))) %>%
         tidyr::unnest(res)
 
     ds2 = inner_join(
-        x %>% filter(term == "CIN70") %>% select(cohort, STAT1=estimate),
-        y %>% filter(term == "CIN70") %>% select(cohort, MycV1=estimate)
-    )
-    ggplot(ds2, aes(x=STAT1, y=MycV1, color=cohort)) + geom_point() +
-        geom_text(aes(label=cohort))
+        x %>% filter(term == "aneup") %>% select(cohort, STAT1=estimate),
+        y %>% filter(term == "aneup") %>% select(cohort, MycV1=estimate)
+    ) %>% inner_join(ds %>% group_by(cohort) %>% summarize(n=n()))
+    ggplot(ds2, aes(x=STAT1, y=MycV1, color=cohort)) +
+        geom_point(aes(size=n)) +
+        ggrepel::geom_text_repel(aes(label=cohort)) +
+        geom_vline(xintercept=0, linetype="dashed") +
+        geom_hline(yintercept=0, linetype="dashed")
 }
 
 stat1int_mut = function() {
@@ -109,11 +113,12 @@ mut_stat1ko = function() {
         mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
         arrange(adj.p, p.value) #%>% filter(adj.p < 0.2)
 
-    inner_join(res %>% select(bem, e1=estimate, p1=p.value, s1=statistic),
+    inner_join(res %>% select(bem, size, e1=estimate, p1=p.value, s1=statistic),
                res2 %>% select(bem, e2=estimate, p2=p.value, s2=statistic)) %>%
+        mutate(pm = pmin(p1, p2)) %>%
         ggplot(aes(x=s1, y=s2)) +
-            geom_point() +
-            ggrepel::geom_text_repel(aes(label=ifelse(s1>2.5, bem, NA))) +
+            geom_point(aes(size=size, alpha=-log10(pm))) +
+            ggrepel::geom_text_repel(aes(label=ifelse(s1>2|s2< -3.5|s1-s2>3.5, bem, NA)), size=2) +
             geom_smooth(method="lm") +
             geom_hline(yintercept=0) + geom_vline(xintercept=0) +
             labs(x="stat1ko", y="acute cin")
