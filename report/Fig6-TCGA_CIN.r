@@ -88,9 +88,17 @@ stat1int_mut = function() {
         geom_smooth(method="gam", formula=y~s(x, k=10)) + #todo: can I test smooth difference using mgcv?
 #        facet_wrap(~cohort) + # set k=5 above
         scale_x_continuous(trans="log1p") + scale_y_continuous(trans="log1p")
-    #todo: find IFNA loss assocs first & link them to aneup/STAT1ko sig
+    m1 = mgcv::gam(log10(tot+1) ~ s(log10(ints+1), k=10), data=xx)
+    m2 = mgcv::gam(log10(tot+1) ~ aneup_class + s(log10(ints+1), k=10), data=xx)
+    broom::tidy(anova(m1, m2, test="F"))
 
+    #todo: find IFNA loss assocs first & link them to aneup/STAT1ko sig
     #todo: add RUBIC BEM incl IFNA loss, then split out IFNa loss + new marker(s)?
+
+
+    # [x] mut mgcv test diff
+    # [ ] stat1ko split survival for all TCGA cohorts
+    # [ ] stat interactor copy number
 }
 
 mut_stat1ko = function() {
@@ -193,14 +201,14 @@ survplot = function(dset) {
         annotate("text_npc", npcx=0.1, npcy=0.1,
                  label=sprintf("CIN STAT1ko vs. no CIN p=%.2g\nCIN70 n.s.\nMyc Targets V1 n.s.\nE2F Targets n.s.", m2p))
 
-    other = calc_surv(dset)
-    ggplot(other, aes(x=assoc, fill=p53_status, y=-log10(p.value), alpha=p.value<0.05)) +
-        geom_col(position="dodge") +
-        geom_hline(yintercept=-log10(0.05), linetype="dashed") +
-        geom_text(aes(label=sprintf("  %.2g  ", p.value)), position=position_dodge(width=1),
-                  hjust=ifelse(other$p.value<0.3, 1, 0)) +
-        scale_alpha_manual(values=c("TRUE"=0.9, "FALSE"=0.4)) +
-        coord_flip()
+#    other = calc_surv(dset)
+#    ggplot(other, aes(x=assoc, fill=p53_status, y=-log10(p.value), alpha=p.value<0.05)) +
+#        geom_col(position="dodge") +
+#        geom_hline(yintercept=-log10(0.05), linetype="dashed") +
+#        geom_text(aes(label=sprintf("  %.2g  ", p.value)), position=position_dodge(width=1),
+#                  hjust=ifelse(other$p.value<0.3, 1, 0)) +
+#        scale_alpha_manual(values=c("TRUE"=0.9, "FALSE"=0.4)) +
+#        coord_flip()
 
     ps1 + ps2 + plot_layout(guides="collect") & theme(legend.direction = "vertical")
 }
@@ -227,3 +235,43 @@ sys$run({
 
     survplot(dset)
 })
+
+surv_cohort = function(cohort) {
+#    clin = tcga$clinical(cohort) %>%
+#        transmute(patient = submitter_id,
+#                  vital_status = as.integer(factor(vital_status)) - 1,
+#                  age_at_diagnosis = age_at_diagnosis / 365,
+#                  OS_years = pmax(days_to_death, days_to_last_follow_up, na.rm=TRUE) / 365,
+#                  vital_status = ifelse(OS_years > 10, 0, vital_status),
+#                  OS_years = pmin(OS_years, 10))
+    eset = tcga$rna_seq(cohort, trans="vst", annot=TRUE)
+    clin = SummarizedExperiment::colData(eset) %>% as.data.frame() %>% as_tibble() %>%
+        transmute(Sample = sample,
+                  vital_status = as.integer(factor(vital_status)) - 1,
+                  age_at_diagnosis = age_at_diagnosis / 365,
+                  OS_years = pmax(days_to_death, days_to_last_follow_up, na.rm=TRUE) / 365,
+                  vital_status = ifelse(OS_years > 10, 0, vital_status),
+                  OS_years = pmin(OS_years, 10))
+
+    gsv = tcga$gsva(cohort, "CIN")[c("wt_rev48_over_dmso", "rev48_stat1_over_wt"),] %>%
+        t() %>% as.data.frame() %>% tibble::rownames_to_column("Sample") %>% as_tibble()
+    mut = tcga$mutations(cohort) %>% filter(Hugo_Symbol=="TP53") %>%
+        select(Sample) %>% mutate(p53_mut=1)
+    pur = tcga$purity() %>% transmute(Sample=Sample, purity=estimate)
+
+    dset = gsv %>%
+        filter(substr(Sample, 14, 16) == "01A") %>%
+        inner_join(clin) %>%
+        left_join(mut) %>%
+        inner_join(pur) %>%
+        mutate(p53_mut = ifelse(is.na(p53_mut), 0, p53_mut))
+
+    dset = dset %>%
+        mutate(iclass = case_when(
+            wt_rev48_over_dmso<0 & rev48_stat1_over_wt>0 ~ "CIN_stat1ko",
+            wt_rev48_over_dmso>0 ~ "CIN",
+            wt_rev48_over_dmso<0 & rev48_stat1_over_wt<0 ~ "noCIN"
+        ), iclass=relevel(factor(iclass), "noCIN"))
+
+    survplot(dset)
+}
