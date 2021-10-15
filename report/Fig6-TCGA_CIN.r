@@ -65,21 +65,23 @@ stat1int_mut = function() {
     ints = igraph::neighbors(net, "STAT1")$name
     tot = igraph::V(net)$name
 
-    m = tcga$mutations() %>% filter(Study == "BRCA") %>%
+    load_fl = function(coh) tcga$mutations(coh) %>%
         filter(Variant_Classification != "Silent") %>%
-        select(Sample=Tumor_Sample_Barcode, gene=Hugo_Symbol) %>%
+        select(Sample, gene=Hugo_Symbol)
+    m = lapply(tcga$cohorts(), load_fl) %>%
+        dplyr::bind_rows() %>%
         group_by(Sample) %>%
-        summarize(ints = sum(gene %in% ints), tot=length(gene)) %>%
+        summarize(ints = length(intersect(gene, ints)), tot=length(intersect(gene, tot))) %>%
         mutate(frac = ints/tot) %>%
         arrange(-frac)
 
-    xx= inner_join(m ,ds) %>% filter(tot < 500, !is.na(aneup))  %>% left_join(dset %>% select(Sample, rev48_stat1_over_wt))
-    ggplot(xx, aes(x=tot, y=ints, color=aneup>0.15, fill=aneup>0.15)) +
-        geom_point(alpha=0.5, aes(size=aneup)) +
-        geom_smooth() +
+    xx= inner_join(m ,ds) %>% filter(!is.na(aneup)) %>% #%>% left_join(dset %>% select(Sample, rev48_stat1_over_wt))
+        mutate(aneup_class=cut(aneup, c(0,0.1,Inf)))
+    ggplot(xx, aes(x=ints, y=tot, color=aneup_class, fill=aneup_class)) +
+        geom_point(alpha=0.2) +
+        geom_smooth(method="gam") + #todo: can I test smooth difference using mgcv?
 #        facet_wrap(~STAT1>0) +
-        scale_size_continuous(range=c(0.1,3)) +
-        scale_x_continuous(trans="log1p") + scale_y_continuous(trans="log1p") + coord_cartesian(xlim=c(5,NA))
+        scale_x_continuous(trans="log1p") + scale_y_continuous(trans="log1p")
     #todo: find IFNA loss assocs first & link them to aneup/STAT1ko sig
 
     #todo: add RUBIC BEM incl IFNA loss, then split out IFNa loss + new marker(s)?
