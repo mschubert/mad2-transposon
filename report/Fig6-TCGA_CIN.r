@@ -67,20 +67,26 @@ stat1int_mut = function() {
 
     load_fl = function(coh) tcga$mutations(coh) %>%
         filter(Variant_Classification != "Silent") %>%
-        select(Sample, gene=Hugo_Symbol)
+        transmute(cohort=coh, Sample=Sample, gene=Hugo_Symbol)
     m = lapply(tcga$cohorts(), load_fl) %>%
         dplyr::bind_rows() %>%
-        group_by(Sample) %>%
-        summarize(ints = length(intersect(gene, ints)), tot=length(intersect(gene, tot))) %>%
+        group_by(cohort, Sample) %>%
+        summarize(stat1 = length(intersect(gene, "STAT1")),
+                  ints = length(intersect(gene, ints)),
+                  tot = length(intersect(gene, tot))) %>%
         mutate(frac = ints/tot) %>%
         arrange(-frac)
 
     xx= inner_join(m ,ds) %>% filter(!is.na(aneup)) %>% #%>% left_join(dset %>% select(Sample, rev48_stat1_over_wt))
         mutate(aneup_class=cut(aneup, c(0,0.1,Inf)))
+    ggplot(xx %>% filter(stat1==1), aes(x=aneup_class, y=1/tot, color=aneup_class)) +
+        ggbeeswarm::geom_quasirandom(alpha=0.5, size=5) +
+        ggsignif::geom_signif(comparisons=list(c("(0,0.1]", "(0.1,Inf]"))) +
+        labs(y="STAT1 as fraction of mutated genes")
     ggplot(xx, aes(x=ints, y=tot, color=aneup_class, fill=aneup_class)) +
         geom_point(alpha=0.2) +
-        geom_smooth(method="gam") + #todo: can I test smooth difference using mgcv?
-#        facet_wrap(~STAT1>0) +
+        geom_smooth(method="gam", formula=y~s(x, k=10)) + #todo: can I test smooth difference using mgcv?
+#        facet_wrap(~cohort) + # set k=5 above
         scale_x_continuous(trans="log1p") + scale_y_continuous(trans="log1p")
     #todo: find IFNA loss assocs first & link them to aneup/STAT1ko sig
 
