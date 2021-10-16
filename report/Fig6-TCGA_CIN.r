@@ -37,8 +37,8 @@ pancan_myc_stat = function() {
                cohort = tcga$barcode2study(Sample))
     dsRep = bind_rows(list(
         ds %>% mutate(cohort2 = cohort),
-        ds %>% filter(p53_mut == 0) %>% mutate(cohort2 = paste0(cohort, "_wt")),
-        ds %>% filter(p53_mut == 1) %>% mutate(cohort2 = paste0(cohort, "_mut"))
+        ds %>% filter(p53_mut == 0) %>% mutate(cohort2 = paste0(cohort, " ^` p53 wt`")),
+        ds %>% filter(p53_mut == 1) %>% mutate(cohort2 = paste0(cohort, " ^` p53 mut`"))
     ))
 
     x= dsRep %>% group_by(cohort2) %>%
@@ -59,9 +59,8 @@ pancan_myc_stat = function() {
         geom_errorbarh(aes(xmin=STAT1-seSTAT1, xmax=STAT1+seSTAT1), alpha=0.2) +
         geom_point(aes(size=n, alpha=meanSE)) +
         scale_alpha_continuous(trans="reverse") +
-#        scale_color_brewer(palette="Set3") +
         scale_size_area() +
-        ggrepel::geom_text_repel(aes(label=cohort2)) +
+        ggrepel::geom_text_repel(aes(label=cohort2), parse=TRUE) +
         geom_vline(xintercept=0, linetype="dashed") +
         geom_hline(yintercept=0, linetype="dashed") +
         coord_cartesian(xlim=c(-1, NA), ylim=c(NA, 1), expand=FALSE)
