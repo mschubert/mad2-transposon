@@ -16,8 +16,8 @@ pancan_myc_stat = function() {
 #    pur = tcga$purity() %>% select(Sample, cohort, purity=estimate) #FIXME: why is xcell different?
     pur = tcga$purity_estimate()
     cohorts = unique(pur$cohort)
-    cin70 = lapply(cohorts, function(c) tcga$gsva(c, "CIN")["CIN70_Carter2006",]) %>%
-        do.call(c, .) %>% stack() %>% as_tibble() %>% select(Sample=ind, CIN70=values)
+#    cin70 = lapply(cohorts, function(c) tcga$gsva(c, "CIN")["CIN70_Carter2006",]) %>%
+#        do.call(c, .) %>% stack() %>% as_tibble() %>% select(Sample=ind, CIN70=values)
     myc = lapply(cohorts, function(c) tcga$gsva(c, "MSigDB_Hallmark_2020")["Myc Targets V1",]) %>%
         do.call(c, .) %>% stack() %>% as_tibble() %>% select(Sample=ind, MycV1=values)
     stat = lapply(cohorts, function(c) tcga$gsva(c, "DoRothEA")["STAT1 (a)",]) %>%
@@ -28,7 +28,7 @@ pancan_myc_stat = function() {
     ds = tcga$aneuploidy() %>% select(Sample, aneup=aneup_log2seg) %>%
         filter(substr(Sample, 14, 16) == "01A") %>%
         inner_join(pur) %>%
-        inner_join(cin70) %>%
+#        inner_join(cin70) %>%
         inner_join(myc) %>%
         inner_join(stat) %>%
         left_join(p53mut) %>%
@@ -86,26 +86,43 @@ stat1int_mut = function() {
     m = lapply(tcga$cohorts(), load_fl) %>%
         dplyr::bind_rows() %>%
         group_by(cohort, Sample) %>%
-        summarize(stat1 = length(intersect(gene, "STAT1")),
-                  ints = length(intersect(gene, ints)),
-                  tot = length(intersect(gene, tot))) %>%
+            summarize(stat1 = length(intersect(gene, "STAT1")),
+                      ints = length(intersect(gene, ints)),
+                      tot = length(intersect(gene, tot))) %>%
+        ungroup() %>%
         mutate(frac = ints/tot) %>%
         arrange(-frac)
 
-    xx= inner_join(m ,ds) %>% filter(!is.na(aneup)) %>% #%>% left_join(dset %>% select(Sample, rev48_stat1_over_wt))
-        mutate(aneup_class=cut(aneup, c(0,0.1,Inf)))
-    ggplot(xx %>% filter(stat1==1), aes(x=aneup_class, y=1/tot, color=aneup_class)) +
-        ggbeeswarm::geom_quasirandom(alpha=0.5, size=5) +
-        ggsignif::geom_signif(comparisons=list(c("(0,0.1]", "(0.1,Inf]"))) +
-        labs(y="STAT1 as fraction of mutated genes")
-    ggplot(xx, aes(x=ints, y=tot, color=aneup_class, fill=aneup_class)) +
-        geom_point(alpha=0.2) +
-        geom_smooth(method="gam", formula=y~s(x, k=10)) + #todo: can I test smooth difference using mgcv?
-#        facet_wrap(~cohort) + # set k=5 above
-        scale_x_continuous(trans="log1p") + scale_y_continuous(trans="log1p")
+    xx = tcga$aneuploidy() %>%
+        select(Sample, aneup=aneup_log2seg) %>%
+        inner_join(tcga$purity() %>% select(Sample, cohort, purity=estimate)) %>%
+        filter(substr(Sample, 14, 16) == "01A",
+               !is.na(aneup) & !is.na(purity)) %>%
+        mutate(aneup = aneup / purity,
+               aneup_class = cut(aneup, c(0,0.1,Inf))) %>%
+        inner_join(m)
+
+    pv1 = xx %>% filter(stat1 == 1) %>% split(.$aneup_class) %>% setNames(c("x","y")) %>%
+        lapply(. %>% pull(tot)) %>% do.call(wilcox.test, .)
     m1 = mgcv::gam(log10(tot+1) ~ s(log10(ints+1), k=10), data=xx)
     m2 = mgcv::gam(log10(tot+1) ~ aneup_class + s(log10(ints+1), k=10), data=xx)
-    broom::tidy(anova(m1, m2, test="F"))
+    pv2 = broom::tidy(anova(m1, m2, test="F"))
+
+    p1 = ggplot(xx %>% filter(stat1==1), aes(x=aneup_class, y=1/tot, color=aneup_class)) +
+        ggbeeswarm::geom_quasirandom(alpha=0.5, size=5) +
+        guides(color="none") +
+        labs(x="Aneuploidy", y="STAT1 as fraction of mutated genes") +
+        ggpp::annotate("text_npc", npcx=0.5, npcy=0.8, label=sprintf("p=%.2g\n(Wilcox)", pv1$p.value))
+    p2 = ggplot(xx, aes(x=ints, y=tot, color=aneup_class, fill=aneup_class)) +
+        geom_point(alpha=0.2) +
+        geom_smooth(method="gam", formula=y~s(x, k=10)) +
+#        facet_wrap(~cohort) + # set k=5 above
+        scale_x_continuous(trans="log1p", breaks=c(0,5,20,100,500)) +
+        scale_y_continuous(trans="log1p", breaks=c(1,10,50,200,500,4000)) +
+        labs(x="Mutations in STAT1 interactors", y="Total number of mutations") +
+        ggpp::annotate("text_npc", npcx=0.2, npcy=0.8, label=sprintf("p=%.2g (F test)", pv2$p.value[2]))
+
+    p1 + p2 + plot_layout(widths=c(1,3))
 
     #todo: find IFNA loss assocs first & link them to aneup/STAT1ko sig
     #todo: add RUBIC BEM incl IFNA loss, then split out IFNa loss + new marker(s)?
