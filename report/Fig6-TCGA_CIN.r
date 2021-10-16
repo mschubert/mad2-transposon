@@ -7,17 +7,10 @@ library(ggpmisc)
 sys = import('sys')
 tcga = import('data/tcga')
 
-#todo: add what is now Fig4 BRCA sig compare
-
-#todo: if instead of stat1ko, put in aneup/CIN70/E2F? @supp
-# + naive assocs with those @supp
-
 pancan_myc_stat = function() {
 #    pur = tcga$purity() %>% select(Sample, cohort, purity=estimate) #FIXME: why is xcell different?
     pur = tcga$purity_estimate()
     cohorts = unique(pur$cohort)
-#    cin70 = lapply(cohorts, function(c) tcga$gsva(c, "CIN")["CIN70_Carter2006",]) %>%
-#        do.call(c, .) %>% stack() %>% as_tibble() %>% select(Sample=ind, CIN70=values)
     myc = lapply(cohorts, function(c) tcga$gsva(c, "MSigDB_Hallmark_2020")["Myc Targets V1",]) %>%
         do.call(c, .) %>% stack() %>% as_tibble() %>% select(Sample=ind, MycV1=values)
     stat = lapply(cohorts, function(c) tcga$gsva(c, "DoRothEA")["STAT1 (a)",]) %>%
@@ -28,7 +21,6 @@ pancan_myc_stat = function() {
     ds = tcga$aneuploidy() %>% select(Sample, aneup=aneup_log2seg) %>%
         filter(substr(Sample, 14, 16) == "01A") %>%
         inner_join(pur) %>%
-#        inner_join(cin70) %>%
         inner_join(myc) %>%
         inner_join(stat) %>%
         left_join(p53mut) %>%
@@ -213,6 +205,71 @@ calc_surv = function(dset) {
         filter(term == "fieldCIN_field") %>% select(-term)
 }
 
+stat1_cin_cor = function(go, hm) {
+    colors = c("no change"="#cccccc40", "down"="#006d2cd0", "up"="#a50f15d0", "different"="#045a8dd0")
+    ifn = bind_rows(go$stat1$wt_ifn2_over_dmso, hm$stat1$wt_ifn2_over_dmso)
+    rev48 = bind_rows(go$stat1$wt_rev48_over_dmso, hm$stat1$wt_rev48_over_dmso)
+    stat48 = bind_rows(go$stat1$rev48_stat1_over_wt, hm$stat1$rev48_stat1_over_wt)
+    aneup = bind_rows(go$aneup, hm$aneup)
+
+#    rev48 = hm$stat1$wt_rev48_over_dmso
+#    stat48 = hm$stat1$rev48_stat1_over_wt
+#    aneup = hm$aneup
+
+    plot_one = function(df) {
+        merged = inner_join(df, aneup, by="label") %>%
+            mutate(type = case_when(
+                abs(statistic.x) < 1.5 | abs(statistic.y) < 1.5 ~ "no change",
+                statistic.x > 0 & statistic.y > 0 ~ "up",
+                statistic.x < 0 & statistic.y < 0 ~ "down",
+                TRUE ~ "different"
+            )) %>%
+            mutate(type2 = ifelse(type == "different", as.character(sign(statistic.x) > 0), type)) %>%
+            group_by(type2) %>%
+                mutate(score = scale(statistic.x)^2 + scale(statistic.y)^2,
+                       lab = ifelse(rank(-score) <= 6 &
+                                    (abs(statistic.x) + abs(statistic.y) > 10), label, NA)) %>%
+            ungroup() %>%
+            mutate(lab = ifelse(type == "no change", NA, lab))
+
+        sums = merged %>%
+            filter(type != "no change") %>%
+            group_by(type2) %>%
+            summarize(n = n())
+        fet = broom::tidy(fisher.test(matrix(sums$n, ncol=2)))
+        if (fet$estimate > 1) {
+            odds = sprintf("%.0fx common enrichment", fet$estimate)
+        } else {
+            odds = sprintf("%.0fx difference enrichment", 1/fet$estimate)
+        }
+
+        ggplot(merged, aes(x=statistic.x, y=statistic.y, color=type)) +
+            geom_point() +
+            scale_color_manual(values=colors) +
+            theme_classic() +
+            geom_hline(yintercept=0, linetype="dashed", size=1.5, alpha=0.3) +
+            geom_vline(xintercept=0, linetype="dashed", size=1.5, alpha=0.3) +
+            geom_smooth(color="black") +
+            ggrepel::geom_label_repel(aes(label=lab), size=3, max.iter=1e5, label.size=NA,
+                min.segment.length=0, max.overlaps=Inf, segment.alpha=0.3, fill="#ffffffc0",
+                label.padding=unit(0.2, "lines")) +
+            coord_cartesian(clip="off") +
+            labs(subtitle = sprintf("%s (p=%.1g FET)", odds, fet$p.value))
+    }
+
+    p1 = plot_one(ifn) + labs(title = "BT549 acute inflammation",
+                              x = "BT549: 2h IFN vs. DMSO (Wald st.)",
+                              y = "Aneuploidy TPS cohort (Wald st.)")
+    p2 = plot_one(rev48) + labs(title = "Acute CIN",
+                                x = "BT549: 48h reversine vs. DMSO (Wald st.)",
+                                y = "Aneuploidy TPS cohort (Wald st.)")
+    p3 = plot_one(stat48) + labs(title = "Non-Stat1 CIN",
+                                 x = "BT549 rev: 48h STAT1 KO vs. WT (Wald st.)",
+                                 y = "Aneuploidy TPS cohort (Wald st.)")
+
+    p1 + p2 + p3 + plot_layout(guides="collect")
+}
+
 survplot = function(dset) {
     p53wt = dset %>% filter(p53_mut == 0)
     p53mut = dset %>% filter(p53_mut != 0)
@@ -230,7 +287,7 @@ survplot = function(dset) {
     ps1 = ggsurvplot(fit1, data=p53wt, xlim=c(0,10), break.time.by=2.5, palette=pal, legend.labs=lab)$plot +
         ylim(c(0.25,1)) +
         labs(x = "Overall survival (years)",
-             title = "Acute CIN response vs. STAT1 ko",
+             title = "BRCA acute CIN response vs. STAT1 ko",
              subtitle = sprintf("p53 wt (n=%i)", sum(fit1$n))) +
         annotate("text_npc", npcx=0.1, npcy=0.1,
                  label=sprintf("CIN STAT1ko vs. no CIN p=%.2g\nCIN70 n.s.\nMyc Targets V1 n.s.\nE2F Targets n.s.", m1p))
@@ -243,29 +300,38 @@ survplot = function(dset) {
         annotate("text_npc", npcx=0.1, npcy=0.1,
                  label=sprintf("CIN STAT1ko vs. no CIN p=%.2g\nCIN70 n.s.\nMyc Targets V1 n.s.\nE2F Targets n.s.", m2p))
 
-#    other = calc_surv(dset)
-#    ggplot(other, aes(x=assoc, fill=p53_status, y=-log10(p.value), alpha=p.value<0.05)) +
-#        geom_col(position="dodge") +
-#        geom_hline(yintercept=-log10(0.05), linetype="dashed") +
-#        geom_text(aes(label=sprintf("  %.2g  ", p.value)), position=position_dodge(width=1),
-#                  hjust=ifelse(other$p.value<0.3, 1, 0)) +
-#        scale_alpha_manual(values=c("TRUE"=0.9, "FALSE"=0.4)) +
-#        coord_flip()
+    other = calc_surv(dset)
+    po = ggplot(other, aes(x=assoc, fill=p53_status, y=-log10(p.value), alpha=p.value<0.05)) +
+        geom_col(position="dodge") +
+        geom_hline(yintercept=-log10(0.05), linetype="dashed") +
+        geom_text(aes(label=sprintf("  %.2g  ", p.value)), position=position_dodge(width=1),
+                  hjust=ifelse(other$p.value<0.3, 1, 0), vjust=0.5, angle=90) +
+        scale_alpha_manual(values=c("TRUE"=0.9, "FALSE"=0.4), guide="none") +
+        theme_classic() +
+        theme(axis.title.x = element_blank(),
+              axis.text.x = element_text(angle=30, hjust=1))
 
-    ps1 + ps2 + plot_layout(guides="collect") & theme(legend.direction = "vertical")
+    km = ps1 / ps2 + plot_layout(guides="collect") & theme(legend.position="bottom")
+    wrap_plots(km) / po + plot_layout(heights=c(3,1))
 }
 
 sys$run({
     args = sys$cmd$parse(
         opt('b', 'brca', 'rds', '../tcga_myc/dset.rds'),
+        opt('g', 'cor_go', 'rds', '../expr_stat1/aneup_ko_cor/GO_Biological_Process_2020.rds'),
+        opt('h', 'cor_hm', 'rds', '../expr_stat1/aneup_ko_cor/MSigDB_Hallmark_2020.rds'),
         opt('p', 'plotfile', 'pdf', 'Fig6-TCGA_CIN.pdf')
     )
 
     ov1 = pancan_myc_stat()
     ov2 = stat1int_mut()
-    ov1 + ov2 + plot_layout(widths=c(2,3)) + plot_annotation(tag_level="a") & theme_classic()
+    ov = ov1 + ov2 + plot_layout(widths=c(2.2,3))
 
-    scde = readRDS("../data/scRNA_cancer/dset.rds")
+    go = readRDS(args$cor_go)
+    hm = readRDS(args$cor_hm)
+    expr_cor = stat1_cin_cor(go, hm)
+
+#    scde = readRDS("../data/scRNA_cancer/dset.rds")
 
     brca = readRDS(args$brca)
     brca$meta$vital_status = as.integer(brca$meta$vital_status) - 1
@@ -279,7 +345,22 @@ sys$run({
             wt_rev48_over_dmso<0 & rev48_stat1_over_wt<0 ~ "noCIN"
         ), iclass=relevel(factor(iclass), "noCIN"))
 
-    survplot(dset)
+    surv = survplot(dset)
+
+    asm = wrap_plots(ov / expr_cor + plot_layout(heights=c(1.2,1)) & theme_classic()) + wrap_plots(surv) +
+        plot_layout(widths=c(4,0.9)) + plot_annotation(tag_level="a") &
+        theme(plot.tag = element_text(size=18, face="bold"),
+              plot.title = element_text(size=14),
+              plot.subtitle = element_text(size=12),
+              legend.title = element_text(size=12),
+              legend.text = element_text(size=10),
+              axis.text.x = element_text(size=12),
+              axis.text.y = element_text(size=12),
+              axis.title = element_text(size=14))
+
+    pdf(args$plotfile, 23, 14)
+    print(asm)
+    dev.off()
 })
 
 surv_cohort = function(cohort) {
