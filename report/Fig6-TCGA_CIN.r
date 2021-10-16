@@ -41,12 +41,14 @@ pancan_myc_stat = function() {
         ds %>% filter(p53_mut == 1) %>% mutate(cohort2 = paste0(cohort, " ^` p53 mut`"))
     ))
 
-    x= dsRep %>% group_by(cohort2) %>%
+    x = dsRep %>% group_by(cohort2) %>%
         summarize(res = list(broom::tidy(lm(STAT1 ~ purity + aneup)))) %>%
         tidyr::unnest(res)
-    y= dsRep %>% group_by(cohort2) %>%
+    y = dsRep %>% group_by(cohort2) %>%
         summarize(res = list(broom::tidy(lm(MycV1 ~ purity + aneup)))) %>%
         tidyr::unnest(res)
+    xp = lm(STAT1 ~ cohort*purity + aneup, data=ds) %>% broom::tidy() %>% filter(term == "aneup")
+    yp = lm(MycV1 ~ cohort*purity + aneup, data=ds) %>% broom::tidy() %>% filter(term == "aneup")
 
     ds2 = inner_join(
         x %>% filter(term == "aneup") %>% select(cohort2, STAT1=estimate, seSTAT1=std.error),
@@ -63,7 +65,11 @@ pancan_myc_stat = function() {
         ggrepel::geom_text_repel(aes(label=cohort2), parse=TRUE) +
         geom_vline(xintercept=0, linetype="dashed") +
         geom_hline(yintercept=0, linetype="dashed") +
-        coord_cartesian(xlim=c(-1, NA), ylim=c(NA, 1), expand=FALSE)
+        coord_cartesian(xlim=c(-1, NA), ylim=c(NA, 1), expand=FALSE) +
+        ggpp::annotate("text_npc", npcx=0.1, npcy=0.1, label=sprintf("Pan-cancer inactivation p=%.2g", xp$p.value)) +
+        ggpp::annotate("text_npc", npcx=0.1, npcy=0.4, label=sprintf("Pan-cancer activation p=%.2g", yp$p.value), angle=90) +
+        labs(x = "STAT1 (a) with aneuploidy (purity-corrected)",
+             y = "Myc Targets V1 with aneuploidy (purity-corrected)")
 
     #todo: could show that Myc on avg increases, stat1 unchanged -> separate BRCA in STAT1+/- via KO sig
     # -> show that acuteCIN-high and KO-high are more aneup then no-CIN + effect in surv
@@ -137,7 +143,7 @@ stat1int_cna = function() {
     # AQUAE_p_TCGA_112_304_b2_N_GenomeWideSNP_6_D06_1348308 etc.
 }
 
-mut_stat1ko = function() {
+mut_stat1kosig = function() {
     # which mutations are associated with stat1ko signature score? [bem?]
 
     bem = tcga$bem()
@@ -254,6 +260,10 @@ sys$run({
         opt('b', 'brca', 'rds', '../tcga_myc/dset.rds'),
         opt('p', 'plotfile', 'pdf', 'Fig6-TCGA_CIN.pdf')
     )
+
+    ov1 = pancan_myc_stat()
+    ov2 = stat1int_mut()
+    ov1 + ov2 + plot_layout(widths=c(2,3)) + plot_annotation(tag_level="a") & theme_classic()
 
     scde = readRDS("../data/scRNA_cancer/dset.rds")
 
