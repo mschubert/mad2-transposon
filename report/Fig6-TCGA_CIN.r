@@ -13,8 +13,8 @@ tcga = import('data/tcga')
 # + naive assocs with those @supp
 
 pancan_myc_stat = function() {
-    pur = tcga$purity() %>% select(Sample, cohort, purity=estimate)
-#    pur = tcga$purity_estimate() separate immune/stroma puts BRCA, LUSC, KIRC, GCM in upper left
+#    pur = tcga$purity() %>% select(Sample, cohort, purity=estimate) #FIXME: why is xcell different?
+    pur = tcga$purity_estimate()
     cohorts = unique(pur$cohort)
     cin70 = lapply(cohorts, function(c) tcga$gsva(c, "CIN")["CIN70_Carter2006",]) %>%
         do.call(c, .) %>% stack() %>% as_tibble() %>% select(Sample=ind, CIN70=values)
@@ -22,6 +22,8 @@ pancan_myc_stat = function() {
         do.call(c, .) %>% stack() %>% as_tibble() %>% select(Sample=ind, MycV1=values)
     stat = lapply(cohorts, function(c) tcga$gsva(c, "DoRothEA")["STAT1 (a)",]) %>%
         do.call(c, .) %>% stack() %>% as_tibble() %>% select(Sample=ind, STAT1=values)
+    p53mut = lapply(cohorts, function(c) tcga$mutations(c) %>% filter(Hugo_Symbol=="TP53") %>%
+                    select(Sample) %>% mutate(p53_mut=1)) %>% bind_rows()
 
     ds = tcga$aneuploidy() %>% select(Sample, aneup=aneup_log2seg) %>%
         filter(substr(Sample, 14, 16) == "01A") %>%
@@ -29,24 +31,34 @@ pancan_myc_stat = function() {
         inner_join(cin70) %>%
         inner_join(myc) %>%
         inner_join(stat) %>%
-#        left_join(dset %>% select(Sample, rev48_stat1_over_wt)) %>% filter(cohort == "BRCA") %>% mutate(cohort=paste0(cohort,rev48_stat1_over_wt>0)) %>%
-        mutate(aneup = aneup / purity)
+        left_join(p53mut) %>%
+        mutate(p53_mut = ifelse(is.na(p53_mut), 0, p53_mut),
+               aneup = aneup / purity,
+               cohort = tcga$barcode2study(Sample))
+    dsRep = bind_rows(list(
+        ds %>% mutate(cohort2 = cohort),
+        ds %>% filter(p53_mut == 0) %>% mutate(cohort2 = paste0(cohort, "_wt")),
+        ds %>% filter(p53_mut == 1) %>% mutate(cohort2 = paste0(cohort, "_mut"))
+    ))
 
-    x= ds %>% group_by(cohort) %>%
+    x= dsRep %>% group_by(cohort2) %>%
         summarize(res = list(broom::tidy(lm(STAT1 ~ purity + aneup)))) %>%
         tidyr::unnest(res)
-    y= ds %>% group_by(cohort) %>%
+    y= dsRep %>% group_by(cohort2) %>%
         summarize(res = list(broom::tidy(lm(MycV1 ~ purity + aneup)))) %>%
         tidyr::unnest(res)
 
     ds2 = inner_join(
-        x %>% filter(term == "aneup") %>% select(cohort, STAT1=estimate),
-        y %>% filter(term == "aneup") %>% select(cohort, MycV1=estimate)
-    ) %>% inner_join(ds %>% group_by(cohort) %>% summarize(n=n()))
-    ggplot(ds2, aes(x=STAT1, y=MycV1, color=cohort)) +
-        geom_point(aes(size=n)) +
+        x %>% filter(term == "aneup") %>% select(cohort2, STAT1=estimate, seSTAT1=std.error),
+        y %>% filter(term == "aneup") %>% select(cohort2, MycV1=estimate, seMycV1=std.error)
+    ) %>% inner_join(dsRep %>% group_by(cohort, cohort2) %>% summarize(n=n())) %>%
+        mutate(meanSE = (seSTAT1 + seMycV1)/2)
+    ggplot(ds2 %>% filter(cohort2!="KIRC_mut"), aes(x=STAT1, y=MycV1, color=cohort)) +
+        geom_point(aes(size=n, alpha=meanSE)) +
+        scale_alpha_continuous(trans="reverse") +
+#        scale_color_brewer(palette="Set3") +
         scale_size_area() +
-        ggrepel::geom_text_repel(aes(label=cohort)) +
+        ggrepel::geom_text_repel(aes(label=cohort2)) +
         geom_vline(xintercept=0, linetype="dashed") +
         geom_hline(yintercept=0, linetype="dashed")
 
@@ -99,6 +111,10 @@ stat1int_mut = function() {
     # [x] mut mgcv test diff
     # [ ] stat1ko split survival for all TCGA cohorts
     # [ ] stat interactor copy number
+}
+stat1int_cna = function() {
+    cna_bem = readr::read_tsv("~/Downloads/Tumours_CNV_BEMs/PANCAN_CNA_BEM.rdata.txt")
+    # AQUAE_p_TCGA_112_304_b2_N_GenomeWideSNP_6_D06_1348308 etc.
 }
 
 mut_stat1ko = function() {
@@ -259,14 +275,14 @@ surv_cohort = function(cohort) {
         select(Sample) %>% mutate(p53_mut=1)
     pur = tcga$purity() %>% transmute(Sample=Sample, purity=estimate)
 
-    dset = gsv %>%
+    dset2 = gsv %>%
         filter(substr(Sample, 14, 16) == "01A") %>%
         inner_join(clin) %>%
         left_join(mut) %>%
         inner_join(pur) %>%
         mutate(p53_mut = ifelse(is.na(p53_mut), 0, p53_mut))
 
-    dset = dset %>%
+    dset2 = dset2 %>%
         mutate(iclass = case_when(
             wt_rev48_over_dmso<0 & rev48_stat1_over_wt>0 ~ "CIN_stat1ko",
             wt_rev48_over_dmso>0 ~ "CIN",
@@ -274,4 +290,8 @@ surv_cohort = function(cohort) {
         ), iclass=relevel(factor(iclass), "noCIN"))
 
     survplot(dset)
+
+    x = dset2 %>% inner_join(dset %>% transmute(Sample=Sample, rev2=wt_rev48_over_dmso, stat2=rev48_stat1_over_wt))
+    plot(x$wt_rev48_over_dmso, x$rev2) # ok
+    plot(x$rev48_stat1_over_wt, x$stat2) # no cor?!
 }
