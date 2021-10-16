@@ -109,6 +109,7 @@ stat1int_mut = function() {
     p1 = ggplot(xx %>% filter(stat1==1), aes(x=aneup_class, y=1/tot, color=aneup_class)) +
         ggbeeswarm::geom_quasirandom(alpha=0.5, size=5) +
         guides(color="none") +
+        scale_color_manual(values=setNames(c("#cc9933", "#5500aa"), c("(0,0.1]", "(0.1,Inf]")), name="Aneuploidy") +
         labs(x="Aneuploidy", y="STAT1 as fraction of mutated genes") +
         ggpp::annotate("text_npc", npcx=0.5, npcy=0.8, label=sprintf("p=%.2g\n(Wilcox)", pv1$p.value))
     p2 = ggplot(xx, aes(x=ints, y=tot, color=aneup_class, fill=aneup_class)) +
@@ -117,6 +118,8 @@ stat1int_mut = function() {
 #        facet_wrap(~cohort) + # set k=5 above
         scale_x_continuous(trans="log1p", breaks=c(0,5,20,100,500)) +
         scale_y_continuous(trans="log1p", breaks=c(1,10,50,200,500,4000)) +
+        scale_color_manual(values=setNames(c("#cc9933", "#5500aa"), c("(0,0.1]", "(0.1,Inf]")), name="Aneuploidy") +
+        scale_fill_manual(values=setNames(c("#cc9933", "#5500aa"), c("(0,0.1]", "(0.1,Inf]")), name="Aneuploidy") +
         labs(x="Mutations in STAT1 interactors", y="Total number of mutations") +
         ggpp::annotate("text_npc", npcx=0.2, npcy=0.8, label=sprintf("p=%.2g (F test)", pv2$p.value[2]))
 
@@ -212,10 +215,6 @@ stat1_cin_cor = function(go, hm) {
     stat48 = bind_rows(go$stat1$rev48_stat1_over_wt, hm$stat1$rev48_stat1_over_wt)
     aneup = bind_rows(go$aneup, hm$aneup)
 
-#    rev48 = hm$stat1$wt_rev48_over_dmso
-#    stat48 = hm$stat1$rev48_stat1_over_wt
-#    aneup = hm$aneup
-
     plot_one = function(df) {
         merged = inner_join(df, aneup, by="label") %>%
             mutate(type = case_when(
@@ -245,7 +244,7 @@ stat1_cin_cor = function(go, hm) {
 
         ggplot(merged, aes(x=statistic.x, y=statistic.y, color=type)) +
             geom_point() +
-            scale_color_manual(values=colors) +
+            scale_color_manual(values=colors, name="Type") +
             theme_classic() +
             geom_hline(yintercept=0, linetype="dashed", size=1.5, alpha=0.3) +
             geom_vline(xintercept=0, linetype="dashed", size=1.5, alpha=0.3) +
@@ -280,24 +279,26 @@ survplot = function(dset) {
     m2 = coxph(Surv(OS_years, vital_status) ~ age_at_diagnosis + purity + iclass, data=p53mut)
     m2p = broom::tidy(m2) %>% filter(term == iclass_cmp) %>% pull(p.value)
 
-    pal = c("#ababab", "blue", "#ad07e3")
-    lab = c("No CIN signature", "Acute CIN signature", "STAT1ko CIN signature")
+    pal = c("#ababab", "blue", "#990033")
+    lab = c("No CIN", "Acute CIN", "STAT1ko CIN")
 
     fit1 = survfit(Surv(OS_years, vital_status) ~ iclass, data=p53wt)
-    ps1 = ggsurvplot(fit1, data=p53wt, xlim=c(0,10), break.time.by=2.5, palette=pal, legend.labs=lab)$plot +
+    ps1 = ggsurvplot(fit1, data=p53wt, xlim=c(0,10), break.time.by=2.5, palette=pal,
+                     legend.labs=lab, legend.title="Signature class")$plot +
         ylim(c(0.25,1)) +
         labs(x = "Overall survival (years)",
              title = "BRCA acute CIN response vs. STAT1 ko",
              subtitle = sprintf("p53 wt (n=%i)", sum(fit1$n))) +
-        annotate("text_npc", npcx=0.1, npcy=0.1,
+        annotate("text_npc", npcx=0.05, npcy=0.05,
                  label=sprintf("CIN STAT1ko vs. no CIN p=%.2g\nCIN70 n.s.\nMyc Targets V1 n.s.\nE2F Targets n.s.", m1p))
 
     fit2 = survfit(Surv(OS_years, vital_status) ~ iclass, data=p53mut)
-    ps2 = ggsurvplot(fit2, data=p53mut, xlim=c(0,10), break.time.by=2.5, palette=pal, legend.labs=lab)$plot +
+    ps2 = ggsurvplot(fit2, data=p53mut, xlim=c(0,10), break.time.by=2.5, palette=pal,
+                     legend.labs=lab, legend.title="Signature class")$plot +
         ylim(c(0.25,1)) +
         labs(x = "Overall survival (years)",
              subtitle = sprintf("p53 mut (n=%i)", sum(fit2$n))) +
-        annotate("text_npc", npcx=0.1, npcy=0.1,
+        annotate("text_npc", npcx=0.05, npcy=0.05,
                  label=sprintf("CIN STAT1ko vs. no CIN p=%.2g\nCIN70 n.s.\nMyc Targets V1 n.s.\nE2F Targets n.s.", m2p))
 
     other = calc_surv(dset)
@@ -307,11 +308,12 @@ survplot = function(dset) {
         geom_text(aes(label=sprintf("  %.2g  ", p.value)), position=position_dodge(width=1),
                   hjust=ifelse(other$p.value<0.3, 1, 0), vjust=0.5, angle=90) +
         scale_alpha_manual(values=c("TRUE"=0.9, "FALSE"=0.4), guide="none") +
+        scale_fill_manual(values=c(mut="#d1495b", wt="#00798c"), name="p53 status") +
         theme_classic() +
         theme(axis.title.x = element_blank(),
               axis.text.x = element_text(angle=30, hjust=1))
 
-    km = ps1 / ps2 + plot_layout(guides="collect") & theme(legend.position="bottom")
+    km = ps1 / ps2 + plot_layout(guides="collect") & theme(legend.direction="vertical")
     wrap_plots(km) / po + plot_layout(heights=c(3,1))
 }
 
@@ -331,8 +333,6 @@ sys$run({
     hm = readRDS(args$cor_hm)
     expr_cor = stat1_cin_cor(go, hm)
 
-#    scde = readRDS("../data/scRNA_cancer/dset.rds")
-
     brca = readRDS(args$brca)
     brca$meta$vital_status = as.integer(brca$meta$vital_status) - 1
     dset = cbind(brca$meta, as.data.frame(brca$dmat)) %>%
@@ -348,7 +348,7 @@ sys$run({
     surv = survplot(dset)
 
     asm = wrap_plots(ov / expr_cor + plot_layout(heights=c(1.2,1)) & theme_classic()) + wrap_plots(surv) +
-        plot_layout(widths=c(4,0.9)) + plot_annotation(tag_level="a") &
+        plot_layout(widths=c(4,0.95)) + plot_annotation(tag_level="a") &
         theme(plot.tag = element_text(size=18, face="bold"),
               plot.title = element_text(size=14),
               plot.subtitle = element_text(size=12),
@@ -358,7 +358,7 @@ sys$run({
               axis.text.y = element_text(size=12),
               axis.title = element_text(size=14))
 
-    pdf(args$plotfile, 23, 14)
+    pdf(args$plotfile, 24, 14)
     print(asm)
     dev.off()
 })
