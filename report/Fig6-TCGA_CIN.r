@@ -52,15 +52,19 @@ pancan_myc_stat = function() {
         x %>% filter(term == "aneup") %>% select(cohort2, STAT1=estimate, seSTAT1=std.error),
         y %>% filter(term == "aneup") %>% select(cohort2, MycV1=estimate, seMycV1=std.error)
     ) %>% inner_join(dsRep %>% group_by(cohort, cohort2) %>% summarize(n=n())) %>%
-        mutate(meanSE = (seSTAT1 + seMycV1)/2)
-    ggplot(ds2 %>% filter(cohort2!="KIRC_mut"), aes(x=STAT1, y=MycV1, color=cohort)) +
+        mutate(meanSE = (seSTAT1 + seMycV1)/2) %>%
+        filter(!is.na(meanSE))
+    ggplot(ds2, aes(x=STAT1, y=MycV1, color=cohort)) +
+        geom_errorbar(aes(ymin=MycV1-seMycV1, ymax=MycV1+seMycV1), alpha=0.2) +
+        geom_errorbarh(aes(xmin=STAT1-seSTAT1, xmax=STAT1+seSTAT1), alpha=0.2) +
         geom_point(aes(size=n, alpha=meanSE)) +
         scale_alpha_continuous(trans="reverse") +
 #        scale_color_brewer(palette="Set3") +
         scale_size_area() +
         ggrepel::geom_text_repel(aes(label=cohort2)) +
         geom_vline(xintercept=0, linetype="dashed") +
-        geom_hline(yintercept=0, linetype="dashed")
+        geom_hline(yintercept=0, linetype="dashed") +
+        coord_cartesian(xlim=c(-1, NA), ylim=c(NA, 1), expand=FALSE)
 
     #todo: could show that Myc on avg increases, stat1 unchanged -> separate BRCA in STAT1+/- via KO sig
     # -> show that acuteCIN-high and KO-high are more aneup then no-CIN + effect in surv
