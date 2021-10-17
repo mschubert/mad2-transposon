@@ -322,7 +322,7 @@ sys$run({
         opt('b', 'brca', 'rds', '../tcga_myc/dset.rds'),
         opt('g', 'cor_go', 'rds', '../expr_stat1/aneup_ko_cor/GO_Biological_Process_2020.rds'),
         opt('h', 'cor_hm', 'rds', '../expr_stat1/aneup_ko_cor/MSigDB_Hallmark_2020.rds'),
-        opt('p', 'plotfile', 'pdf', 'Fig6-TCGA_CIN.pdf')
+        opt('p', 'plotfile', 'pdf', 'Fig5-TCGA_CIN.pdf')
     )
 
     ov1 = pancan_myc_stat()

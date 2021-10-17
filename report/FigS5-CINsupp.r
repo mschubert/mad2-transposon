@@ -94,7 +94,7 @@ purplot = function(dset) {
 sys$run({
     args = sys$cmd$parse(
         opt('b', 'brca', 'rds', '../tcga_myc/dset.rds'),
-        opt('p', 'plotfile', 'pdf', 'FigS6-CINsupp.pdf')
+        opt('p', 'plotfile', 'pdf', 'FigS5-CINsupp.pdf')
     )
 
     brca = readRDS(args$brca)
