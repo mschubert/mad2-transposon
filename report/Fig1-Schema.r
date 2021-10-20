@@ -71,13 +71,14 @@ chrom_genes = function() {
                end = end_position / 1e6,
                chromosome_name = factor(chromosome_name, levels=c(1:19,'X')))
     ggplot(hlg) +
-        geom_segment(data=gen, aes(x=1, xend=len, y=0, yend=0), size=2, alpha=0.4, lineend="round") +
+        geom_segment(data=gen, aes(x=1, xend=len, y=0, yend=0), size=2.2, alpha=0.4, lineend="round") +
         geom_point(aes(x=start, y=0)) +
         geom_text(aes(x=start, label=external_gene_name), y=0, vjust=2, size=4) +
         facet_grid(. ~ chromosome_name, scales="free", space="free") +
         coord_cartesian(clip="off") +#, expand=FALSE) +
         theme_void() +
         theme(strip.background = element_blank(),
+              strip.text.x = element_text(size=10),
               panel.spacing.x = unit(1, "mm"))
 }
 
