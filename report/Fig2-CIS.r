@@ -50,9 +50,9 @@ insertion_matrix = function(cis, rna_ins, cis_aneup, aneup, net_genes) {
         filter(!is.na(external_gene_name))
 
     p1 = ggplot(cis_samples, aes(x=sample, y=external_gene_name)) +
-        geom_tile(aes(fill=ins_type, alpha=gene_read_frac, color=has_ins), size=0.2) +
+        geom_tile(aes(fill=ins_type, alpha=gene_read_frac, color=has_ins), size=0.5) +
         scale_fill_manual(values=c("maroon4", "navy", "springgreen4"), na.translate=FALSE) +
-        scale_color_manual(values="#565656ff") +
+        scale_color_manual(values="#565656ff", na.translate=FALSE) +
         guides(color = FALSE,
                fill = guide_legend(title="Insert type"),
                alpha = guide_legend(title="Read fraction")) +
@@ -100,7 +100,7 @@ insertion_matrix = function(cis, rna_ins, cis_aneup, aneup, net_genes) {
 
     p11 + plot_spacer() + (p12 + plot_layout(tag_level="new")) + plot_spacer() +
         p1 + (p13 + plot_layout(tag_level="new")) +
-        plot_layout(widths=c(6,1), heights=c(1,0.12,5), guides="collect") &
+        plot_layout(widths=c(8,1), heights=c(1,0.12,5), guides="collect") &
         theme(plot.margin=margin(0.25, 0, 0.25, 2, "mm"))
 }
 
@@ -162,7 +162,7 @@ bionet_combine = function(bionet) {
 
 sc_wgs = function(scs) {
     plt$genome$heatmap(scs) +
-        guides(fill = guide_legend(title="Copy number")) +
+        guides(fill = guide_legend(title="Copy\nnumber")) +
         theme(panel.ontop = FALSE)
 }
 
@@ -233,11 +233,12 @@ sys$run({
                                        theme(plot.margin = margin(0,0,0,0,"cm"))))
     bnet = wrap_plots(wrap_elements(bionet_combine(bionet) + theme(plot.margin = margin(10,0,10,-25,"mm"))))
 
-    top = (splot | sc_wgs | aneup_het | stype) + plot_layout(widths=c(4,5.2,2,3))
+    top = (splot | sc_wgs | (aneup_het + plot_layout(tag_level="new")) | stype) +
+        plot_layout(widths=c(4,5.2,2,3))
     bottom =  wrap_plots(ins_mat) + bnet + plot_layout(widths=c(2.1,1))
 
-    asm = (top / bottom) + plot_layout(heights=c(1,2)) +
-        plot_annotation(tag_levels='a') & theme(plot.tag = element_text(size=18, face="bold"))
+    asm = (top / bottom) + plot_layout(heights=c(1,2)) + plot_annotation(tag_levels='a') &
+        theme(plot.tag = element_text(size=24, face="bold"))
 
     pdf("Fig2-CIS.pdf", 20, 12)
     print(asm)
