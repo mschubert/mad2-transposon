@@ -144,6 +144,8 @@ bionet_combine = function(bionet) {
         mutate(deg = igraph::degree(.),
                hub = ifelse(is.na(hub), 0, hub)) %>%
         filter(deg > 2) %>%
+        mutate(deg = igraph::degree(.)) %>%
+        filter(deg > 2) %>%
         arrange(-hub) %>%
         mutate(aneup_hub = ifelse(is.na(aneup_hub), 0, aneup_hub))
     ggraph(cnet) +
@@ -155,7 +157,7 @@ bionet_combine = function(bionet) {
         scale_fill_distiller(palette="RdPu", direction=1) +
         geom_node_label(aes(label=external_gene_name, size=hub), repel=TRUE, min.segment.length=0.75,
             label.size=NA, segment.alpha=0.3, fill="#ffffff00", label.padding=unit(0.31, "lines")) +
-        scale_size(range = c(2.5,10)) +
+        scale_size(range = c(3.5,7)) +
         guides(fill = guide_legend(title="Aneuploidy\ncentrality", override.aes=list(size=5)),
                size = guide_legend(title="CIS centrality"))
 }
