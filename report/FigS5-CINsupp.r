@@ -3,6 +3,7 @@ library(ggplot2)
 library(patchwork)
 library(ggpmisc)
 sys = import('sys')
+tcga = import('data/tcga')
 
 isCINsig_plot = function(dset) {
     cins = tidyr::gather(dset, "measure", "value", aneup_log2seg, CIN70_Carter2006, HET70)
@@ -78,17 +79,25 @@ aov_plot = function(dset) {
 
 purplot = function(dset) {
     ds = dset %>%
-        mutate(p53_mut = as.character(p53_mut),
+        left_join(tcga$purity_estimate() %>% select(Sample, stromal_score, immune_score)) %>%
+        mutate(stromal_score = scale(stromal_score),
+               immune_score = scale(immune_score),
+               purity = scale(purity),
+               p53_mut = as.character(p53_mut),
+               aneup = scale(aneup_log2seg),
                MYCg = cut(MYC, c(-Inf,median(MYC),Inf)),
+               MYC = scale(MYC),
                MycV1 = cut(`Myc Targets V1`, c(-Inf,0,Inf)))
 
-    p1 = ggplot(ds, aes(x=iclass, fill=iclass, y=1-purity)) +
-        geom_boxplot(outlier.shape=NA) + facet_grid(MYCg ~ p53_mut) +
-        ggtitle("MYC")
-    p2 = ggplot(ds, aes(x=iclass, fill=iclass, y=1-purity)) +
-        geom_boxplot(outlier.shape=NA) + facet_grid(MycV1 ~ p53_mut) +
-        ggtitle("Myc Targets V1")
-    p1 + p2 + plot_layout(guides="collect")
+    ds2 = ds %>%
+        tidyr::gather("type", "score", aneup, purity, immune_score, stromal_score, MYC) %>%
+        mutate(type = factor(sub("_score", "", type),
+                             levels=c("aneup", "purity", "immune", "stromal", "MYC")))
+
+    ggplot(ds2, aes(x=type, fill=type, color=p53_mut, y=score)) +
+        geom_boxplot(outlier.shape=NA, position="dodge") + facet_grid(MycV1 ~ iclass) +
+        ggtitle("BRCA by survival class, Myc Targets and p53 status") +
+        scale_color_manual(values=c("0"="#ababab", "1"="#131313"))
 }
 
 sys$run({
@@ -113,9 +122,10 @@ sys$run({
     p2 = purplot(dset)
     right = sgl_plot(dset) + aov_plot(dset) + plot_layout(nrow=2, heights=c(2,3))
     left = p1 + p2 + plot_layout(heights=c(1,2), ncol=1)
-    p = wrap_plots(left) + wrap_plots(right) + plot_layout(widths=c(1.6,1)) +
+    p = (left | right) + plot_layout(widths=c(1.6,1)) +
         plot_annotation(tag_levels='a') &
-        theme(plot.tag = element_text(size=18, face="bold"))
+        theme(panel.background = element_rect(fill="#f5f5f5"),
+              plot.tag = element_text(size=18, face="bold"))
 
     pdf(args$plotfile, 16, 9)
     print(p)
