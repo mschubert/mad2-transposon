@@ -45,14 +45,15 @@ EtsErg_subtype = function(tps, mile, hutype) {
         ggrepel::geom_text_repel(aes(label=sample), size=2) +
         labs(title = "Mouse cohort expression",
              fill = "Mouse tumor type",
-             size = "Aneuploidy")
+             size = "Aneuploidy") +
+        scale_fill_discrete(guide=guide_legend(override.aes=list(size=2)))
 
     p2 = ggplot(mile, aes(x=ERG, y=ETS1)) +
         geom_point(aes(fill=type, size=aneuploidy), alpha=0.5, shape=21) +
         labs(title = "Human leukemia cohort (MILE)",
              fill = "Human leukemia type",
              size = "Aneuploidy") +
-        scale_fill_manual(values=hutype)
+        scale_fill_manual(values=hutype, guide=guide_legend(override.aes=list(size=2)))
 
     p1 + p2 + plot_layout(guides="collect")
 }
@@ -84,8 +85,8 @@ sys$run({
         "c-ALL/Pre-B-ALL without t(9;22)" = "#78c679",
         "Pro-B-ALL with t(11q23)/MLL" = "#238443",
         "mature B-ALL with t(8;14)" = "#ffffe5",
-        "AML with normal karyotype" = "#7f2704",
-        "AML with complex aberrant karyotype" = "#feb24c"
+        "AML with normal karyotype" = "#bd0026",
+        "AML complex aberrant karyotype" = "#feb24c"
     )
     dset2 = readRDS(args$human)
     expr = Biobase::exprs(dset2)
@@ -95,9 +96,10 @@ sys$run({
                   type = FactorValue..LEUKEMIA.CLASS.)
     mile = cbind(meta, t(expr[c("ETS1", "ERG"),]))
     mile$type = sub(" + other abnormalities", "", mile$type, fixed=TRUE)
-    mile = mile[mile$type %in% names(hutype),] %>%
-        inner_join(import('io')$load("../misc/subtype_overlay/aneup_scores_mile.RData")$aneup)
-#        inner_join(readRDS("../misc/subtype_overlay/aneup_scores_mile.rds")$aneup)
+    maneup = import('io')$load("../misc/subtype_overlay/aneup_scores_mile.RData")$aneup %>%
+#    maneup = readRDS("../misc/subtype_overlay/aneup_scores_mile.rds")$aneup %>%
+        select(sample, aneuploidy)
+    mile = mile[mile$type %in% names(hutype),] %>% inner_join(maneup)
 
     aneups = list(`Mouse transposon cohort` = tps %>% select(sample, type=subtype, aneuploidy),
                   `Human leukemia cohort (MILE)` = mile %>% select(sample, type, aneuploidy)) %>%
@@ -105,9 +107,10 @@ sys$run({
         filter(!is.na(type)) %>%
         as_tibble()
     pa = ggplot(aneups, aes(x=forcats::fct_reorder(type, aneuploidy), y=aneuploidy, fill=type)) +
-        geom_boxplot() +
+        geom_boxplot(outlier.shape=NA) +
+        ggbeeswarm::geom_quasirandom(shape=21, size=2, alpha=0.3) +
         facet_grid(. ~ dset, scales="free", space="free") +
-        scale_x_discrete(guide = guide_axis(n.dodge=2)) +
+        scale_x_discrete(guide = guide_axis(n.dodge=3)) +
         scale_fill_manual(values=c(cols, hutype), guide="none") +
         theme(axis.title.x = element_blank()) +
         ylab("Aneuploidy")
