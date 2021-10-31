@@ -1,7 +1,6 @@
 library(dplyr)
 library(ggplot2)
 library(patchwork)
-io = import('io')
 seq = import('seq')
 sys = import('sys')
 util = import('../../ploidy_from_rnaseq/eT_ploidy')
@@ -40,56 +39,59 @@ plot_sample = function(smp, title="") {
     p2 + p2_dens + plot_layout(nrow=1, widths=c(10,1))
 }
 
-args = sys$cmd$parse(
-    opt('i', 'infile', 'MILE study', '../../data/arrayexpress/E-GEOD-13159.RData'),
-    opt('r', 'ref', 'type for diploid', 'Non-leukemia and healthy bone marrow'),
-    opt('o', 'outfile', 'RData', 'aneup_scores_mile.RData'),
-    opt('p', 'plotfile', 'pdf', 'aneup_scores_mile.pdf'))
+sys$run({
+    args = sys$cmd$parse(
+        opt('i', 'infile', 'MILE study', '../../data/arrayexpress/E-GEOD-13159.rds'),
+        opt('r', 'ref', 'type for diploid', 'Non-leukemia and healthy bone marrow'),
+        opt('o', 'outfile', 'RData', 'aneup_scores_mile.rds'),
+        opt('p', 'plotfile', 'pdf', 'aneup_scores_mile.pdf')
+    )
 
-eset = io$load(args$infile)
-meta = Biobase::pData(eset) %>%
-    transmute(sample = rownames(.),
-              type = FactorValue..LEUKEMIA.CLASS.)
-expr = Biobase::exprs(eset)
+    eset = readRDS(args$infile)
+    meta = Biobase::pData(eset) %>%
+        transmute(sample = rownames(.),
+                  type = FactorValue..LEUKEMIA.CLASS.)
+    expr = Biobase::exprs(eset)
 
-genes = seq$coords$gene("ensembl_gene_id", granges=TRUE) %>%
-    plyranges::select(ensembl_gene_id) %>%
-    as.data.frame() %>%
-    filter(seqnames %in% c(1:22, 'X'))
+    genes = seq$coords$gene("ensembl_gene_id", granges=TRUE) %>%
+        plyranges::select(ensembl_gene_id) %>%
+        as.data.frame() %>%
+        filter(seqnames %in% c(1:22, 'X'))
 
-ref = expr[,meta$type == args$ref]
-keep = narray::map(ref, along=2, function(x) sum(x>5 & x<11) > 0.8 * length(x))
-ref = ref[keep,]
-narray::intersect(expr, ref, genes$ensembl_gene_id, along=1)
-ratio = 2^(expr - rowMeans(ref))
+    ref = expr[,meta$type == args$ref]
+    keep = narray::map(ref, along=2, function(x) sum(x>5 & x<11) > 0.8 * length(x))
+    ref = ref[keep,]
+    narray::intersect(expr, ref, genes$ensembl_gene_id, along=1)
+    ratio = 2^(expr - rowMeans(ref))
 
-# ca. 10 minutes for 2000 samples @ 100 jobs
-segments = expand.grid(sample=colnames(ratio), seqnames=c(1:22,'X')) %>%
-    mutate(result = clustermq::Q(extract_segment, smp=sample, chr=seqnames,
-                const = list(genes=genes, ratio=ratio), n_jobs=100)) %>%
-    tidyr::unnest() %>%
-    group_by(sample) %>%
-    mutate(ploidy = 2 + util$center_segment_density(ploidy, w=width, bw=0.5)) %>%
-    ungroup()
+    # ca. 10 minutes for 2000 samples @ 100 jobs
+    segments = expand.grid(sample=colnames(ratio), seqnames=c(1:22,'X'), stringsAsFactors=FALSE) %>%
+        mutate(result = clustermq::Q(extract_segment, smp=sample, chr=seqnames,
+                    const = list(genes=genes, ratio=ratio), n_jobs=50)) %>%
+        tidyr::unnest() %>%
+        group_by(sample) %>%
+        mutate(ploidy = 2 + util$center_segment_density(ploidy, w=width, bw=0.5)) %>%
+        ungroup()
 
-aneup = seq$aneuploidy(segments, sample="sample") %>%
-    inner_join(meta) %>%
-    arrange(-aneuploidy)
+    aneup = seq$aneuploidy(segments, sample="sample") %>%
+        inner_join(meta) %>%
+        arrange(-aneuploidy)
 
-plot_aneup = aneup %>%
-    arrange(type, -aneuploidy) %>%
-    group_by(type) %>%
-    filter(row_number() %in% c(1:2, n()-1, n())) %>%
-    ungroup()
+    plot_aneup = aneup %>%
+        arrange(type, -aneuploidy) %>%
+        group_by(type) %>%
+        filter(row_number() %in% c(1:2, n()-1, n())) %>%
+        ungroup()
 
-pdf(args$plotfile, 9, 4)
-for (i in seq_len(nrow(plot_aneup))) {
-    cur = plot_aneup[i,]
-    message(cur$sample)
-    tit = with(cur, sprintf("%s: %s (aneup %.2f, coverage %.2f)",
-                            type, sample, aneuploidy, coverage))
-    print(plot_sample(cur$sample, tit) & plt$theme$no_gx())
-}
-dev.off()
+    pdf(args$plotfile, 9, 4)
+    for (i in seq_len(nrow(plot_aneup))) {
+        cur = plot_aneup[i,]
+        message(cur$sample)
+        tit = with(cur, sprintf("%s: %s (aneup %.2f, coverage %.2f)",
+                                type, sample, aneuploidy, coverage))
+        print(plot_sample(cur$sample, tit) & plt$theme$no_gx())
+    }
+    dev.off()
 
-save(segments, aneup, ratio, file=args$outfile)
+    saveRDS(list(segments=segments, aneup=aneup, ratio=ratio), file=args$outfile)
+})
