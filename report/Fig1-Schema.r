@@ -71,13 +71,14 @@ chrom_genes = function() {
                end = end_position / 1e6,
                chromosome_name = factor(chromosome_name, levels=c(1:19,'X')))
     ggplot(hlg) +
-        geom_segment(data=gen, aes(x=1, xend=len, y=0, yend=0), size=2, alpha=0.4, lineend="round") +
+        geom_segment(data=gen, aes(x=1, xend=len, y=0, yend=0), size=2.2, alpha=0.4, lineend="round") +
         geom_point(aes(x=start, y=0)) +
-        geom_text(aes(x=start, label=external_gene_name), y=0, vjust=2, size=3) +
+        geom_text(aes(x=start, label=external_gene_name), y=0, vjust=2, size=4) +
         facet_grid(. ~ chromosome_name, scales="free", space="free") +
         coord_cartesian(clip="off") +#, expand=FALSE) +
         theme_void() +
         theme(strip.background = element_blank(),
+              strip.text.x = element_text(size=10),
               panel.spacing.x = unit(1, "mm"))
 }
 
@@ -169,15 +170,14 @@ sys$run({
 
     topright = wrap_plots(wrap_elements(surv1(meta_all) / surv2(meta)))
     top = (cohort() | topright) + plot_layout(widths=c(1.6,1))
-    mid = plt$text("pathology imgs go here") + theme(panel.background = element_rect(color=NA, fill="#00000005"))
     btm = chrom_genes() + plot_spacer() + chroms(segs, meta) + genotype_weights(meta) +
         plot_layout(widths=unit(c(1,3), c("null","cm")), heights=c(1,18), guides="collect")
 
-    asm = top / wrap_plots(wrap_elements(mid)) / wrap_plots(wrap_elements(btm)) +
-        plot_annotation(tag_levels='a') + plot_layout(ncol=1, heights=c(1.5,1,2)) &
+    asm = wrap_plots(top) + wrap_plots(wrap_elements(btm)) +
+        plot_annotation(tag_levels='a') + plot_layout(ncol=1, heights=c(1.2,2)) &
         theme(plot.tag = element_text(size=18, face="bold"))
 
-    pdf(args$plotfile, 15, 15)
+    pdf(args$plotfile, 15, 12)
     print(asm)
     dev.off()
 })

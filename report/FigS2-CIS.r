@@ -64,8 +64,6 @@ all_ins = function(rna_ins, dna_ins) {
 }
 
 cis_row = function(bn, assocs, common) {
-    p1 = plt$volcano(assocs, size="n_smp", label_top=30, max.overlaps=50, x_label_bias=0.5) +
-        labs(x="CIS enrichment", y="Adjusted p-value (FDR)")
     p2 = ggraph(bn$cis_net) +
         geom_node_point(aes(size=n_smp, alpha=hub)) +
         geom_node_label(aes(label=name), label.size=NA, fill="#ffffffa0",
@@ -86,11 +84,10 @@ cis_row = function(bn, assocs, common) {
         coord_flip() +
         scale_alpha_manual(values=c("TRUE"=1, "FALSE"=0.3), guide=FALSE) +
         labs(x="CIS gene", y="Hub centrality")
-    p1 + p2 + p3 + p4 + plot_layout(widths=c(1.2,2,0.5,0.5))
+    wrap_elements(p2) + (p3 + p4 + plot_layout(tag_level="new")) + plot_layout(widths=c(2,1))
 }
 
 aneup_row = function(bn, ext, common) {
-    p1 = plt$volcano(ext, label_top=30) + labs(x="Aneuploidy difference if inserted", y="P-value")
     net_with_stats = bn$ext_nets$aneuploidy %>%
         left_join(ext %>% select(name=external_gene_name, p.value, statistic))
     p2 = ggraph(net_with_stats) +
@@ -118,7 +115,7 @@ aneup_row = function(bn, ext, common) {
         coord_flip() +
         scale_alpha_manual(values=c("TRUE"=1, "FALSE"=0.3), guide=FALSE) +
         labs(x="CIS gene", y="Hub centrality")
-    p1 + p2 + p3 + p4 + plot_layout(widths=c(1.2,2,0.5,0.5))
+    wrap_elements(p2) + (p3 + p4 + plot_layout(tag_level="new")) + plot_layout(widths=c(2,1))
 }
 
 sys$run({
@@ -127,6 +124,7 @@ sys$run({
         opt('b', 'bionet', 'rds', '../cis_analysis/bionet_omnipath.rds'),
         opt('d', 'dna_ins', 'rds', '../cis_analysis/analysis_set.rds'),
         opt('r', 'rna_ins', 'txt', '../data/rnaseq_imfusion/insertions.txt'),
+        opt('s', 'poisson', 'rds', '../cis_analysis/poisson.rds'),
         opt('p', 'plotfile', 'pdf', 'FigS2-CIS.pdf')
     )
 
@@ -144,13 +142,22 @@ sys$run({
     ext = readRDS(args$ext)$aneuploidy %>%
         mutate(circle = external_gene_name %in% common)
 
-    asm = (cis_row(bn, assocs, common) / aneup_row(bn, ext, common)) +
+    volc_cis = plt$volcano(assocs, size="n_smp", label_top=30, max.overlaps=50, x_label_bias=0.5) +
+        labs(x="CIS enrichment", y="Adjusted p-value (FDR)")
+    volc_aneup = plt$volcano(ext, label_top=30) + labs(x="Aneuploidy difference if inserted", y="P-value")
+    cis_row = cis_row(bn, assocs, common)
+    aneup_row = aneup_row(bn, ext, common)
+
+    asm = ((volc_cis / volc_aneup) | (cis_row / aneup_row)) +
+        plot_layout(widths=c(1,3)) +
         plot_annotation(tag_levels='a') &
-        theme(plot.tag = element_text(size=18, face="bold"))
+        theme(plot.tag = element_text(size=22, face="bold"),
+              axis.title = element_text(size=14),
+              axis.text = element_text(size=12))
 
 #    all_ins(rna_ins, dna_ins)
 
-    pdf(args$plotfile, 18, 14)
+    pdf(args$plotfile, 20, 14)
     print(asm)
     dev.off()
 })
