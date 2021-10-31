@@ -10,9 +10,10 @@ marker_pca = function(markers) {
     one_pca = function(mm, smps) {
         plt$pca(prcomp(mm[smps,]), aes(x=PC1, y=PC2), annot=meta[smps,],
                 biplot=TRUE, bi_size=2.5, bi_color="darkviolet", bi_arrow=0.2) +
-            geom_point(aes(color=type, size=aneuploidy), alpha=0.8) +
+            geom_point(aes(fill=type, size=aneuploidy), shape=21, alpha=0.8) +
             ggrepel::geom_text_repel(aes(label=sample), size=2, segment.alpha=0.3) +
-            scale_color_discrete(drop=FALSE) +
+            scale_fill_discrete(name="Type", drop=FALSE, guide=guide_legend(override.aes=list(size=3))) +
+            labs(size="Aneuploidy") +
             theme_classic()
     }
     meta = markers$meta %>%
@@ -39,21 +40,19 @@ marker_pca = function(markers) {
         plot_layout(nrow=1, guides="collect")
 }
 
-EtsErg_subtype = function(tps, mile, hutype) {
+EtsErg_subtype = function(tps, mile, cols, hutype) {
     p1 = ggplot(tps, aes(x=Erg, y=Ets1)) +
         geom_point(aes(size=aneuploidy, fill=type), shape=21) +
         ggrepel::geom_text_repel(aes(label=sample), size=2) +
-        labs(title = "Mouse cohort expression",
-             fill = "Mouse tumor type",
-             size = "Aneuploidy") +
-        scale_fill_discrete(guide=guide_legend(override.aes=list(size=2)))
+        ggtitle("Mouse cohort expression") +
+        scale_fill_manual(name="Mouse tumor type", values=cols, guide=guide_legend(override.aes=list(size=3))) +
+        scale_size_continuous(name="Aneuploidy", breaks=c(0,0.1,0.2,0.3,0.4))
 
     p2 = ggplot(mile, aes(x=ERG, y=ETS1)) +
         geom_point(aes(fill=type, size=aneuploidy), alpha=0.5, shape=21) +
-        labs(title = "Human leukemia cohort (MILE)",
-             fill = "Human leukemia type",
-             size = "Aneuploidy") +
-        scale_fill_manual(values=hutype, guide=guide_legend(override.aes=list(size=2)))
+        ggtitle("Human leukemia cohort (MILE)") +
+        scale_fill_manual(name="Human leukemia type", values=hutype, guide=guide_legend(override.aes=list(size=3))) +
+        scale_size_continuous(name="Aneuploidy", breaks=c(0,0.1,0.2,0.3,0.4), guide="none") # guide duplicated
 
     p1 + p2 + plot_layout(guides="collect")
 }
@@ -75,7 +74,7 @@ sys$run({
     tps = cbind(meta, t(dset$vs[c("Ets1", "Erg"),]))
     tps = tps[tps$type != "unknown",] %>%
         inner_join(aset %>% select(sample, subtype)) %>%
-        mutate(subtype = ifelse(type=="Other", as.character(subtype), as.character(type))) %>%
+        mutate(type = ifelse(type=="Other", as.character(subtype), as.character(type))) %>%
         filter(!is.na(type))
 
     hutype = c(
@@ -101,7 +100,7 @@ sys$run({
         select(sample, aneuploidy)
     mile = mile[mile$type %in% names(hutype),] %>% inner_join(maneup)
 
-    aneups = list(`Mouse transposon cohort` = tps %>% select(sample, type=subtype, aneuploidy),
+    aneups = list(`Mouse transposon cohort` = tps %>% select(sample, type, aneuploidy),
                   `Human leukemia cohort (MILE)` = mile %>% select(sample, type, aneuploidy)) %>%
         bind_rows(.id="dset") %>%
         filter(!is.na(type)) %>%
@@ -116,7 +115,7 @@ sys$run({
         ylab("Aneuploidy")
 
     r1 = wrap_elements(marker_pca(markers))
-    r2 = wrap_elements(EtsErg_subtype(tps, mile, hutype))
+    r2 = wrap_elements(EtsErg_subtype(tps, mile, cols, hutype))
 
     asm = (r1 / r2 / wrap_elements(pa)) +
         plot_layout(heights=c(1,1.2,0.8)) +
