@@ -6,7 +6,7 @@ theme_set(cowplot::theme_cowplot())
 sys = import('sys')
 gset = import('genesets')
 plt = import('plot')
-gnet = import('tools/genenet')
+idmap = import('process/idmap')
 
 marker_pca = function(markers) {
     one_pca = function(mm, smps) {
@@ -36,7 +36,9 @@ marker_pca = function(markers) {
     mm3 = mmat[,c("Ebf1", "Ets1", "Erg", "Myc", "Stat1", "Kit", "Tmem184a", "Cd34", "Pax5", "Cd19")]
     p3 = one_pca(mm3, smps)
 
-    p1 + p2 + p3 + plot_layout(nrow=1, guides="collect")
+    p1 + (p2 + plot_layout(tag_level="new")) +
+        (p3 + plot_layout(tag_level="new")) +
+        plot_layout(nrow=1, guides="collect")
 }
 
 set_cor = function(sets) {
@@ -49,71 +51,53 @@ set_cor = function(sets) {
     ggcorrplot::ggcorrplot(cc, hc.order=TRUE, method="circle")
 }
 
-cor_net = function(sets, cis) {
-#TODO;
-# should we do
-# (1) selected HMs boxplot between tissue -> t-cells have a lot already (B: depends Erg; myeloid: not)
-# (2) GEX correlation + ins changing expr of category
+EtsErg_subtype = function() {
+    dset = readRDS("../expr_diff/eset_Mad2PB.rds")
+    meta = as.data.frame(SummarizedExperiment::colData(dset$eset))
+    idx = cbind(meta, t(dset$vs[c("Ets1", "Erg"),]))
+    idx = idx[idx$type != "unknown",]
 
-    types = narray::mask(sets$type) + 0
-    smat = cbind(types, data.matrix(sets[-c(1,2)]))
-    rownames(smat) = rownames(types) = sets$sample
+    p1 = ggplot(idx, aes(x=Erg, y=Ets1)) +
+        geom_point(aes(size=aneuploidy, fill=type), shape=21) +
+        ggrepel::geom_text_repel(aes(label=sample), size=2) +
+        labs(title = "Mouse cohort expression",
+             fill = "Mouse tumor type",
+             size = "Aneuploidy")
 
-    test_cis = c("Ets1", "Erg", "Trp53", "Stat1", "Pten", "Ikzf1", "Crebbp")
-    cis2 = cis %>%
-        filter(external_gene_name %in% test_cis) %>%
-        mutate(has_ins = 1) %>%
-        narray::construct(has_ins ~ sample + external_gene_name, fill=0)
+    hutype = c(
+        "T-ALL" = "#2b8cbe",
+        "ALL with hyperdiploid karyotype" = "#54278f",
+        "c-ALL/Pre-B-ALL with t(9;22)" = "#d9f0a3",
+        "c-ALL/Pre-B-ALL without t(9;22)" = "#78c679",
+        "Pro-B-ALL with t(11q23)/MLL" = "#238443",
+        "mature B-ALL with t(8;14)" = "#ffffe5",
+        "AML with normal karyotype + other abnormalities" = "#7f2704",
+        "AML with complex aberrant karyotype" = "#feb24c"
+    )
 
-    narray::intersect(sets$sample, types, smat, cis2, along=1)
+    dset2 = readRDS("../data/arrayexpress/E-GEOD-13159.rds")
+    expr = Biobase::exprs(dset2)
+    rownames(expr) = idmap$gene(rownames(expr), to="hgnc_symbol")
+    meta = Biobase::pData(dset2) %>%
+        transmute(sample = Array.Data.File,
+                  type = FactorValue..LEUKEMIA.CLASS.)
+    idx2 = cbind(meta, t(expr[c("ETS1", "ERG"),]))
+    idx2 = idx2[idx2$type %in% names(hutype),]
 
-    stype = sets$type
-    res = st$lm(smat ~ stype + cis2) %>%
-        as_tibble() %>%
-        filter(term == "cis2") %>%
-        mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
-        arrange(adj.p, p.value)
-    ggplot(res, aes(x=smat, y=cis2, fill=estimate)) +
-        geom_tile() +
-        scale_fill_distiller(palette="RdBu", lim=c(-0.5,0.5)) +
-        theme(axis.text.x = element_text(angle=45, hjust=1))
+    p2 = ggplot(idx2, aes(x=ERG, y=ETS1)) +
+        geom_point(aes(fill=type, size=aneuploidy), alpha=0.5, shape=21, size=3) + # size=aneuploidy
+        labs(title = "Human leukemia cohort (MILE)",
+             fill = "Human leukemia type",
+             size = "Aneuploidy") +
+        scale_fill_manual(values=hutype)
 
-    cmat = cbind(types, cis2)
-    smat2 = data.matrix(sets[-c(1,2)])
-    res3 = st$lm(smat2 ~ 0 + cmat, atomic="cmat") %>%
-        as_tibble() %>%
-        mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
-        arrange(adj.p, p.value)
-    ggplot(res3, aes(x=smat2, y=term, fill=estimate)) +
-        geom_tile() +
-        scale_fill_distiller(palette="RdBu", lim=c(-1,1)) +
-        theme(axis.text.x = element_text(angle=45, hjust=1))
-
-    res2 = st$lm(smat ~ types) %>%
-        as_tibble() %>%
-        mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
-        arrange(adj.p, p.value)
-
-    x = res2 %>% filter(! smat %in% c("B-like", "T-cell", "Myeloid"))
-    ggplot(x, aes(x=smat, y=types, fill=estimate)) +
-        geom_tile() +
-        scale_fill_distiller(palette="RdBu", lim=c(-1,1)) +
-        theme(axis.text.x = element_text(angle=45, hjust=1))
-
-    #todo: add myc CN, expr?
-
-#    smat = data.matrix(sets[-(1:2)])
-#    smat = smat[,-c(3,5,6)]
-
-    smat5 = smat[,-c(1,2,3,8,10,11,15,16,5)] # 16=stat1, 14=mit spind, 16 tgfb, 6 aneup, 5 myc copies
-
-    gnet$plot_bootstrapped_pcor(smat5, fdr=0.5, n=500, show_edge_if=50, layout="stress")
+    p1 + p2 + plot_layout(guides="collect")
 }
 
 #fixme: defunct
 EtsErg_TPS = function() {
     genes = c("Ets1", "Erg", "Stat1", "Pias1")
-    dset = io$load("../expr_diff/eset_Mad2PB.RData")
+    dset = readRDS("../expr_diff/eset_Mad2PB.rds")
 
     meta = as.data.frame(SummarizedExperiment::colData(dset$eset))
 
@@ -129,9 +113,9 @@ EtsErg_TPS = function() {
 
     #FIXME: annoying empty plots
     c1 = corrplot::corrplot(cor(t(dset$vs[genes, meta$type == "Myeloid"])), main="Myeloid")
-    c2 = corrplot::corrplot(cor(t(dset$vs[genes, meta$type == "B-like"])), main="B-like")
+    c2 = corrplot::corrplot(cor(t(dset$vs[genes, meta$type == "Other"])), main="B-like")
     c3 = corrplot::corrplot(cor(t(dset$vs[genes, meta$type == "T-cell"])), main="T-ALL")
-    #{ c1 + c2 + c3 + plot_layout(ncol=1) } + { eplot } + plot_layout(nrow=1)
+    { c1 + c2 + c3 + plot_layout(ncol=1) } + { eplot } + plot_layout(nrow=1)
 }
 
 #fixme: defunct
@@ -208,10 +192,13 @@ sys$run({
     # switch Ighm for monocyte marker?
     # myc copies -> myc targets? (maybe: does Myc targets assoc drop when conditioning on copies) [could do xy instead of @volc]
 
-    asm = marker_pca(markers) + plot_annotation(tag_levels='a') &
+    r1 = wrap_elements(marker_pca(markers))
+    r2 = wrap_elements(EtsErg_subtype())
+
+    asm = (r1 / r2) + plot_annotation(tag_levels='a') &
         theme(plot.tag = element_text(size=18, face="bold"))
 
-    pdf(args$plotfile, 16, 5)
+    pdf(args$plotfile, 16, 12)
     print(asm)
     dev.off()
 })
