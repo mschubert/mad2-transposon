@@ -94,10 +94,28 @@ purplot = function(dset) {
         mutate(type = factor(sub("_score", "", type),
                              levels=c("aneup", "purity", "immune", "stromal", "MYC")))
 
+    tests = ds2 %>%
+        group_by(type, MycV1, iclass) %>%
+            summarize(res = list(broom::tidy(lm(score ~ p53_mut)))) %>%
+        ungroup() %>%
+        tidyr::unnest(res) %>%
+        filter(term == "p53_mut1") %>%
+        mutate(adj.p = p.adjust(p.value, method="fdr"),
+               signif = ifelse(adj.p < 0.05, "FDR<0.05", "n.s."))
+
     ggplot(ds2, aes(x=type, fill=type, color=p53_mut, y=score)) +
         geom_boxplot(outlier.shape=NA, position="dodge") + facet_grid(MycV1 ~ iclass) +
-        ggtitle("BRCA by survival class, Myc Targets and p53 status") +
-        scale_color_manual(values=c("0"="#ababab", "1"="#131313"))
+        scale_color_manual(values=c("0"="#ababab", "1"="#131313")) +
+        geom_text(data=tests, aes(label=sprintf("p=%.2g", p.value), alpha=signif), y=3,
+                  color="black", size=2.5, angle=20) +
+        scale_alpha_manual(values=c("FDR<0.05"=1, "n.s."=0.6)) +
+        labs(title = "BRCA by survival class, Myc Targets and p53 status",
+             x = "Sample composition or Myc gene expression",
+             y = "z-score",
+             fill = "Measure",
+             alpha = "Difference",
+             color = "p53 mut") +
+        theme(axis.text.x = element_text(angle=30, hjust=1))
 }
 
 sys$run({
