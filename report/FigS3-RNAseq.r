@@ -95,8 +95,7 @@ sys$run({
                   type = FactorValue..LEUKEMIA.CLASS.)
     mile = cbind(meta, t(expr[c("ETS1", "ERG"),]))
     mile$type = sub(" + other abnormalities", "", mile$type, fixed=TRUE)
-    maneup = import('io')$load("../misc/subtype_overlay/aneup_scores_mile.RData")$aneup %>%
-#    maneup = readRDS("../misc/subtype_overlay/aneup_scores_mile.rds")$aneup %>%
+    maneup = readRDS("../misc/subtype_overlay/aneup_scores_mile.rds")$aneup %>%
         select(sample, aneuploidy)
     mile = mile[mile$type %in% names(hutype),] %>% inner_join(maneup)
 
