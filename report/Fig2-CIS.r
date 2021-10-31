@@ -234,26 +234,26 @@ sys$run({
 
     # create plot objects
     splot = wrap_plots(wrap_elements(schema() + tt +
-        theme(plot.margin=margin(5,-20,10,-20,"mm"))
+        theme(plot.margin=margin(5,0,15,15,"mm"))
     ))
     sc_wgs = wrap_plots(wrap_elements(sc_wgs(scs) + tt +
         theme(axis.text.y = element_blank(),
-              plot.margin = margin(3,0,0,0,"mm"))
+              plot.margin = margin(3,0,0,15,"mm"))
     ))
     aneup_het = wrap_plots(wrap_elements(aneup_het(scs) + tt +
-        theme(plot.margin = margin(15,5,15,0,"mm"))
+        theme(plot.margin = margin(15,15,15,15,"mm"))
     ))
-    stype = wrap_plots(wrap_elements(subtype_assocs(ext, net_genes) + tt +
-        theme(axis.text.y = element_blank(),
-              plot.margin = margin(5,5,5,5,"mm"))
-    ))
+#    stype = wrap_plots(wrap_elements(subtype_assocs(ext, net_genes) + tt +
+#        theme(axis.text.y = element_blank(),
+#              plot.margin = margin(5,5,5,5,"mm"))
+#    ))
 
     ins_mat = wrap_plots(wrap_elements(insertion_matrix(cis, rna_ins, ext$aneuploidy, aneup, net_genes) +
                                        theme(plot.margin = margin(0,0,0,0,"cm"))))
     bnet = wrap_plots(wrap_elements(bionet_combine(bionet) + theme(plot.margin = margin(10,0,10,-25,"mm"))))
 
-    top = (splot | sc_wgs | (aneup_het + plot_layout(tag_level="new")) | stype) +
-        plot_layout(widths=c(4,5.2,2,3))
+    top = (splot | sc_wgs | (aneup_het + plot_layout(tag_level="new"))) +
+        plot_layout(widths=c(1.2,2.5,1))
     bottom =  wrap_plots(ins_mat) + bnet + plot_layout(widths=c(2.1,1))
 
     asm = (top / bottom) + plot_layout(heights=c(1,2)) + plot_annotation(tag_levels='a') &
