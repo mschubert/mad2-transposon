@@ -18,7 +18,8 @@ isCINsig_plot = function(dset) {
         facet_wrap(~measure, scales="free") +
         geom_text_npc(data=stats, aes(label=sprintf("p=%.2g", p.value)),
                       npcx=0.08, npcy=0.95, size=4) +
-        scale_shape_manual(values=c("0"=21, "1"=23), name="TP53 mutation")
+        scale_shape_manual(values=c("0"=21, "1"=23), name="TP53 mutation") +
+        guides(fill = guide_legend(override.aes = list(shape=21), title="PAM50 subtype"))
 }
 
 sgl_plot = function(dset) {
@@ -38,13 +39,15 @@ sgl_plot = function(dset) {
         ungroup() %>%
         tidyr::unnest(res) %>%
         filter(!is.na(estimate)) %>%
-        mutate(p53_status = factor(p53_status, levels=c("all", "wt", "mut")))
+        mutate(p53_status = factor(p53_status, levels=c("all", "wt", "mut")) %>%
+                    forcats::fct_recode("all samples"="all", "p53 wt"="wt", "p53 mut"="mut"))
 
     ggplot(sgl, aes(x=term, y=-log10(p.value))) +
         geom_col(aes(fill=factor(sign(estimate)))) +
         facet_grid(y ~ p53_status, scales="free_x", space="free_x") +
+        scale_fill_manual(values=c("1"="#d6604d", "-1"="#92c5de")) +
         theme(axis.text.x = element_text(hjust=1, angle=45)) +
-        labs(title="Single associations", x="Predictor", fill="Regression slope")
+        labs(title="Single associations of Predictor with Myc/Myc targets", x="Predictor", fill="Regression slope")
 }
 
 aov_plot = function(dset) {
@@ -62,13 +65,16 @@ aov_plot = function(dset) {
     anov = list(MYC = aov_one(MYC ~ type + p53_mut + myc_copy + rev48_stat1_over_wt),
                 MycV1 = aov_one(`Myc Targets V1` ~ type + p53_mut + MYC + myc_copy + rev48_stat1_over_wt)) %>%
         bind_rows(.id="y") %>%
-        mutate(p53_status = factor(p53_status, levels=c("all", "wt", "mut")),
+        mutate(p53_status = factor(p53_status, levels=c("all", "wt", "mut")) %>%
+                    forcats::fct_recode("all samples"="all", "p53 wt"="wt", "p53 mut"="mut"),
                y = factor(y, levels=c("MYC", "MycV1", "aneup_log2seg")))
 
     ggplot(anov, aes(x=rel_sq/2, fill=term, y=frac_sq_total, width=rel_sq)) +
         geom_col() +
         coord_polar("y", start=0) +
         facet_grid(y ~ p53_status) +
+        scale_fill_manual(values=c(MYC="#e31a1c", myc_copy="#fb9a99", p53_mut="#35978f",
+                                   rev48_stat1_over_wt="#6a3d9a", type="#b15928", Residuals="#dedede")) +
         theme(axis.title = element_blank(),
               axis.text = element_blank(),
               axis.ticks = element_blank(),
@@ -87,7 +93,8 @@ purplot = function(dset) {
                aneup = scale(aneup_log2seg),
                MYCg = cut(MYC, c(-Inf,median(MYC),Inf)),
                MYC = scale(MYC),
-               MycV1 = cut(`Myc Targets V1`, c(-Inf,0,Inf)))
+               MycV1 = cut(`Myc Targets V1`, c(-Inf,0,Inf), labels=FALSE),
+               MycV1 = forcats::fct_recode(factor(MycV1), "Myc Targets low"="1", "Myc Targets high"="2"))
 
     ds2 = ds %>%
         tidyr::gather("type", "score", aneup, purity, immune_score, stromal_score, MYC) %>%
