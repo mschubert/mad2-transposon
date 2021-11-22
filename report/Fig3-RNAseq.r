@@ -9,15 +9,13 @@ gset = import('genesets')
 plt = import('plot')
 
 umap_types = function(em) {
-    set.seed(15208)
-    meta = em$meta %>% filter(analysis_set & !is.na(type))
+    set.seed(15202)
+    meta = em$meta %>% filter(analysis_set)
     vst = as.matrix(SummarizedExperiment::assay(em$vst[,meta$sample]))
     umap2 = uwot::umap(t(vst), n_components=2)
     dset = meta %>%
         mutate(umap1 = umap2[,1],
                umap2 = umap2[,2])
-    dset$umap1[dset$umap1 > 0] = dset$umap1[dset$umap1 > 0] - 1.5 # empty space is meaningless, better vis
-    dset$umap2[dset$umap2 > 0] = dset$umap2[dset$umap2 > 0] - 1.5
 
     p1 = ggplot(dset, aes(x=umap1, y=umap2)) +
         geom_point(aes(color=type, size=aneuploidy), alpha=0.8) +
