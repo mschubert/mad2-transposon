@@ -66,7 +66,7 @@ sys$run({
     )
 
     cols = c("Myeloid"="#f8766d", "T-cell"="#619cff", "B-like"="#00ba38",
-             "Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3")
+             "Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen1")
     markers = readRDS(args$markers)
     aset = readRDS("../ploidy_compare/analysis_set.rds")$meta
     dset = readRDS(args$eset)

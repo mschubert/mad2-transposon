@@ -76,7 +76,7 @@ aneup_volcano = function(diff_expr) {
 
 gset_aneup = function(dset) {
     cols = c("Myeloid"="#f8766d", "T-cell"="#619cff", "B-like"="#00ba38",
-             "Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3")
+             "Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen1")
     gdf = dset %>%
         mutate(Subtype = ifelse(is.na(Subtype), as.character(Type), as.character(Subtype))) %>%
         filter(Subtype != "B-like") # rare B-like
@@ -176,7 +176,7 @@ set_tissue = function(dset) {
              geom_text(data=sig_df, aes(x=`Gene set`, label=sig, y=y), size=5, hjust=0.5, vjust=0.5, inherit.aes=FALSE),
              plot_layout(tag_level="new"))
     )
-    subvals = c("Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3")
+    subvals = c("Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen1")
     p11 = ggplot(tsets, aes(x="Aneuploidy", y=Aneuploidy, fill=Type)) +
         common(aes(group=Type, shape=CIS)) +
         geom_text(data=aneup_type, aes(x=x, label=sig), y=0.57, size=5, hjust=0.5, vjust=0.5, inherit.aes=FALSE) +
