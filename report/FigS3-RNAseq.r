@@ -115,8 +115,8 @@ sys$run({
         facet_grid(. ~ dset, scales="free", space="free") +
         scale_x_discrete(guide = guide_axis(n.dodge=3)) +
         scale_fill_manual(values=c(cols, hutype), guide="none") +
-        theme(axis.title.x = element_blank()) +
-        ylab("Aneuploidy")
+        labs(x = "Cancer type",
+             y = "Aneuploidy")
 
     r1 = wrap_elements(marker_pca(markers))
     r2 = wrap_elements(EtsErg_subtype(tps, mile, cols, hutype))
