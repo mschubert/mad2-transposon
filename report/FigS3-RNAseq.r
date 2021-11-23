@@ -44,13 +44,18 @@ EtsErg_subtype = function(tps, mile, cols, hutype) {
     p1 = ggplot(tps, aes(x=Erg, y=Ets1)) +
         geom_point(aes(size=aneuploidy, fill=type), shape=21) +
         ggrepel::geom_text_repel(aes(label=sample), size=2) +
-        ggtitle("Mouse cohort expression") +
-        scale_fill_manual(name="Mouse tumor type", values=cols, guide=guide_legend(override.aes=list(size=3))) +
+        labs(title = "Mouse cohort expression",
+             x = "Erg (variance stabilizing transformation)",
+             y = "Ets1 (variance stabilizing transformation)") +
+        scale_fill_manual(name="Mouse tumor type", values=cols[names(cols) %in% tps$type],
+                          guide=guide_legend(override.aes=list(size=3))) +
         scale_size_continuous(name="Aneuploidy", breaks=c(0,0.1,0.2,0.3,0.4))
 
     p2 = ggplot(mile, aes(x=ERG, y=ETS1)) +
         geom_point(aes(fill=type, size=aneuploidy), alpha=0.5, shape=21) +
-        ggtitle("Human leukemia cohort (MILE)") +
+        labs(title = "Human leukemia cohort (MILE)",
+             x = "ERG (normalized microarray expression)",
+             y = "ETS1 (normalized microarray expression)") +
         scale_fill_manual(name="Human leukemia type", values=hutype, guide=guide_legend(override.aes=list(size=3))) +
         scale_size_continuous(name="Aneuploidy", breaks=c(0,0.1,0.2,0.3,0.4), guide="none") # guide duplicated
 
