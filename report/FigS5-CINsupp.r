@@ -110,12 +110,13 @@ purplot = function(dset) {
         tidyr::unnest(res) %>%
         filter(term == "p53_mut1") %>%
         mutate(adj.p = p.adjust(p.value, method="fdr"),
-               signif = ifelse(adj.p < 0.1, "FDR<0.1", "n.s."))
+               signif = ifelse(adj.p < 0.1, "FDR<0.1", "n.s."),
+               y = ifelse(grepl("low", MycV1), 3, -3))
 
     ggplot(ds2, aes(x=type, fill=type, color=p53_mut, y=score)) +
         geom_boxplot(outlier.shape=NA, position="dodge") + facet_grid(MycV1 ~ iclass) +
         scale_color_manual(values=c("0"="#ababab", "1"="#131313")) +
-        geom_text(data=tests, aes(label=sprintf("p=%.2g", p.value), alpha=signif), y=3,
+        geom_text(data=tests, aes(y=y, label=sprintf("p=%.2g", p.value), alpha=signif),
                   color="black", size=3, angle=20) +
         scale_alpha_manual(values=c("FDR<0.1"=1, "n.s."=0.6)) +
         labs(title = "BRCA by survival class, Myc Targets and p53 status",
