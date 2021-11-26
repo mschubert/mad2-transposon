@@ -113,11 +113,33 @@ purplot = function(dset) {
                signif = ifelse(adj.p < 0.1, "FDR<0.1", "n.s."),
                y = ifelse(grepl("low", MycV1), 3, -3))
 
+    mloCIN = ds2 %>% filter(MycV1 == "Myc Targets low", type == "purity", iclass != "noCIN")
+    mhiCIN = ds2 %>% filter(MycV1 == "Myc Targets high", type == "purity", iclass != "noCIN")
+    imm = ds2 %>% filter(type == "immune", iclass == "CIN_stat1ko")
+    t2 = list(
+        low_wt = lm(score ~ iclass, data=mloCIN %>% filter(p53_mut == 0)),
+        low_mut = lm(score ~ iclass, data=mloCIN %>% filter(p53_mut == 1)),
+        high_both = lm(score ~ iclass, data=mhiCIN),
+        cmp_wt = lm(score ~ MycV1, data=imm %>% filter(p53_mut == 0)),
+        cmp_mut = lm(score ~ MycV1, data=imm %>% filter(p53_mut == 1))
+    ) %>%
+        lapply(broom::tidy) %>% bind_rows(.id="cmp") %>% filter(term != "(Intercept)") %>%
+        mutate(adj.p = p.adjust(p.value, method="fdr"),
+               type = factor(rep("immune", 5), levels=levels(ds2$type)), # x
+               score = c(-3.8, -2.8, 3, -4, -3.5), # y
+               MycV1 = factor(sprintf("Myc Targets %s", c("low", "low", "high", "low", "low")), levels=levels(ds2$MycV1)),
+               iclass = factor(c("CIN", "CIN", "CIN", "CIN_stat1ko", "CIN_stat1ko"), levels=levels(ds2$iclass)),
+               signif = ifelse(adj.p < 0.1, "FDR<0.1", "n.s."),
+               hj = c(0.5, 0.5, 0.5, 1.5, -0.5))
+
     ggplot(ds2, aes(x=type, fill=type, color=p53_mut, y=score)) +
-        geom_boxplot(outlier.shape=NA, position="dodge") + facet_grid(MycV1 ~ iclass) +
+        geom_boxplot(outlier.shape=NA, position="dodge") +
+        facet_grid(MycV1 ~ iclass) +
         scale_color_manual(values=c("0"="#ababab", "1"="#131313")) +
         geom_text(data=tests, aes(y=y, label=sprintf("p=%.2g", p.value), alpha=signif),
                   color="black", size=3, angle=20) +
+        geom_text(data=t2, aes(label=sprintf("p=%.2g", p.value), alpha=signif, hjust=hj),
+                  color="black", size=3) +
         scale_alpha_manual(values=c("FDR<0.1"=1, "n.s."=0.6)) +
         labs(title = "BRCA by survival class, Myc Targets and p53 status",
              x = "Sample composition or Myc gene expression",
