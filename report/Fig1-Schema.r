@@ -14,12 +14,16 @@ cohort = function() {
 }
 
 surv1 = function(meta_all) {
+    gt_col = c("Mad2"="#e2e2e2", "Mad2 PB UT"="#d6e9ee", "Mad2 PB"="#afdde9", "PB"="#ffccaa")
+    gt_col[] = shades::lightness(gt_col, shades::delta(-10))
+    gt_col[] = shades::saturation(gt_col, shades::delta(0.2))
+    gt_col[1] = "#b0b0b0"
     meta2 = meta_all %>%
         mutate(gtpc = factor(paste(genotype, pipc)),
                status = 1)
-    levels(meta2$gtpc) = c("Mad2", "Mad2 PB UT", "Mad2 PB", "PB")
+    levels(meta2$gtpc) = names(gt_col)
     fit = survfit(Surv(months_death, status) ~ gtpc, data=meta2)
-    p1 = ggsurvplot(fit, data=meta2, palette=brewer.pal(4, "Set2"))$plot +
+    p1 = ggsurvplot(fit, data=meta2, palette=unname(gt_col))$plot +
         xlab("Months") +
         ylab("OS") +
         theme(legend.position="none")
@@ -34,7 +38,7 @@ surv1 = function(meta_all) {
         geom_bar(stat="identity", width=1, color="white") +
         scale_y_continuous(breaks=tdf$pos, labels=tdf$n) +
         coord_polar("y", start=0) +
-        scale_fill_brewer(palette="Set2", name="Genotype") +
+        scale_fill_manual(values=gt_col, name="Genotype") +
         theme_void() +
         theme(axis.text.x = element_text()) +
         plot_layout(tag_level="new")
