@@ -60,8 +60,8 @@ pancan_myc_stat = function() {
         coord_cartesian(xlim=c(-1, NA), ylim=c(NA, 1), expand=FALSE) +
         ggpp::annotate("text_npc", npcx=0.1, npcy=0.1, label=sprintf("Pan-cancer inactivation p=%.2g", xp$p.value)) +
         ggpp::annotate("text_npc", npcx=0.1, npcy=0.4, label=sprintf("Pan-cancer activation p=%.2g", yp$p.value), angle=90) +
-        labs(x = "STAT1 (a) with aneuploidy (purity-corrected)",
-             y = "Myc Targets V1 with aneuploidy (purity-corrected)")
+        labs(x = "Δ STAT1 (a) with Δ aneuploidy (purity-corrected)",
+             y = "Δ Myc Targets V1 with Δ aneuploidy (purity-corrected)")
 
     #todo: could show that Myc on avg increases, stat1 unchanged -> separate BRCA in STAT1+/- via KO sig
     # -> show that acuteCIN-high and KO-high are more aneup then no-CIN + effect in surv
@@ -121,7 +121,8 @@ stat1int_mut = function() {
         scale_color_manual(values=setNames(c("#cc9933", "#5500aa"), c("(0,0.1]", "(0.1,Inf]")), name="Aneuploidy") +
         scale_fill_manual(values=setNames(c("#cc9933", "#5500aa"), c("(0,0.1]", "(0.1,Inf]")), name="Aneuploidy") +
         labs(x="Mutations in STAT1 interactors", y="Total number of mutations") +
-        ggpp::annotate("text_npc", npcx=0.2, npcy=0.8, label=sprintf("p=%.2g (F test)", pv2$p.value[2]))
+        ggpp::annotate("text_npc", npcx=0.2, npcy=0.8, label=sprintf("p=%.2g (F test)", pv2$p.value[2])) +
+        theme(legend.position=c(0.85,0.3))
 
     p1 + p2 + plot_layout(widths=c(1,3))
 
@@ -253,7 +254,8 @@ stat1_cin_cor = function(go, hm) {
                 min.segment.length=0, max.overlaps=Inf, segment.alpha=0.3, fill="#ffffffc0",
                 label.padding=unit(0.2, "lines")) +
             coord_cartesian(clip="off") +
-            labs(subtitle = sprintf("%s (p=%.1g FET)", odds, fet$p.value))
+            labs(subtitle = sprintf("%s (p=%.1g FET)", odds, fet$p.value)) +
+            theme(legend.position="none")
     }
 
     p1 = plot_one(ifn) + labs(title = "BT549 acute inflammation",
@@ -349,7 +351,7 @@ sys$run({
 
     asm = wrap_plots(ov / expr_cor + plot_layout(heights=c(1.2,1)) & theme_classic()) + wrap_plots(surv) +
         plot_layout(widths=c(4,0.95)) + plot_annotation(tag_level="a") &
-        theme(plot.tag = element_text(size=18, face="bold"),
+        theme(plot.tag = element_text(size=24, face="bold"),
               plot.title = element_text(size=14),
               plot.subtitle = element_text(size=12),
               legend.title = element_text(size=12),
@@ -358,7 +360,7 @@ sys$run({
               axis.text.y = element_text(size=12),
               axis.title = element_text(size=14))
 
-    pdf(args$plotfile, 24, 14)
+    cairo_pdf(args$plotfile, 24, 14)
     print(asm)
     dev.off()
 })

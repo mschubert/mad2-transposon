@@ -182,6 +182,9 @@ aneup_het = function(scs) {
     m = lm(Heterogeneity ~ 0 + Aneuploidy, data=measures)
     mb = broom::tidy(m)
     mlab = sprintf("p=%.2g<br/>R<sup>2</sup>=%.2f", mb$p.value, broom::glance(m)$r.squared)
+
+    measures = bind_rows(measures, tibble(sample="Euploid tumors", Aneuploidy=0, Heterogeneity=0))
+
     ggplot(measures, aes(x=Aneuploidy, y=Heterogeneity)) +
         geom_abline(slope=mb$estimate, color="purple", linetype="dashed", size=1) +
         geom_point(size=5, alpha=0.6) +

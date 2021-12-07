@@ -14,28 +14,36 @@ cohort = function() {
 }
 
 surv1 = function(meta_all) {
+    gt_col = c("Mad2"="#e2e2e2", "Mad2 PB UT"="#d6e9ee", "Mad2 PB"="#afdde9", "PB"="#ffccaa")
+    gt_col[] = shades::lightness(gt_col, shades::delta(-10))
+    gt_col[] = shades::saturation(gt_col, shades::delta(0.2))
+    gt_col[1] = "#b0b0b0"
     meta2 = meta_all %>%
         mutate(gtpc = factor(paste(genotype, pipc)),
                status = 1)
-    levels(meta2$gtpc) = c("Mad2", "Mad2 PB UT", "Mad2 PB", "PB")
+    levels(meta2$gtpc) = names(gt_col)
     fit = survfit(Surv(months_death, status) ~ gtpc, data=meta2)
-    p1 = ggsurvplot(fit, data=meta2, palette=brewer.pal(4, "Set2"))$plot +
+    p1 = ggsurvplot(fit, data=meta2, palette=unname(gt_col))$plot +
         xlab("Months") +
         ylab("OS") +
         theme(legend.position="none")
 
     tdf = meta2 %>%
         group_by(gtpc) %>%
-        summarize(frac = n() / nrow(.))
-    p2 = ggplot(tdf, aes(x="", y=frac, fill=gtpc)) +
+        summarize(n = n(), frac = n() / nrow(.)) %>%
+        mutate(csum = rev(cumsum(rev(frac))),
+               pos = frac/2 + lead(csum, 1),
+               pos = if_else(is.na(pos), frac/2, pos))
+    p2 = ggplot(tdf, aes(x=1, y=frac, fill=gtpc)) +
         geom_bar(stat="identity", width=1, color="white") +
+        scale_y_continuous(breaks=tdf$pos, labels=tdf$n) +
         coord_polar("y", start=0) +
-#        geom_text(aes(y=ypos, label=frac), color = "white", size=6) +
-        scale_fill_brewer(palette="Set2", name="Genotype") +
+        scale_fill_manual(values=gt_col, name="Genotype") +
         theme_void() +
+        theme(axis.text.x = element_text()) +
         plot_layout(tag_level="new")
 
-    (p1 | p2) + plot_layout(widths=c(1.5,1))
+    (p1 | p2) + plot_layout(widths=c(2,1))
 }
 
 surv2 = function(meta) {
@@ -48,16 +56,20 @@ surv2 = function(meta) {
 
     tdf = meta %>%
         group_by(type) %>%
-        summarize(frac = n() / nrow(.))
-    p2 = ggplot(tdf, aes(x="", y=frac, fill=type)) +
+        summarize(n = n(), frac = n() / nrow(.)) %>%
+        mutate(csum = rev(cumsum(rev(frac))),
+               pos = frac/2 + lead(csum, 1),
+               pos = if_else(is.na(pos), frac/2, pos))
+    p2 = ggplot(tdf, aes(x=1, y=frac, fill=type)) +
         geom_bar(stat="identity", width=1, color="white") +
+        scale_y_continuous(breaks=tdf$pos, labels=tdf$n) +
         coord_polar("y", start=0) +
         guides(fill = guide_legend(title="Cancer type")) +
-#        geom_text(aes(y=ypos, label=frac), color = "white", size=6) +
         theme_void() +
+        theme(axis.text.x = element_text()) +
         plot_layout(tag_level="new")
 
-    (p1 | p2) + plot_layout(widths=c(1.5,1))
+    (p1 | p2) + plot_layout(widths=c(2,1))
 }
 
 chrom_genes = function() {
@@ -89,7 +101,7 @@ chroms = function(segs, meta) {
         inner_join(meta %>% select(sample, aneuploidy)) %>%
         mutate(copy.number = factor(round(ploidy)))
 
-    plt$genome$heatmap(wgs30, cell="sample") +
+    plt$genome$heatmap(wgs30, cell="sample", y_dodge=2) +
         guides(fill=guide_legend(title="Copy number")) +
         theme(plot.background = element_rect(fill="transparent", color=NA),
               panel.background = element_rect(fill="transparent", color=NA),
@@ -99,7 +111,7 @@ chroms = function(segs, meta) {
               panel.grid.major = element_blank(),
               panel.grid.minor = element_blank(),
               axis.text.x = element_text(angle=60, hjust=1),
-              axis.text.y = element_text(size=5.5)) +
+              axis.text.y = element_text(size=8)) +
         coord_cartesian(clip="off") +
         plot_layout(tag_level="new")
 }
@@ -129,7 +141,7 @@ genotype_weights = function(meta) {
         geom_col(aes(fill=sw), color="white") +
         scale_fill_manual(values=c("TRUE"="purple", "FALSE"="grey"), guide=FALSE) +
         coord_flip(expand=FALSE, clip="off") +
-        scale_y_continuous(breaks=50) +
+        scale_y_continuous(breaks=50, labels="50% switch") +
         theme_classic() +
         theme(axis.line = element_blank(),
               axis.ticks.y = element_blank(),
@@ -140,9 +152,8 @@ genotype_weights = function(meta) {
         geom_point(aes(size=weight), alpha=0.2) +
         coord_cartesian(clip="off") +
         guides(size=guide_legend(title="Weight (grams)")) +
-        scale_size_area(breaks=c(1,1.5)) &
+        scale_size_area(breaks=c(0.5,1)) &
         theme_minimal()
-    #todo: mad2 switching in % as bar?
     ct + sex + gtsw + tumors + plot_layout(widths=c(1,1,3,3), tag_level="new") &
         theme(plot.margin = margin(0,0,0,0,"mm"),
               axis.ticks.y = element_blank(),
@@ -168,8 +179,9 @@ sys$run({
     segs = aset$segs %>%
         filter(is_pref_src)
 
-    topright = wrap_plots(wrap_elements(surv1(meta_all) / surv2(meta)))
-    top = (cohort() | topright) + plot_layout(widths=c(1.6,1))
+    cohort_ov = cohort() & theme(plot.margin = margin(0,-5,0,0,"cm"))
+    topright = wrap_plots(wrap_elements((surv1(meta_all) / surv2(meta)) & theme(plot.margin = margin(0,0,-2.5,-4,"mm"))))
+    top = (cohort_ov | topright) + plot_layout(widths=c(1.6,1))
     btm = chrom_genes() + plot_spacer() + chroms(segs, meta) + genotype_weights(meta) +
         plot_layout(widths=unit(c(1,3), c("null","cm")), heights=c(1,18), guides="collect")
 

@@ -44,13 +44,18 @@ EtsErg_subtype = function(tps, mile, cols, hutype) {
     p1 = ggplot(tps, aes(x=Erg, y=Ets1)) +
         geom_point(aes(size=aneuploidy, fill=type), shape=21) +
         ggrepel::geom_text_repel(aes(label=sample), size=2) +
-        ggtitle("Mouse cohort expression") +
-        scale_fill_manual(name="Mouse tumor type", values=cols, guide=guide_legend(override.aes=list(size=3))) +
+        labs(title = "Mouse cohort expression",
+             x = "Erg (variance stabilizing transformation)",
+             y = "Ets1 (variance stabilizing transformation)") +
+        scale_fill_manual(name="Mouse tumor type", values=cols[names(cols) %in% tps$type],
+                          guide=guide_legend(override.aes=list(size=3))) +
         scale_size_continuous(name="Aneuploidy", breaks=c(0,0.1,0.2,0.3,0.4))
 
     p2 = ggplot(mile, aes(x=ERG, y=ETS1)) +
         geom_point(aes(fill=type, size=aneuploidy), alpha=0.5, shape=21) +
-        ggtitle("Human leukemia cohort (MILE)") +
+        labs(title = "Human leukemia cohort (MILE)",
+             x = "ERG (normalized microarray expression)",
+             y = "ETS1 (normalized microarray expression)") +
         scale_fill_manual(name="Human leukemia type", values=hutype, guide=guide_legend(override.aes=list(size=3))) +
         scale_size_continuous(name="Aneuploidy", breaks=c(0,0.1,0.2,0.3,0.4), guide="none") # guide duplicated
 
@@ -66,7 +71,7 @@ sys$run({
     )
 
     cols = c("Myeloid"="#f8766d", "T-cell"="#619cff", "B-like"="#00ba38",
-             "Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen3")
+             "Ets1"="chartreuse3", "Erg"="forestgreen", "Ebf1"="darkolivegreen1")
     markers = readRDS(args$markers)
     aset = readRDS("../ploidy_compare/analysis_set.rds")$meta
     dset = readRDS(args$eset)
@@ -110,8 +115,8 @@ sys$run({
         facet_grid(. ~ dset, scales="free", space="free") +
         scale_x_discrete(guide = guide_axis(n.dodge=3)) +
         scale_fill_manual(values=c(cols, hutype), guide="none") +
-        theme(axis.title.x = element_blank()) +
-        ylab("Aneuploidy")
+        labs(x = "Cancer type",
+             y = "Aneuploidy")
 
     r1 = wrap_elements(marker_pca(markers))
     r2 = wrap_elements(EtsErg_subtype(tps, mile, cols, hutype))

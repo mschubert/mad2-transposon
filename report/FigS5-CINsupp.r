@@ -16,10 +16,12 @@ isCINsig_plot = function(dset) {
         geom_point(aes(fill=type, shape=factor(p53_mut)), size=2, alpha=0.6) +
         geom_smooth(method="lm", se=FALSE) +
         facet_wrap(~measure, scales="free") +
-        geom_text_npc(data=stats, aes(label=sprintf("p=%.2g", p.value)),
-                      npcx=0.08, npcy=0.95, size=4) +
+        geom_label_npc(data=stats, aes(label=sprintf("p=%.2g", p.value)),
+                       npcx=0.08, npcy=0.95, size=3, label.size=NA, fill="#ffffffc0") +
         scale_shape_manual(values=c("0"=21, "1"=23), name="TP53 mutation") +
-        guides(fill = guide_legend(override.aes = list(shape=21), title="PAM50 subtype"))
+        scale_fill_discrete(name="PAM50 subtype", na.value="#ffffff00") +
+        guides(fill = guide_legend(override.aes = list(shape=21))) +
+        xlab("CIN + STAT1 ko signature (rev48_stat1_over_wt)")
 }
 
 sgl_plot = function(dset) {
@@ -43,9 +45,9 @@ sgl_plot = function(dset) {
                     forcats::fct_recode("all samples"="all", "p53 wt"="wt", "p53 mut"="mut"))
 
     ggplot(sgl, aes(x=term, y=-log10(p.value))) +
-        geom_col(aes(fill=factor(sign(estimate)))) +
+        geom_col(aes(fill=c("1"="positive","-1"="negative")[as.character(sign(estimate))])) +
         facet_grid(y ~ p53_status, scales="free_x", space="free_x") +
-        scale_fill_manual(values=c("1"="#d6604d", "-1"="#92c5de")) +
+        scale_fill_manual(values=c("positive"="#d6604d", "negative"="#92c5de")) +
         theme(axis.text.x = element_text(hjust=1, angle=45)) +
         labs(title="Single associations of Predictor with Myc/Myc targets", x="Predictor", fill="Regression slope")
 }
@@ -97,9 +99,9 @@ purplot = function(dset) {
                MycV1 = forcats::fct_recode(factor(MycV1), "Myc Targets low"="1", "Myc Targets high"="2"))
 
     ds2 = ds %>%
-        tidyr::gather("type", "score", aneup, purity, immune_score, stromal_score, MYC) %>%
+        tidyr::gather("type", "score", purity, immune_score, stromal_score) %>%
         mutate(type = factor(sub("_score", "", type),
-                             levels=c("aneup", "purity", "immune", "stromal", "MYC")))
+                             levels=c("purity", "immune", "stromal")))
 
     tests = ds2 %>%
         group_by(type, MycV1, iclass) %>%
@@ -108,14 +110,37 @@ purplot = function(dset) {
         tidyr::unnest(res) %>%
         filter(term == "p53_mut1") %>%
         mutate(adj.p = p.adjust(p.value, method="fdr"),
-               signif = ifelse(adj.p < 0.05, "FDR<0.05", "n.s."))
+               signif = ifelse(adj.p < 0.1, "FDR<0.1", "n.s."),
+               y = ifelse(grepl("low", MycV1), 3, -3))
+
+    mloCIN = ds2 %>% filter(MycV1 == "Myc Targets low", type == "purity", iclass != "noCIN")
+    mhiCIN = ds2 %>% filter(MycV1 == "Myc Targets high", type == "purity", iclass != "noCIN")
+    imm = ds2 %>% filter(type == "immune", iclass == "CIN_stat1ko")
+    t2 = list(
+        low_wt = lm(score ~ iclass, data=mloCIN %>% filter(p53_mut == 0)),
+        low_mut = lm(score ~ iclass, data=mloCIN %>% filter(p53_mut == 1)),
+        high_both = lm(score ~ iclass, data=mhiCIN),
+        cmp_wt = lm(score ~ MycV1, data=imm %>% filter(p53_mut == 0)),
+        cmp_mut = lm(score ~ MycV1, data=imm %>% filter(p53_mut == 1))
+    ) %>%
+        lapply(broom::tidy) %>% bind_rows(.id="cmp") %>% filter(term != "(Intercept)") %>%
+        mutate(adj.p = p.adjust(p.value, method="fdr"),
+               type = factor(rep("immune", 5), levels=levels(ds2$type)), # x
+               score = c(-3.8, -2.8, 3, -4, -3.5), # y
+               MycV1 = factor(sprintf("Myc Targets %s", c("low", "low", "high", "low", "low")), levels=levels(ds2$MycV1)),
+               iclass = factor(c("CIN", "CIN", "CIN", "CIN_stat1ko", "CIN_stat1ko"), levels=levels(ds2$iclass)),
+               signif = ifelse(adj.p < 0.1, "FDR<0.1", "n.s."),
+               hj = c(0.5, 0.5, 0.5, 1.5, -0.5))
 
     ggplot(ds2, aes(x=type, fill=type, color=p53_mut, y=score)) +
-        geom_boxplot(outlier.shape=NA, position="dodge") + facet_grid(MycV1 ~ iclass) +
+        geom_boxplot(outlier.shape=NA, position="dodge") +
+        facet_grid(MycV1 ~ iclass) +
         scale_color_manual(values=c("0"="#ababab", "1"="#131313")) +
-        geom_text(data=tests, aes(label=sprintf("p=%.2g", p.value), alpha=signif), y=3,
-                  color="black", size=2.5, angle=20) +
-        scale_alpha_manual(values=c("FDR<0.05"=1, "n.s."=0.6)) +
+        geom_text(data=tests, aes(y=y, label=sprintf("p=%.2g", p.value), alpha=signif),
+                  color="black", size=3, angle=20) +
+        geom_text(data=t2, aes(label=sprintf("p=%.2g", p.value), alpha=signif, hjust=hj),
+                  color="black", size=3) +
+        scale_alpha_manual(values=c("FDR<0.1"=1, "n.s."=0.6)) +
         labs(title = "BRCA by survival class, Myc Targets and p53 status",
              x = "Sample composition or Myc gene expression",
              y = "z-score",
