@@ -16,4 +16,4 @@
 https://www.biorxiv.org/content/10.1101/2021.12.03.471107v2
 
 This repository contains all analysis code, but we are still in the process of
-cleaning it up.
+cleaning it up and properly documenting it.
