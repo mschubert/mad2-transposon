@@ -6,13 +6,17 @@ tcga = import('data/tcga')
 
 stat1int_mut = function() {
     op = OmnipathR::import_all_interactions()
-    net = OmnipathR::interaction_graph(op) %>%
-        as_tbl_graph() %>%
+    net2 = OmnipathR::interaction_graph(op) %>%
+        as_tbl_graph()
+    net = net2 %>%
             convert(to_undirected, .clean=TRUE) %>%
             convert(to_simple, .clean=TRUE) %E>%
         select(-.orig_data)
     ints = igraph::neighbors(net, "STAT1")$name
     tot = igraph::V(net)$name
+
+    # use this to check the type of specific interactions
+    net2 %N>% filter(name %in% c("STAT1", "EP300")) #%E>% as.data.frame()
 
     load_fl = function(coh) tcga$mutations(coh) %>%
         filter(Variant_Classification != "Silent") %>%
