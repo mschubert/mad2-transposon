@@ -45,7 +45,16 @@ plot_cnas = function(xx) {
              y = "Aneuploidy") +
         ggsignif::geom_signif(color="black", test=wilcox.test, comparisons=list(c("0", "1")))
 
-    p2 = ggplot(xx, aes(x=aneup_class, y=cna/(n_del), color=aneup_class)) +
+    #todo: remove filter, but doesn't change stats (ggsignif/issues/48)
+    p2 = ggplot(xx %>% filter(n_del<250), aes(x=aneup_class, y=n_del, color=aneup_class)) +
+        geom_boxplot(outlier.shape=NA) +
+#        coord_cartesian(ylim=c(NA, 250)) +
+        scale_color_manual(values=setNames(c("#cc9933", "#5500aa"), c("(0,0.1]", "(0.1,Inf]")), name="Aneuploidy") +
+        labs(x = "Aneuploidy",
+             y = "Total number of lost genes") +
+        ggsignif::geom_signif(color="black", test=wilcox.test, comparisons=list(c("(0,0.1]", "(0.1,Inf]")))
+
+    p3 = ggplot(xx, aes(x=aneup_class, y=cna/(n_del), color=aneup_class)) +
         geom_boxplot(outlier.shape=NA) +
         facet_wrap(~ gene) +
         scale_y_log10() +
@@ -54,7 +63,7 @@ plot_cnas = function(xx) {
         scale_color_manual(values=setNames(c("#cc9933", "#5500aa"), c("(0,0.1]", "(0.1,Inf]")), name="Aneuploidy") +
         ggsignif::geom_signif(color="black", test=wilcox.test, comparisons=list(c("(0,0.1]", "(0.1,Inf]")))
 
-    p1 | p2
+    (p1 | p2 | p3) + plot_layout(widths=c(2,1,2))
 }
 
 get_muts = function(aneup) {
@@ -84,16 +93,24 @@ plot_muts = function(both) {
              y = "Aneuploidy") +
         ggsignif::geom_signif(color="black", test=wilcox.test, comparisons=list(c("0", "1")))
 
-    p2 = ggplot(both %>% filter(mut == 1), aes(x=aneup_class, y=1/tot, color=aneup_class)) +
+    #todo: remove filter, but doesn't change stats (ggsignif/issues/48)
+    p2 = ggplot(both %>% filter(tot < 500), aes(x=aneup_class, y=tot, color=aneup_class)) +
         geom_boxplot(outlier.shape=NA) +
-        guides(color="none") +
+#        coord_cartesian(ylim=c(NA, 500)) +
+        scale_color_manual(values=setNames(c("#cc9933", "#5500aa"), c("(0,0.1]", "(0.1,Inf]")), name="Aneuploidy") +
+        labs(x = "Aneuploidy",
+             y = "Total number of mutations") +
+        ggsignif::geom_signif(color="black", test=wilcox.test, comparisons=list(c("(0,0.1]", "(0.1,Inf]")))
+
+    p3 = ggplot(both %>% filter(mut == 1), aes(x=aneup_class, y=1/tot, color=aneup_class)) +
+        geom_boxplot(outlier.shape=NA) +
         facet_wrap(~ gene) +
         scale_color_manual(values=setNames(c("#cc9933", "#5500aa"), c("(0,0.1]", "(0.1,Inf]")), name="Aneuploidy") +
         labs(x="Aneuploidy", y="As fraction of total mutational load") +
         scale_y_log10() +
         ggsignif::geom_signif(color="black", test=wilcox.test, comparisons=list(c("(0,0.1]", "(0.1,Inf]")))
 
-    p1 | p2
+    (p1 | p2 | p3) + plot_layout(widths=c(2,1,2))
 }
 
 sys$run({
@@ -101,5 +118,5 @@ sys$run({
     muts = get_muts(aneup)
     cnas = get_cnas(aneup)
 
-    (plot_muts(muts) / plot_cnas(cnas)) + plot_layout(guides="collect")
+    (plot_muts(muts) / plot_cnas(cnas)) + plot_layout(guides="collect") & theme_classic()
 })
