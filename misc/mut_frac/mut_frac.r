@@ -3,12 +3,6 @@ library(ggplot2)
 library(patchwork)
 tcga = import('data/tcga')
 
-# load mutations, gistic
-load_fl = function(coh) tcga$mutations(coh) %>%
-    transmute(cohort=coh, Sample=Sample, gene=Hugo_Symbol, vclass=Variant_Classification)
-muts = lapply(tcga$cohorts(), load_fl) %>%
-    dplyr::bind_rows()
-
 aneup = tcga$aneuploidy() %>%
     select(Sample, aneup=aneup_log2seg) %>%
     inner_join(tcga$purity() %>% select(Sample, cohort, purity=estimate)) %>%
@@ -18,33 +12,33 @@ aneup = tcga$aneuploidy() %>%
     mutate(aneup = aneup / purity,
            aneup_class = cut(aneup, c(0,0.1,Inf)))
 
+# copy number changes
 cnas = tcga$cna_gistic(thresh=TRUE) %>%
     reshape2::melt() %>%
     dplyr::rename(Sample=Var2, gene=Var1, gistic=value) %>%
     as_tibble() %>%
     filter(substr(Sample, 14, 16) == "01A")
-
 cfrac = cnas %>%
     group_by(Sample) %>%
         summarize(n_eup = sum(gistic == 1),
                   n_amp = sum(gistic == 2),
                   n_del = sum(gistic == -2),
-                  TP53_loss = as.integer(gistic[gene == "TP53"] == -2),
-#                  MYC_amp = as.integer(gistic[gene == "MYC"] == 2),
-                  IFNA1_loss = as.integer(gistic[gene == "IFNA1"] == -2)) %>%
-#                  IFNB1_loss = as.integer(gistic[gene == "IFNB1"] == -2),
-#                  CDKN2A_loss = as.integer(gistic[gene == "CDKN2A"] == -2)) %>%
+                  `TP53 loss` = as.integer(gistic[gene == "TP53"] == -2),
+#                  `MYC amp` = as.integer(gistic[gene == "MYC"] == 2),
+                  `IFNA1 loss` = as.integer(gistic[gene == "IFNA1"] == -2)) %>%
+#                  `IFNB1 loss` = as.integer(gistic[gene == "IFNB1"] == -2),
+#                  `CDKN2A loss` = as.integer(gistic[gene == "CDKN2A"] == -2)) %>%
     ungroup()
-
 xx = inner_join(aneup, cfrac) %>%
     tidyr::gather("gene", "cna", -(Sample:n_del)) %>%
-    mutate(gene = factor(gene, levels=c("MYC_amp", "IFNA1_loss", "TP53_loss")))
+    mutate(gene = factor(gene, levels=c("MYC amp", "IFNA1 loss", "TP53 loss")))
+
 p1 = ggplot(xx, aes(x=aneup_class, y=cna/(n_del), color=aneup_class)) +
     geom_boxplot(outlier.shape=NA) +
     facet_wrap(~ gene) +
     scale_y_log10() +
     labs(x = "Aneuploidy",
-         y = "Fraction of genes lost") +
+         y = "As fraction of genes lost") +
     scale_color_manual(values=setNames(c("#cc9933", "#5500aa"), c("(0,0.1]", "(0.1,Inf]")), name="Aneuploidy") +
     ggsignif::geom_signif(color="black", test=wilcox.test, comparisons=list(c("(0,0.1]", "(0.1,Inf]")))
 p0 = ggplot(xx, aes(x=factor(cna), y=aneup, color=factor(cna))) +
@@ -55,10 +49,9 @@ p0 = ggplot(xx, aes(x=factor(cna), y=aneup, color=factor(cna))) +
          y = "Aneuploidy") +
     ggsignif::geom_signif(color="black", test=wilcox.test, comparisons=list(c("0", "1")))
 
-# frac of genes affected?
-
-# STAT1, TP53, TP53 loss, MYC amp, CDKN2A loss, IFNA loss?
-
+# mutated genes
+load_fl = function(coh) tcga$mutations(coh) %>%
+    transmute(cohort=coh, Sample=Sample, gene=Hugo_Symbol, vclass=Variant_Classification)
 m = lapply(tcga$cohorts(), load_fl) %>%
     dplyr::bind_rows() %>%
     group_by(cohort, Sample) %>%
@@ -68,7 +61,6 @@ m = lapply(tcga$cohorts(), load_fl) %>%
                   TP53 = as.integer("TP53" %in% gene[vclass != "Silent"]),
                   TTN = as.integer("TTN" %in% gene[vclass != "Silent"])) %>%
     ungroup()
-
 both = aneup %>%
     inner_join(m)
 
@@ -89,12 +81,9 @@ p3 = ggplot(tmb, aes(x=aneup_class, y=1/tot, color=aneup_class)) +
     guides(color="none") +
     facet_wrap(~ gene) +
     scale_color_manual(values=setNames(c("#cc9933", "#5500aa"), c("(0,0.1]", "(0.1,Inf]")), name="Aneuploidy") +
-    labs(x="Aneuploidy", y="Fraction of total mutational load") +
+    labs(x="Aneuploidy", y="As fraction of total mutational load") +
     scale_y_log10() +
     ggsignif::geom_signif(color="black", test=wilcox.test, comparisons=list(c("(0,0.1]", "(0.1,Inf]")))
 
 
-# are TTN^mut samples more aneup than TTN^wt? (-> if yes explains TP53^mut more aneup); +tot #muts aneup vs eup
-# or, do aneup samples more more muts?
-
-p0 + p1 + p2 + p3 + plot_layout(ncol=2, guides="collect")
+p2 + p3 + p0 + p1 + plot_layout(ncol=2, guides="collect")
