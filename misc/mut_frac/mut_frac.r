@@ -67,6 +67,44 @@ plot_cnas = function(xx) {
     (p1 | p2 | p3) + plot_layout(widths=c(2,1,2))
 }
 
+all_muts_volc = function(aneup) {
+    plt = import('plot')
+    gset = import('genesets')
+
+    load_fl = function(coh) tcga$mutations(coh) %>%
+        transmute(cohort=coh, Sample=Sample, gene=Hugo_Symbol, vclass=Variant_Classification)
+    m = lapply(tcga$cohorts(), load_fl) %>%
+        dplyr::bind_rows() %>%
+        inner_join(aneup) %>%
+        group_by(aneup_class, Sample) %>%
+            mutate(tot = n_distinct(gene)) %>%
+        ungroup() %>%
+        filter(tot <= 5000)
+    genes = table(m$gene)
+    genes = names(genes)[genes > 50]
+
+    test_one = function(g) {
+        df = m %>% filter(g == gene) %>% group_by(aneup_class, Sample) %>% summarize(.gene = -log10(tot[1]))
+        broom::tidy(lm(.gene ~ aneup_class, data=df))
+    }
+    res = sapply(genes, test_one, simplify=FALSE) %>% bind_rows(.id="gene") %>%
+        filter(term != "(Intercept)") %>%
+        arrange(p.value)
+    res$circle = res$gene %in% c("JAK1", "JAK2", "STAT1", "B2M", "TP53")
+    plt$volcano(res, ceil=1e-15, label_top=50)
+
+    sets = gset$get_human(c("MSigDB_Hallmark_2020", "GO_Biological_Process_Tree"))
+    s1 = gset$test_lm(res, sets[[1]])
+    plt$volcano(s1)
+    s2 = gset$test_lm(res, sets[[2]])
+
+    res2 = res[res$circle,]
+    ggplot(res, aes(x=estimate)) +
+        geom_density() +
+        geom_point(data=res2, y=0, aes(x=estimate)) +
+        ggrepel::geom_text_repel(data=res2, y=0, aes(x=estimate, label=gene))
+}
+
 get_muts = function(aneup) {
     load_fl = function(coh) tcga$mutations(coh) %>%
         transmute(cohort=coh, Sample=Sample, gene=Hugo_Symbol, vclass=Variant_Classification)
