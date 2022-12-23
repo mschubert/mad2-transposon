@@ -105,6 +105,28 @@ all_muts_volc = function(aneup) {
         ggrepel::geom_text_repel(data=res2, y=0, aes(x=estimate, label=gene))
 }
 
+dn_ds_try = function(aneup) {
+    load_fl = function(coh) tcga$mutations(coh) %>%
+        transmute(cohort=coh, Sample=Sample, gene=Hugo_Symbol, vclass=Variant_Classification)
+    m = lapply(tcga$cohorts(), load_fl) %>%
+        dplyr::bind_rows() %>%
+        inner_join(aneup)
+
+    fracs = m %>%
+        group_by(Sample) %>%
+            filter(n() < 3000) %>%
+        group_by(aneup_class, gene) %>%
+            summarize(dn = sum(vclass != "Silent"),
+                      ds = sum(vclass == "Silent"))
+    res = fracs %>%
+        group_by(gene) %>%
+            filter(n() == 2) %>%
+            summarize(res = list(broom::tidy(fisher.test(matrix(c(dn, ds), ncol=2))))) %>%
+        tidyr::unnest(res) %>%
+        select(-method, -alternative) %>%
+        arrange(p.value)
+}
+
 get_muts = function(aneup) {
     load_fl = function(coh) tcga$mutations(coh) %>%
         transmute(cohort=coh, Sample=Sample, gene=Hugo_Symbol, vclass=Variant_Classification)
@@ -115,7 +137,7 @@ get_muts = function(aneup) {
             summarize(tot = unique(n),
                       STAT1 = as.integer("STAT1" %in% gene[vclass != "Silent"]),
                       TP53 = as.integer("TP53" %in% gene[vclass != "Silent"]),
-                      JAK2 = as.integer("JAK2" %in% gene[vclass != "Silent"]),
+                      JAK1 = as.integer("JAK1" %in% gene[vclass != "Silent"]),
 #                      B2M = as.integer("B2M" %in% gene[vclass != "Silent"]),
                       TTN = as.integer("TTN" %in% gene[vclass != "Silent"])) %>%
         ungroup()
