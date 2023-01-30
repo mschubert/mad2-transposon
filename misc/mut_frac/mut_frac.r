@@ -38,12 +38,15 @@ get_cnas = function(aneup) {
 }
 
 plot_cnas = function(cnas) {
-    cna_cols = setNames(c("#cc9933", "#5500aa"), c("(0,0.1]", "(0.1,Inf]"))
+    mut_cols = c(`0`="#377eb8", `1`="#e41a1c")
+    mut_fill = c(`0`="#b3cde345", `1`="#fbb4ae45")
+    cna_cols = c(`(0,0.1]`="#cc9933", `(0.1,Inf]`="#5500aa")
 
     p1 = ggplot(cnas, aes(x=factor(cna), y=aneup, color=factor(cna))) +
-        geom_boxplot(outlier.shape=NA) +
+        geom_boxplot(aes(fill=factor(cna)), outlier.shape=NA) +
         facet_wrap(~ gene) +
-        scale_color_brewer(palette="Set1", name="Genomic\nevent") +
+        scale_color_manual(values=mut_cols) +
+        scale_fill_manual(values=mut_fill) +
         labs(x = "Presence of event",
              y = "Aneuploidy") +
         ggsignif::geom_signif(color="black", test=wilcox.test, comparisons=list(c("0", "1")))
@@ -59,12 +62,13 @@ plot_cnas = function(cnas) {
             comparisons=list(c("(0,0.1]", "(0.1,Inf]")), y_position=10)
 
     p3 = ggplot(cnas, aes(x=aneup_class, y=cna/(n_del), color=aneup_class)) +
-        geom_boxplot(outlier.shape=NA) +
+        geom_boxplot(aes(fill=factor(cna)), outlier.shape=NA) +
         facet_wrap(~ gene) +
         scale_y_log10() +
         labs(x = "Aneuploidy",
              y = "As fraction of genes lost") +
         scale_color_manual(values=cna_cols, name="Aneuploidy") +
+        scale_fill_manual(values=mut_fill) +
         ggsignif::geom_signif(color="black", test=wilcox.test,
             comparisons=list(c("(0,0.1]", "(0.1,Inf]")))
 
@@ -185,11 +189,14 @@ get_muts = function(aneup) {
 }
 
 plot_muts = function(muts) {
-    cna_cols = setNames(c("#cc9933", "#5500aa"), c("(0,0.1]", "(0.1,Inf]"))
+    mut_cols = c(`0`="#377eb8", `1`="#e41a1c")
+    mut_fill = c(`0`="#b3cde345", `1`="#fbb4ae45")
+    cna_cols = c(`(0,0.1]`="#cc9933", `(0.1,Inf]`="#5500aa")
 
     p1 = ggplot(muts, aes(x=factor(mut), y=aneup, color=factor(mut))) +
-        geom_boxplot(outlier.shape=NA) +
-        scale_color_brewer(palette="Set1", name="Genomic\nevent") +
+        geom_boxplot(aes(fill=factor(mut)), outlier.shape=NA) +
+        scale_color_manual(values=mut_cols) +
+        scale_fill_manual(values=mut_fill) +
         facet_wrap(~ gene) +
         labs(x = "Presence of mutation",
              y = "Aneuploidy") +
@@ -206,7 +213,9 @@ plot_muts = function(muts) {
             comparisons=list(c("(0,0.1]", "(0.1,Inf]")), y_position=200)
 
     p3 = ggplot(muts %>% filter(mut == 1), aes(x=aneup_class, y=1/tot, color=aneup_class)) +
-        geom_boxplot(outlier.shape=NA) +
+        geom_boxplot(aes(fill=factor(mut)), outlier.shape=NA) +
+        scale_color_manual(values=mut_cols) +
+        scale_fill_manual(values=mut_fill) +
         facet_wrap(~ gene) +
         scale_color_manual(values=cna_cols, name="Aneuploidy") +
         labs(x="Aneuploidy", y="As fraction of mutated genes") +
