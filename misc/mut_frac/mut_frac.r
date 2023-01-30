@@ -38,17 +38,17 @@ get_cnas = function(aneup) {
 }
 
 plot_cnas = function(cnas) {
-    ev_fill = c(Absent="#b3cde3", Present="#fbb4ae")
+    ev_fill = c(Absent="#ccebc5", Present="#fed9a6")
     cna_cols = c(`(0,0.1]`="#a65628", `(0.1,Inf]`="#5500aa")
     cnas$event = ifelse(cnas$cna, "Present", "Absent") %>% factor(levels=names(ev_fill))
 
-    p1 = ggplot(cnas, aes(x=cna, y=aneup, fill=cna)) +
+    p1 = ggplot(cnas, aes(x=event, y=aneup, fill=event)) +
         geom_boxplot(outlier.shape=NA) +
         facet_wrap(~ gene) +
-        scale_fill_manual(values=ev_fill) +
+        scale_fill_manual(values=ev_fill, name="Deletion") +
         labs(x = "Presence of event",
              y = "Aneuploidy") +
-        ggsignif::geom_signif(color="black", test=wilcox.test, comparisons=list(c("0", "1")))
+        ggsignif::geom_signif(color="black", test=wilcox.test, comparisons=list(names(ev_fill)))
 
     #todo: fix y_position, tip_length (ggsignif/issues/48)
     p2 = ggplot(cnas, aes(x=aneup_class, y=n_del, color=aneup_class)) +
@@ -61,15 +61,14 @@ plot_cnas = function(cnas) {
             comparisons=list(c("(0,0.1]", "(0.1,Inf]")), y_position=10)
 
     p3 = ggplot(cnas, aes(x=aneup_class, y=cna/(n_del), color=aneup_class)) +
-        geom_boxplot(aes(fill=cna), outlier.shape=NA) +
+        geom_boxplot(aes(fill=event), outlier.shape=NA) +
+        scale_color_manual(values=cna_cols, name="Aneuploidy") +
+        scale_fill_manual(values=ev_fill, drop=FALSE, name="Deletion") +
         facet_wrap(~ gene) +
         scale_y_log10() +
         labs(x = "Aneuploidy",
              y = "As fraction of genes lost") +
-        scale_color_manual(values=cna_cols, name="Aneuploidy") +
-        scale_fill_manual(values=ev_fill) +
-        ggsignif::geom_signif(color="black", test=wilcox.test,
-            comparisons=list(c("(0,0.1]", "(0.1,Inf]")))
+        ggsignif::geom_signif(color="black", test=wilcox.test, comparisons=list(names(cna_cols)))
 
     (p1 | p2 | p3) + plot_layout(widths=c(2,1,2))
 }
@@ -192,13 +191,13 @@ plot_muts = function(muts) {
     cna_cols = c(`(0,0.1]`="#a65628", `(0.1,Inf]`="#5500aa")
     muts$event = ifelse(muts$mut, "Present", "Absent") %>% factor(levels=names(ev_fill))
 
-    p1 = ggplot(muts, aes(x=mut, y=aneup, fill=mut)) +
+    p1 = ggplot(muts, aes(x=event, y=aneup, fill=event)) +
         geom_boxplot(outlier.shape=NA) +
-        scale_fill_manual(values=ev_fill) +
+        scale_fill_manual(values=ev_fill, name="Mutation") +
         facet_wrap(~ gene) +
         labs(x = "Presence of mutation",
              y = "Aneuploidy") +
-        ggsignif::geom_signif(color="black", test=wilcox.test, comparisons=list(c("0", "1")))
+        ggsignif::geom_signif(color="black", test=wilcox.test, comparisons=list(names(ev_fill)))
 
     #todo: fix y_position, tip_length (ggsignif/issues/48)
     p2 = ggplot(muts, aes(x=aneup_class, y=tot, color=aneup_class)) +
@@ -208,18 +207,16 @@ plot_muts = function(muts) {
         labs(x = "Aneuploidy",
              y = "Total number of mutated genes") +
         ggsignif::geom_signif(color="black", test=wilcox.test, tip_length=1e-3,
-            comparisons=list(c("(0,0.1]", "(0.1,Inf]")), y_position=200)
+            comparisons=list(names(cna_cols)), y_position=200)
 
     p3 = ggplot(muts %>% filter(mut == "1"), aes(x=aneup_class, y=1/tot, color=aneup_class)) +
-        geom_boxplot(aes(fill=mut), outlier.shape=NA) +
-        scale_color_manual(values=cna_cols) +
-        scale_fill_manual(values=ev_fill) +
-        facet_wrap(~ gene) +
+        geom_boxplot(aes(fill=event), outlier.shape=NA) +
         scale_color_manual(values=cna_cols, name="Aneuploidy") +
+        scale_fill_manual(values=ev_fill, drop=FALSE, name="Mutation") +
+        facet_wrap(~ gene) +
         labs(x="Aneuploidy", y="As fraction of mutated genes") +
         scale_y_log10() +
-        ggsignif::geom_signif(color="black", test=wilcox.test,
-            comparisons=list(c("(0,0.1]", "(0.1,Inf]")))
+        ggsignif::geom_signif(color="black", test=wilcox.test, comparisons=list(names(cna_cols)))
 
     (p1 | p2 | p3) + plot_layout(widths=c(2,1,2))
 }
