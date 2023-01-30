@@ -52,18 +52,18 @@ plot_cnas = function(cnas) {
 
     #todo: fix y_position, tip_length (ggsignif/issues/48)
     p2 = ggplot(cnas, aes(x=aneup_class, y=n_del, color=aneup_class)) +
-        geom_boxplot(outlier.shape=NA) +
+        geom_boxplot(outlier.shape=NA, fill="#dedede") +
         coord_cartesian(ylim=c(NA, 260)) +
         scale_color_manual(values=cna_cols, name="Aneuploidy") +
         labs(x = "Aneuploidy",
              y = "Total number of lost genes") +
         ggsignif::geom_signif(color="black", test=wilcox.test, tip_length=1e-3,
-            comparisons=list(c("(0,0.1]", "(0.1,Inf]")), y_position=10)
+            comparisons=list(names(cna_cols)), y_position=10)
 
     p3 = ggplot(cnas, aes(x=aneup_class, y=cna/(n_del), color=aneup_class)) +
         geom_boxplot(aes(fill=event), outlier.shape=NA) +
-        scale_color_manual(values=cna_cols, name="Aneuploidy") +
-        scale_fill_manual(values=ev_fill, drop=FALSE, name="Deletion") +
+        scale_color_manual(values=cna_cols, guide="none") +
+        scale_fill_manual(values=ev_fill, guide="none") +
         facet_wrap(~ gene) +
         scale_y_log10() +
         labs(x = "Aneuploidy",
@@ -201,7 +201,7 @@ plot_muts = function(muts) {
 
     #todo: fix y_position, tip_length (ggsignif/issues/48)
     p2 = ggplot(muts, aes(x=aneup_class, y=tot, color=aneup_class)) +
-        geom_boxplot(outlier.shape=NA) +
+        geom_boxplot(outlier.shape=NA, fill="#dedede") +
         coord_cartesian(ylim=c(NA, 450)) +
         scale_color_manual(values=cna_cols, name="Aneuploidy") +
         labs(x = "Aneuploidy",
@@ -211,8 +211,8 @@ plot_muts = function(muts) {
 
     p3 = ggplot(muts %>% filter(mut == "1"), aes(x=aneup_class, y=1/tot, color=aneup_class)) +
         geom_boxplot(aes(fill=event), outlier.shape=NA) +
-        scale_color_manual(values=cna_cols, name="Aneuploidy") +
-        scale_fill_manual(values=ev_fill, drop=FALSE, name="Mutation") +
+        scale_color_manual(values=cna_cols, guide="none") +
+        scale_fill_manual(values=ev_fill, guide="none") +
         facet_wrap(~ gene) +
         labs(x="Aneuploidy", y="As fraction of mutated genes") +
         scale_y_log10() +
@@ -226,5 +226,9 @@ sys$run({
     muts = get_muts(aneup)
     cnas = get_cnas(aneup)
 
-    (plot_muts(muts) / plot_cnas(cnas)) + plot_layout(guides="collect") & theme_classic()
+    (plot_muts(muts) / plot_cnas(cnas)) + plot_layout(guides="collect") &
+        theme_classic() & theme(
+            strip.background = element_blank(),
+            strip.text.x = element_text(size=12, face="bold")
+        )
 })
