@@ -20,7 +20,8 @@ mut_fracs = function() {
 plot_bars = function(fet_hm) {
     hms = fet_hm %>%
         filter(label %in% c(head(label, 10), tail(label, 10))) %>%
-        mutate(label = forcats::fct_reorder(label, p.value, .desc=TRUE)) %>%
+        mutate(label = sprintf("%s (%i)", label, size_used),
+               label = forcats::fct_reorder(label, p.value, .desc=TRUE)) %>%
         mutate(type = case_when(
             grepl("Spindle", label) ~ "CIN causing",
             grepl("Interf|Inflamm|Rej|TNF|STAT", label) ~ "Inflammatory",
@@ -29,6 +30,8 @@ plot_bars = function(fet_hm) {
         mutate(sign = ifelse(adj.p < 0.15, "< 0.15", "n.s."))
     ggplot(hms, aes(x=estimate, y=label, fill=type)) +
         geom_col(aes(alpha=sign)) +
+        geom_text(aes(label=sprintf("  p=%.2g  ", p.value)), x=0, size=3,
+            hjust=ifelse(hms$estimate > 1, 1, 0), color="grey") +
         scale_alpha_manual(values=c("< 0.15"=1, "n.s."=0.4), name="FDR") +
         scale_fill_manual(name="Gene set type",
             values=c("CIN causing"="#e41a1c", "Inflammatory"="#984ea3", "Other"="grey")) +
