@@ -4,21 +4,9 @@ library(patchwork)
 tcga = import('data/tcga')
 sys = import('sys')
 
-all_muts_volc = function(aneup) {
+all_muts_volc = function(aneup, ex) {
     plt = import('plot')
     gset = import('genesets')
-
-    ens106 = AnnotationHub::AnnotationHub()[["AH100643"]]
-    is_prot = GeneBiotypeFilter("protein_coding")
-    is_chr = SeqNameFilter(c(1:22,'X','Y'))
-    tx = transcripts(ens106, filter=c(is_prot, is_chr)) %>%
-        plyranges::filter(tx_is_canonical == 1)
-    ex = exonsBy(ens106)[names(tx)]
-    names(ex) = sub("-[0-9]+$", "", tx$tx_external_name)
-    ex = ex[!is.na(names(ex))] %>%
-        lapply(. %>% summarize(glen = sum(end(.) - start(.))) %>% as.data.frame()) %>%
-        bind_rows(.id="gene")
-    filter = dplyr::filter
 
     load_fl = function(coh) tcga$mutations(coh) %>%
         transmute(cohort=coh, Sample=Sample, gene=Hugo_Symbol, vclass=Variant_Classification)
@@ -51,7 +39,7 @@ all_muts_volc = function(aneup) {
     plt$volcano(f1 %>% mutate(estimate=log2(estimate)))
     s1 = gset$test_lm(res, stat="estimate", sets[[1]])
     plt$volcano(s1)
-    f2 = gset$test_fet(res$gene[res$estimate>quantile(res$estimate,0.8)], sets[[2]], valid=res$gene, min=4)
+    f2 = gset$test_fet(res$gene[res$estimate>quantile(res$estimate,0.7)], sets[[2]], valid=res$gene, min=4)
     plt$volcano(f2 %>% mutate(estimate=log2(estimate)))
     s2 = gset$test_lm(res, stat="est2", gset$filter(sets[[2]], max=250))
     plt$volcano(s2)
@@ -65,4 +53,9 @@ all_muts_volc = function(aneup) {
 #        coord_cartesian(xlim=c(-2e-4, 7e-4))
 }
 
+sys$run({
+    aneup = readRDS("mut_frac.rds")$aneup
+    ex = readRDS("canonical_exon_length.rds")
 
+    all_muts_volc(aneup, ex)
+})
