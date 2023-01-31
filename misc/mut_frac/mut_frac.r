@@ -136,9 +136,15 @@ sys$run({
     muts = get_muts(aneup)
     cnas = get_cnas(aneup)
 
-    (plot_muts(muts) / plot_cnas(cnas)) + plot_layout(guides="collect") &
+    asm = (plot_muts(muts) / plot_cnas(cnas)) + plot_layout(guides="collect") &
         theme_classic() & theme(
             strip.background = element_blank(),
             strip.text.x = element_text(size=12, face="bold")
         )
+
+    pdf("mut_frac.pdf", 12, 8)
+    print(asm)
+    dev.off()
+
+    saveRDS(list(aneup=aneup, muts=muts, cnas=cnas), file="mut_frac.rds")
 })
