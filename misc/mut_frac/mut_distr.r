@@ -78,5 +78,15 @@ sys$run({
     muts = get_muts(aneup, ex)
     res = test_fet(muts)
 
-    saveRDS(list(muts=muts, res=res), file="mut_distr.rds")
+    sets_hm = gset$get_human("MSigDB_Hallmark_2020")
+    hits_hm = res$gene[res$estimate>quantile(res$estimate,0.7)]
+    fet_hm = gset$test_fet(hits_hm, sets_hm, valid=res$gene)
+
+    pdf("mut_distr.pdf", 14, 8)
+    print(distr_plot(res))
+    print(volcano_hallmarks(res))
+    print(volcano_go(res))
+    dev.off()
+
+    saveRDS(list(muts=muts, res=res, fet_hm=fet_hm), file="mut_distr.rds")
 })

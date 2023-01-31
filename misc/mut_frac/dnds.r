@@ -31,7 +31,13 @@ dn_ds_try = function(aneup) {
     # JAK1 evidence (p=0.02); STAT1, TP53 unchanged (p=1, 0.2)
     # with only Silent, no Intron: p=0.02; 1, 0.6
     # -> across IFNA all genes ~0.5 enrich (so opposite effect)
+    list(res=res2, fracs=fracs)
 }
 
 sys$run({
+    aneup = readRDS("mut_frac.rds")$aneup
+
+    res = dn_ds_try(aneup)
+
+    saveRDS(res, file="dnds.rds")
 })
