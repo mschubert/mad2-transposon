@@ -6,41 +6,44 @@ gset = import('genesets')
 tcga = import('data/tcga')
 sys = import('sys')
 
-get_muts = function(aneup, ex) {
-    load_fl = function(coh) tcga$mutations(coh) %>%
-        transmute(cohort=coh, Sample=Sample, gene=Hugo_Symbol, vclass=Variant_Classification)
-    m = lapply(tcga$cohorts(), load_fl) %>%
-        dplyr::bind_rows() %>%
+get_cnas = function(aneup) {
+    cnas = tcga$cna_gistic(thresh=TRUE) %>%
+        reshape2::melt() %>%
+        dplyr::rename(Sample=Var2, gene=Var1, gistic=value) %>%
+        as_tibble() %>%
         inner_join(aneup) %>%
+        filter(substr(Sample, 14, 16) == "01A") %>%
         group_by(aneup_class, Sample) %>%
-            mutate(tot = n_distinct(gene)) %>%
-        ungroup() %>%
-        filter(tot <= 5000) %>%
-        inner_join(ex)
+            mutate(tot = n_distinct(gene[abs(gistic) == 2])) %>%
+        ungroup()
 }
 
-test_fet = function(muts) {
-    genes = table(muts$gene)
-    genes = names(genes)[genes > 50]
+test_fet = function(cnas) {
+    cnas2 = cnas %>%
+        filter(gistic == -2) %>%
+        group_by(gene) %>%
+            filter(n_distinct(aneup_class) == 2,
+                   n_distinct(Sample) >= 50) %>%
+        ungroup() %>%
+        mutate(gene = droplevels(gene)) %>%
+        split(.$gene)
 
-    test_one = function(g) {
-        df = muts %>% filter(g == gene) %>% group_by(aneup_class, Sample, glen) %>%
-            summarize(.gene = -log10(tot[1]))
-        broom::tidy(lm(.gene ~ aneup_class, data=df)) %>% mutate(glen=df$glen[1])
+    test_one = function(df) {
+        df2 = df %>% mutate(.gene = -log10(tot))
+        broom::tidy(lm(.gene ~ aneup_class, data=df2))
     }
-    sapply(genes, test_one, simplify=FALSE) %>% bind_rows(.id="gene") %>%
+    lapply(cnas2, test_one) %>% bind_rows(.id="gene") %>%
         filter(term == "aneup_class(0.1,Inf]") %>%
+        select(-term) %>%
         mutate(adj.p = p.adjust(p.value, method="fdr")) %>%
         arrange(adj.p, p.value) %>%
         filter(std.error < 0.2)
 }
 
 distr_plot = function(res) {
-#    res$circle = res$gene %in% c("JAK1", "STAT1", "B2M", "TP53", "TTN", "CDKN2A", "HLA-A", "HLA-B", "ERBB2", "KRAS", "MYC")
-    res$circle = res$gene %in% c("JAK1", "STAT1", "TP53", "TTN")
+    res$circle = res$gene %in% c("JAK1", "STAT1", "TP53", "TTN", "CDKN2A", "IFNA1", "IFNB1")
 #    plt$volcano(res, ceil=1e-15, label_top=50)
 
-    #TODO: figure out why TP53 vs. CDKN2A so different here
     res2 = res[res$circle,]
     ggplot(res, aes(x=estimate)) +
         geom_density() +
@@ -75,19 +78,18 @@ volcano_go = function(res) {
 
 sys$run({
     aneup = readRDS("mut_frac.rds")$aneup
-    ex = readRDS("canonical_exon_length.rds")
 
-    muts = get_muts(aneup, ex)
-    res = test_fet(muts)
+    cnas = get_cnas(aneup)
+    res = test_fet(cnas)
 
     vhm = volcano_hallmarks(res)
     vgo = volcano_go(res)
 
-    pdf("mut_distr.pdf", 14, 8)
+    pdf("cna_distr.pdf", 14, 8)
     print(distr_plot(res))
     print(vhm$plot)
     print(vgo$plot)
     dev.off()
 
-    saveRDS(list(muts=muts, res=res, fet_hm=vhm$fet), file="mut_distr.rds")
+    saveRDS(list(cnas=cnas, res=res, fet_hm=vhm$fet), file="cna_distr.rds")
 })
