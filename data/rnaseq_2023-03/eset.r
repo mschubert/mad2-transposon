@@ -32,6 +32,15 @@ plot_pca = function(eset, ntop=500, title="PCA") {
              subtitle = sprintf("%i most variable genes", length(pr$center)))
 }
 
+plot_hallmark_gsva = function(vs) {
+    sets = gset$get_human("MSigDB_Hallmark_2020")
+    rownames(vs) = idmap$gene(rownames(vs), to="hgnc_symbol")
+    colnames(vs) = eset$sample
+    vs = vs[!is.na(rownames(vs)),]
+    scores = GSVA::gsva(assay(vs), sets)
+    ComplexHeatmap::Heatmap(scores, row_dend_reorder=TRUE)
+}
+
 sys$run({
     samples = yaml::read_yaml("fastq_id.yaml") %>% lapply(unlist)
     counts = lapply(names(samples), load_counts, samples=samples) %>%
@@ -49,6 +58,7 @@ sys$run({
     pdf("eset.pdf", 12, 10)
     print(plot_pca(vs, Inf))
     print(plot_pca(vs, 500))
+    print(plot_hallmark_gsva(vs))
     dev.off()
 
     saveRDS(eset2, file="eset.rds")
