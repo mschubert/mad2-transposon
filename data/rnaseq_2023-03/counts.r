@@ -35,10 +35,21 @@ read_matrix = function(reads, sel) {
 
 #' ggplot2 read count barplot for all samples (mapped, unmapped, ambiguous etc.)
 read_barplot = function(stats) {
-    ggplot(stats, aes(x=forcats::fct_reorder(sample, -reads), y=reads, fill=feature)) +
+    stats$sample = forcats::fct_reorder(stats$sample, -stats$reads)
+    stats$feature = factor(stats$feature)
+    lab_num = stats %>% filter(grepl("selected", count_type)) %>% group_by(sample) %>%
+        summarize(count_type = count_type[1],
+                  total_reads = sum(reads),
+                  reads = sprintf("%.2gM", reads[feature == "N_mapped"]/1e6),
+                  feature = factor("N_mapped", levels=levels(stats$feature)))
+
+    ggplot(stats, aes(x=sample, y=reads, fill=feature)) +
         geom_col() +
+        geom_text(data=lab_num, aes(y=total_reads, label=reads, color=feature),
+                  vjust=-0.5, size=3) +
         facet_wrap(~ count_type, ncol=1, scales="free_y") +
         scale_fill_brewer(palette="Set1") +
+        scale_color_brewer(palette="Set1", drop=FALSE) +
         theme(axis.text.x = element_text(angle=30, hjust=1, vjust=1))
 }
 
