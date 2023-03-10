@@ -20,6 +20,7 @@ backup
 cache
 *.h5
 **/docs/*
+*.html
 
 # History files
 .Rhistory

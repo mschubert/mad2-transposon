@@ -2,7 +2,7 @@ configfile: "fastq_index.yaml"
 
 rule all:
     input:
-        "eset.pdf"
+        "eset.pdf", "multiqc_report.html"
 
 rule eset:
     input:
@@ -41,6 +41,12 @@ rule align:
             " --limitBAMsortRAM {resources.mem}000000"
             " --quantMode GeneCounts"
             " --outFileNamePrefix seq_aligned/{wildcards.run}/{wildcards.sample}."
+
+rule multiqc:
+    output:
+        "multiqc_report.html"
+    shell:
+        "multiqc --no-data-dir ."
 
 rule counts:
     input:
