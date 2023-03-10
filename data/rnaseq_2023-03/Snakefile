@@ -2,7 +2,22 @@ configfile: "fastq_index.yaml"
 
 rule all:
     input:
-        expand("seq_counts/{run}.pdf", run=config.keys())
+        "eset.pdf"
+
+rule eset:
+    input:
+        rscript = "eset.r",
+        samples = "fastq_id.yaml",
+        infiles = expand("seq_counts/{run}.rds", run=config.keys())
+    output:
+        outfile = "eset.rds",
+        plotfile = "eset.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --samples {input.samples}"
+            " --outfile {output.outfile}"
+            " --plotfile {output.plotfile}"
+            " {input.infiles}"
 
 rule align:
     input:
@@ -29,7 +44,7 @@ rule align:
 
 rule counts:
     input:
-        rscript = "counts.r",
+        rscript = "seq_counts.r",
         tabs = lambda wc: [ rec['counts'] for rec in config[wc.run].values() ]
     output:
         outfile = "seq_counts/{run}.rds",

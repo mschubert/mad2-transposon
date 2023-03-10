@@ -6,10 +6,11 @@ gset = import('genesets')
 idmap = import('process/idmap')
 deseq = import('process/deseq')
 
-load_counts = function(seq_lib, samples) {
+load_counts = function(count_file, samples) {
+    seq_lib = tools::file_path_sans_ext(basename(count_file))
     message(seq_lib)
     idx = samples[[seq_lib]]
-    counts = readRDS(sprintf("seq_counts/%s.rds", seq_lib))[,names(idx),drop=FALSE]
+    counts = readRDS(count_file)[,names(idx),drop=FALSE]
     colnames(counts) = sprintf("%s.%s", seq_lib, names(idx))
     counts
 }
@@ -23,7 +24,7 @@ plot_pca = function(eset, ntop=500, title="PCA") {
         filter(n_distinct(batch) > 1)
 
     plt$pca(eset, aes(x=PC1, y=PC2, fill=short, color=batch), pr=pr) +
-        geom_line(data=lines, aes(group=treatment), color="black", alpha=0.1) +
+        geom_line(data=lines, aes(group=short), color="black", alpha=0.1) +
         geom_point(shape=21, size=3, color="#12121256") +
         scale_fill_brewer(palette="Paired") +
         scale_color_brewer(palette="Dark2") +
@@ -42,8 +43,16 @@ plot_hallmark_gsva = function(vs) {
 }
 
 sys$run({
+    args = sys$cmd$parse(
+        opt('s', 'samples', 'yaml', 'fastq_id.yaml'),
+        opt('o', 'outfile', 'rds', 'eset.rds'),
+        opt('p', 'plotfile', 'pdf', 'eset.pdf'),
+        arg('infiles', 'rds', arity='*',
+            list.files('seq_counts', '\\.rds$', recursive=TRUE, full.names=TRUE))
+    )
+
     samples = yaml::read_yaml("fastq_id.yaml") %>% lapply(unlist)
-    counts = lapply(names(samples), load_counts, samples=samples) %>%
+    counts = lapply(args$infiles, load_counts, samples=samples) %>%
         narray::stack(along=2, fill=0)
 
     meta = tibble(sample = unlist(samples, use.names=FALSE),
@@ -55,11 +64,11 @@ sys$run({
     eset = DESeq2::DESeqDataSetFromMatrix(counts, meta, ~1)
     vs = DESeq2::varianceStabilizingTransformation(eset)
 
-    pdf("eset.pdf", 12, 10)
+    pdf(args$plotfile, 12, 10)
     print(plot_pca(vs, Inf))
     print(plot_pca(vs, 500))
     print(plot_hallmark_gsva(vs))
     dev.off()
 
-    saveRDS(eset2, file="eset.rds")
+    saveRDS(eset, file=args$outfile)
 })
