@@ -1,0 +1,19 @@
+FF230302:
+  S1: wt_ut-1
+  S2: wt_ut-2
+  S3: wt_ut-3
+  S4: wt_rev250-1
+  S5: wt_rev250-2
+  S6: wt_rev250-3
+  S7: wt_rev500-1
+  S8: wt_rev500-2
+  S9: wt_rev500-3
+  S10: stat1_ut-clone2
+  S11: stat1_rev200-clone2
+  S12: stat1_rev500-clone2
+  S13: stat1_ut-clone3
+  S14: stat1_rev200-clone3
+  S15: stat1_rev500-clone3
+  S16: stat1_ut-clone4
+  S17: stat1_rev200-clone4
+  S18: stat1_rev500-clone4
