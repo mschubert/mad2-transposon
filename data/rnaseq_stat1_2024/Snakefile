@@ -1,0 +1,62 @@
+configfile: "fastq_index.yaml"
+
+rule all:
+    input:
+        "eset.pdf", "multiqc_report.html"
+
+rule eset:
+    input:
+        rscript = "eset.r",
+        samples = "fastq_id.yaml",
+        infiles = expand("seq_counts/{run}.rds", run=config.keys())
+    output:
+        outfile = "eset.rds",
+        plotfile = "eset.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --samples {input.samples}"
+            " --outfile {output.outfile}"
+            " --plotfile {output.plotfile}"
+            " {input.infiles}"
+
+rule align:
+    input:
+        genome = "genome/STAR_GRCh38_ens107",
+        fastq = lambda wc: config[wc.run][wc.sample]['fastq']
+    output:
+        counts = "seq_aligned/{run}/{sample}.ReadsPerGene.out.tab"
+    resources:
+        mem = 30000,
+        walltime = 120
+    threads: 10
+    shell:
+        "STAR --runMode alignReads"
+            " --runThreadN {threads}"
+            " --genomeLoad LoadAndKeep"
+            " --readFilesCommand zcat"
+            " --limitOutSJcollapsed 2000000"
+            " --genomeDir {input.genome}"
+            " --readFilesIn {input.fastq}"
+            " --outSAMtype BAM SortedByCoordinate"
+            " --limitBAMsortRAM {resources.mem}000000"
+            " --quantMode GeneCounts"
+            " --outFileNamePrefix seq_aligned/{wildcards.run}/{wildcards.sample}."
+
+rule multiqc:
+    output:
+        "multiqc_report.html"
+    shell:
+        "multiqc --no-data-dir ."
+
+rule counts:
+    input:
+        rscript = "seq_counts.r",
+        tabs = lambda wc: [ rec['counts'] for rec in config[wc.run].values() ]
+    output:
+        outfile = "seq_counts/{run}.rds",
+        plotfile = "seq_counts/{run}.pdf"
+    shell:
+        "Rscript {input.rscript}"
+            " --outfile {output.outfile}"
+            " --plotfile {output.plotfile}"
+            " {input.tabs}"
