@@ -36,7 +36,7 @@ plot_pca = function(eset, ntop=500, title="PCA") {
 plot_hallmark_gsva = function(vs) {
     sets = gset$get_human("MSigDB_Hallmark_2020")
     rownames(vs) = idmap$gene(rownames(vs), to="hgnc_symbol")
-    colnames(vs) = vs$sample
+    colnames(vs) = vs$short
     vs = vs[!is.na(rownames(vs)),]
     scores = GSVA::gsva(assay(vs), sets)
     ComplexHeatmap::Heatmap(scores, row_dend_reorder=TRUE)
@@ -57,10 +57,10 @@ sys$run({
 
     meta = tibble(sample = unlist(samples, use.names=FALSE),
                   batch = sub("^(.+)\\.[^.]+", "\\1", colnames(counts))) %>%
-        mutate(genotype = sub("([^_]+)_([^-]+)-(.+)", "\\1", sample),
-               treatment = sub("([^_]+)_([^-]+)-(.+)", "\\2", sample),
-               rep = sub("([^_]+)_([^-]+)-(.+)", "\\3", sample),
-               short = sub("([^_]+)_([^-]+)-(.+)", "\\1_\\2", sample))
+        mutate(#genotype = sub("([^-]+) hours-(.+)", "\\1", sample),
+               #treatment = sub("([^-]+) hours-(.+)", "\\2", sample),
+               #rep = sub("([^-]+) hours-(.+)", "\\2", sample),
+               short = sub(" nM", "", sub(" hours", "", sample)))
     eset = DESeq2::DESeqDataSetFromMatrix(counts, meta, ~1)
     vs = DESeq2::varianceStabilizingTransformation(eset)
 
