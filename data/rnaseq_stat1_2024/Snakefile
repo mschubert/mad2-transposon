@@ -7,7 +7,7 @@ rule all:
 rule eset:
     input:
         rscript = "eset.r",
-        samples = "fastq_id.yaml",
+        samples = "samples.tsv",
         infiles = expand("seq_counts/{run}.rds", run=config.keys())
     output:
         outfile = "eset.rds",
