@@ -43,6 +43,20 @@ plot_hallmark_gsva = function(vs) {
     ComplexHeatmap::Heatmap(scores, row_dend_reorder=TRUE)
 }
 
+plot_qPCR_genes = function(vs) {
+    rownames(vs) = idmap$gene(rownames(vs), to="hgnc_symbol")
+    colnames(vs) = vs$short
+    dset = vs[c("CXCL10", "ISG15", "IFNB1", "IL6", "CXCL8", "CCL5"),] |>
+        DESeq2::counts() |> t() |> cbind(colData(vs)) |>
+        as.data.frame() |> as_tibble() |>
+        tidyr::pivot_longer(-(sample:short), names_to="gene", values_to="counts")
+    ggplot(dset, aes(x=short, y=counts)) +
+        geom_col(aes(fill=factor(conc))) +
+        scale_y_continuous(trans="log1p", breaks=c(1,2,5,20,100,500)) +
+        facet_wrap(~ gene) +
+        theme(axis.text.x = element_text(angle=90, hjust=1))
+}
+
 sys$run({
     args = sys$cmd$parse(
         opt('s', 'samples', 'tsv', 'samples.tsv'),
@@ -65,6 +79,8 @@ sys$run({
     print(plot_pca(vs, Inf))
     print(plot_pca(vs, 500))
     print(plot_hallmark_gsva(vs))
+    print(plot_hallmark_gsva(eset[,vs$cline == "BT549" & vs$genotype == "WT"]))
+    print(plot_qPCR_genes(eset[,eset$cline == "BT549" & eset$genotype == "WT"]))
     dev.off()
 
     saveRDS(eset, file=args$outfile)
