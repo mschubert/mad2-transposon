@@ -10,7 +10,7 @@ load_counts = function(count_file, samples) {
     seq_lib = tools::file_path_sans_ext(basename(count_file))
     message(seq_lib)
     counts = readRDS(count_file)[,samples$sample,drop=FALSE]
-    colnames(counts) = sprintf("%s.%s", seq_lib, samples$short)
+    colnames(counts) = sprintf("%s.%s", seq_lib, samples$sample)
     counts
 }
 
@@ -50,7 +50,7 @@ sys$run({
             list.files('seq_counts', '\\.rds$', recursive=TRUE, full.names=TRUE))
     )
 
-    meta = readr::read_tsv(args$samples) |>
+    meta = readr::read_tsv(args$samples, comment="#") |>
         mutate(short = sprintf("%s %s %s %sh-%i", cline, genotype, conc, hours, rep),
                rep = factor(rep))
     counts = lapply(args$infiles, load_counts, samples=meta) |>
