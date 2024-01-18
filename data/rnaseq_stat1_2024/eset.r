@@ -24,10 +24,12 @@ plot_pca = function(eset, ntop=500, title="PCA") {
 
     plt$pca(eset, aes(x=PC1, y=PC2, fill=paste(cline, genotype), color=rep), pr=pr) +
         geom_line(data=lines, aes(group=treatment), color="black", alpha=0.1) +
-        geom_point(shape=21, size=3, color="#12121256") +
+        geom_point(aes(shape=factor(conc)), size=3, color="#12121256") +
+        scale_shape_manual(values=c("0"=21, "250"=22, "500"=23)) +
         scale_fill_brewer(palette="Paired") +
         scale_color_brewer(palette="Dark2") +
-        ggrepel::geom_text_repel(aes(label=sample)) +
+        guides(fill = guide_legend(override.aes=list(shape=21))) +
+        ggrepel::geom_text_repel(aes(label=short)) +
         labs(title = title,
              subtitle = sprintf("%i most variable genes", length(pr$center)))
 }
