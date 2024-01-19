@@ -6,12 +6,19 @@ gset = import('genesets')
 idmap = import('process/idmap')
 deseq = import('process/deseq')
 
-load_counts = function(count_file, samples) {
-    seq_lib = tools::file_path_sans_ext(basename(count_file))
-    message(seq_lib)
-    counts = readRDS(count_file)[,samples$sample,drop=FALSE]
-    colnames(counts) = sprintf("%s.%s", seq_lib, samples$sample)
-    counts
+read_counts = function(rfiles, sel="sense") {
+    samples = sub(".ReadsPerGene.out.tab", "", basename(rfiles), fixed=TRUE)
+    reads = lapply(rfiles, readr::read_tsv, col_names=FALSE) %>%
+        setNames(samples) %>%
+        bind_rows(.id="sample") %>%
+        dplyr::rename(feature=X1, unstranded=X2, sense=X3, antisense=X4)
+
+    counts = reads %>% filter(!grepl("^N_", feature)) %>%
+        select(sample, feature, {{ sel }}) %>%
+        tidyr::pivot_wider(names_from=sample, values_from={{ sel }})
+    cmat = data.matrix(counts[-1])
+    rownames(cmat) = counts$feature
+    cmat
 }
 
 plot_pca = function(eset, ntop=500, title="PCA") {
@@ -59,19 +66,17 @@ plot_qPCR_genes = function(vs) {
 
 sys$run({
     args = sys$cmd$parse(
-        opt('s', 'samples', 'tsv', 'samples.tsv'),
-        opt('o', 'outfile', 'rds', 'eset.rds'),
-        opt('p', 'plotfile', 'pdf', 'eset.pdf'),
-        arg('infiles', 'rds', arity='*',
-            list.files('seq_counts', '\\.rds$', recursive=TRUE, full.names=TRUE))
+        opt('s', 'samples', 'tsv', 'FF230302.tsv'),
+        opt('o', 'outfile', 'rds', 'FF230302.rds'),
+        opt('p', 'plotfile', 'pdf', 'FF230302.pdf'),
+        arg('infiles', '.ReadsPerGene.out.tab', arity='*',
+            list.files("seq_aligned/FF230302", "\\.ReadsPerGene\\.out\\.tab", full.names=TRUE))
     )
 
     meta = readr::read_tsv(args$samples, comment="#") |>
         mutate(short = sprintf("%s %s %s %sh-%i", cline, genotype, conc, hours, rep),
                rep = factor(rep))
-    counts = lapply(args$infiles, load_counts, samples=meta) |>
-        narray::stack(along=2, fill=0)
-
+    counts = read_counts(args$infiles)[,meta$sample]
     eset = DESeq2::DESeqDataSetFromMatrix(counts, meta, ~1)
     vs = DESeq2::varianceStabilizingTransformation(eset)
 

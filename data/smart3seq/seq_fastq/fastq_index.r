@@ -9,13 +9,14 @@ index_run = function(fastq_dir) {
 #    if (length(ends) != 1)
 #        stop("single and paired ends in ", fastq_dir)
 
-    df = tibble(keys, fnames) %>%
-        group_by(keys) %>%
-        summarize(fastq = list(fnames)) %>%
+    df = tibble(keys, fnames) |>
+        group_by(keys) |>
+        summarize(fastq = list(fnames)) |>
         mutate(counts = file.path(sub("^seq_fastq", "seq_aligned", fastq_dir),
-                                  paste0(keys, ".ReadsPerGene.out.tab"))) %>%
-        rowwise() %>%
-        mutate(both = list(list(fastq=fastq, counts=counts)))
+                                  paste0(keys, ".ReadsPerGene.out.tab"))) |>
+        rowwise() |>
+        mutate(both = list(list(fastq=fastq, counts=counts))) |>
+        arrange(order(gtools::mixedorder(keys)))
 
     setNames(df$both, df$keys)
 }
@@ -23,4 +24,4 @@ index_run = function(fastq_dir) {
 runs = list.files("seq_fastq", "^[0-9A-Z_]+$", all.files=TRUE, full.names=TRUE)
 samples = lapply(runs, index_run) %>% setNames(basename(runs))
 
-yaml::write_yaml(samples, file="fastq_index.yaml")
+yaml::write_yaml(samples, file="seq_fastq/fastq_index.yaml")
