@@ -2,7 +2,7 @@ configfile: "seq_fastq/fastq_index.yaml"
 
 rule all:
     input:
-        expand("{run}.{ext}", run=config.keys(), ext=['rds', 'pdf']),
+        expand("{run}.{ext}", run=config.keys(), ext=['rds', 'pdf', 'multiqc.html']),
         "multiqc_report.html"
 
 rule eset:
@@ -25,6 +25,13 @@ rule multiqc:
         "multiqc_report.html"
     shell:
         "multiqc --interactive --no-data-dir ."
+
+rule multiqc_per_run:
+    output:
+        "{run}.multiqc.html"
+    shell:
+        "multiqc --interactive --no-data-dir --filename {output}"
+            " seq_fastq/{wildcards.run} seq_aligned/{wildcards.run}"
 
 rule align:
     input:
