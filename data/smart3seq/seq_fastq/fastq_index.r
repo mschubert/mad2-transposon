@@ -2,7 +2,7 @@ library(dplyr)
 
 index_run = function(fastq_dir) {
     regex = "([0-9A-Z]+_[0-9]+)_(S[0-9]+)_R(1)_[0-9]+\\.fastq\\.gz"
-    fnames = list.files(fastq_dir, regex, full.names=TRUE)
+    fnames = list.files(fastq_dir, regex, full.names=TRUE, recursive=TRUE)
     keys = sub(regex, "\\1", basename(fnames))
     Rs = length(unique(sub(regex, "\\3", basename(fnames))))
     ends = c("1"="single", "2"="paired")[as.character(Rs)]
@@ -22,6 +22,6 @@ index_run = function(fastq_dir) {
 }
 
 runs = list.files("seq_fastq", "^[0-9A-Z_]+$", all.files=TRUE, full.names=TRUE)
-samples = lapply(runs, index_run) %>% setNames(basename(runs))
+samples = lapply(runs, index_run) |> setNames(basename(runs))
 
 yaml::write_yaml(samples, file="seq_fastq/fastq_index.yaml")

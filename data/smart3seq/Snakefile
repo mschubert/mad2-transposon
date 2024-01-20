@@ -24,8 +24,7 @@ rule multiqc:
     output:
         "multiqc_report.html"
     shell:
-#        "fastqc --outdir seq_aligned/FF231221_49_96 seq_fastq/FF231221_49_96/*.fastq.gz && "
-        "multiqc --no-data-dir ."
+        "multiqc --interactive --no-data-dir ."
 
 rule align:
     input:
