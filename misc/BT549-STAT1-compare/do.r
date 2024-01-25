@@ -2,7 +2,7 @@ library(dplyr)
 deseq = import('process/deseq')
 
 # load nextflex, 2023 and 2024 data
-# compare qPCR gene counts in seq data
+# TODO: compare qPCR gene counts in seq data
 
 # compare DMSO vs. 500 nM Rev 48 hours
 c2021 = readr::read_tsv("../../data/rnaseq_stat1/count_matrix_known_barcodes_STL_and_USS_genes.txt")
@@ -43,3 +43,6 @@ dset = r2021 |> bind_rows(r2023) |> bind_rows(r2024) |>
     tidyr::pivot_wider(names_from="term", values_from="stat")
 
 # do corrplot all-vs-all
+dmat = data.matrix(dset[-1])
+pairs(dmat)
+corrplot::corrplot(cor(na.omit(dmat)))
