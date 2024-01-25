@@ -5,8 +5,17 @@ deseq = import('process/deseq')
 # compare qPCR gene counts in seq data
 
 # compare DMSO vs. 500 nM Rev 48 hours
-orig = readRDS("../../data/rnaseq_stat1/dset.rds")
-e2021 = orig$eset[,grepl("wt_48_(rev|dmso)", orig$index$id)]
+c2021 = readr::read_tsv("../../data/rnaseq_stat1/count_matrix_known_barcodes_STL_and_USS_genes.txt")
+counts = data.matrix(c2021[-1])
+rownames(counts) = sub("\\.[0-9]+", "", c2021$gene_id)
+experiment = yaml::read_yaml("../../data/rnaseq_stat1/BT549_Stat1.yaml")
+samples = tibble(id=names(experiment$samples)) |>
+    mutate(genotype = relevel(factor(sub("^([^_]+)_.*", "\\1", id)), "wt"),
+           time = relevel(factor(sub(".*_([0-9]+)[_-].*", "\\1", id)), "0"),
+           treatment = relevel(factor(sub(".*(dmso|rev|ifng|0).*", "\\1", id)), "dmso"),
+           replicate = factor(sapply(strsplit(id, "-"), function(x) x[[2]])))
+e2021 = DESeq2::DESeqDataSetFromMatrix(counts, samples, ~1)
+e2021 = e2021[,grepl("wt_48_(rev|dmso)", e2021$id)]
 r2021 = deseq$genes(e2021, ~ treatment) |>
     mutate(term = sub("^treatment", "r2021", term))
 
